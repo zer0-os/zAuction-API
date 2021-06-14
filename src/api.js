@@ -1,25 +1,30 @@
 const express = require('express');
 const fleek = require('@fleekhq/fleek-storage-js');
 const rateLimit = require('express-rate-limit');
+const ethers = require('ethers');
+const abi = require('./abi.json');
 
 const router = express.Router();
 
-//router.get('/', (req, res) => {
-//  res.json({
-//    message: ''
-//  });
-//});
+// Ethers/Infura
+const infuraUrl = process.env.INFURA_URL;
+const provider = new ethers.providers.JsonRpcProvider(infuraUrl);
+const signer = provider.getSigner();
+const contractAddress = process.env.CONTRACT_ADDRESS;
+
+const contract = new ethers.Contract(contractAddress, abi, signer);
 
 // User will receive a 429 error for being rate limited
-const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100 // limit each IP to 50 requests per windowMs
-});
+//const limiter = rateLimit({
+//  windowMs: 1 * 60 * 1000, // 1 minute
+//  max: 100 // limit each IP to 50 requests per windowMs
+//});
 
 // Use .env.example as a basis for a .env file with the correct fleek credentials
 const secrets = {
   apiKey: process.env.FLEEK_API_KEY,
-  apiSecret: process.env.FLEEK_API_SECRET
+  apiSecret: process.env.FLEEK_API_SECRET,
+  infuraSecret: process.env.INFURA_API_SECRET
 }
 
 // Function to check null and empty auction creation fields
@@ -85,6 +90,14 @@ router.post('/auction', async (req, res, next) => {
     if (result['value'] == false) {
         return res.status(400).send({"message": result['data'] + " not found"});
     }
+
+    // is this correct?
+    //try {
+    //  await storageContract.estimateGas.someFunction();
+    //} catch (err) {
+    //  return res.status(400).send({"message": "invalid auction"});
+    //}
+
     // compile data from fields
     const data = {
       account: req.body.account,
