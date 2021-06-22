@@ -73,7 +73,7 @@ router.get("/auctions", async (req, res, next) => {
   }
 });
 
-// Creates a new auction
+/* Creates a new auction
 router.post("/auction", async (req, res, next) => {
   try {
     // check null and empty request fields
@@ -109,12 +109,6 @@ router.post("/auction", async (req, res, next) => {
       currentBidder: "",
       currentBid: 0,
     };
-    
-    // generate auctionId
-    let idString = req.body.contractAddress + req.body.tokenID
-    let idStringBytes = ethers.utils.toUtf8Bytes(idString)
-    let auctionId = ethers.utils.keccak256(idStringBytes);
-    //console.log("New auctionId is", auctionId);
 
     // upload to fleek
     await fleek
@@ -128,25 +122,32 @@ router.post("/auction", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-});
+});*/
 
 // Creates a new bid for an auction
 router.post("/auctions/:auctionID/bid", async (req, res, next) => {
   try {
     let result = checkNullBidFields(
       req.body.account, // account of the bidder
+      req.body.tokenID,
+      req.body.contractAddress,
       req.body.bidAmt,
       req.body.bidMsg // signed msg
     );
     if (result["value"] == false) {
       return res.status(400).send({ message: result["data"] + " not found" });
     }
+    // generate auctionId
+    let idString = req.body.contractAddress + req.body.tokenID
+    let idStringBytes = ethers.utils.toUtf8Bytes(idString)
+    let auctionId = ethers.utils.keccak256(idStringBytes);
+    //console.log("New auctionId is", auctionId);
     // pull auction from fleek
     await fleek
       .get({
         apiKey: secrets.apiKey,
         apiSecret: secrets.apiSecret,
-        key: req.params.auctionID,
+        key: auctionId,
       })
       .then(async (auction) => {
         // then parse data & add currentBidder and currentBid
@@ -156,10 +157,6 @@ router.post("/auctions/:auctionID/bid", async (req, res, next) => {
             account: oldAuction.account,
             tokenID: oldAuction.tokenID,
             contractAddress: oldAuction.contractAddress,
-            startTime: oldAuction.startTime,
-            endTime: oldAuction.endTime,
-            minBid: oldAuction.minBid,
-            auctionType: oldAuction.auctionType,
             currentBidder: req.body.account,
             currentBid: req.body.bidAmt,
             bidMsg: req.body.bidMsg,
@@ -169,7 +166,7 @@ router.post("/auctions/:auctionID/bid", async (req, res, next) => {
             .deleteFile({
               apiKey: secrets.apiKey,
               apiSecret: secrets.apiSecret,
-              key: req.params.auctionID,
+              key: auctionID,
             })
             .then(async () => {
               // and upload new auction under the same name (key)
@@ -177,15 +174,27 @@ router.post("/auctions/:auctionID/bid", async (req, res, next) => {
                 .upload({
                   apiKey: secrets.apiKey,
                   apiSecret: secrets.apiSecret,
-                  key: req.params.auctionID,
+                  key: auctionID,
                   data: JSON.stringify(data),
                 })
                 .then(() => res.status(200).send({ message: "Ok" }));
             });
         } else {
-          return res
-            .status(500)
-            .send({ message: "An error occurred when posting bid" });
+          const data = {
+            account: req.body.account,
+            tokenID: req.body.tokenID,
+            contractAddress: req.body.contractAddress,
+            currentBidder: req.body.account,
+            currentBid: req.body.bidMsg,
+          };
+          await fleek
+                .upload({
+                  apiKey: secrets.apiKey,
+                  apiSecret: secrets.apiSecret,
+                  key: auctionID,
+                  data: JSON.stringify(data),
+                })
+                .then(() => res.status(200).send({ message: "Ok" }));
         }
       });
   } catch (error) {
