@@ -2,7 +2,7 @@ const express = require("express");
 const fleek = require("@fleekhq/fleek-storage-js");
 const rateLimit = require("express-rate-limit");
 const ethers = require("ethers");
-const abi = require("./abi.json");
+//const abi = require("./abi.json");
 
 const router = express.Router();
 
@@ -12,13 +12,13 @@ const provider = new ethers.providers.JsonRpcProvider(infuraUrl);
 const signer = provider.getSigner();
 const contractAddress = process.env.CONTRACT_ADDRESS;
 
-const contract = new ethers.Contract(contractAddress, abi, signer);
+//const contract = new ethers.Contract(contractAddress, abi, signer);
 
 // User will receive a 429 error for being rate limited
-//const limiter = rateLimit({
-//  windowMs: 1 * 60 * 1000, // 1 minute
-//  max: 100 // limit each IP to 50 requests per windowMs
-//});
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100 // limit each IP to 50 requests per windowMs
+});
 
 // Use .env.example as a basis for a .env file with the correct fleek credentials
 const secrets = {
@@ -57,16 +57,9 @@ function checkNullBidFields(...args) {
   return { data: null, value: true };
 }
 
-// Function to get current time in seconds, for logging purposes
-function curTimeInSec() {
-  return Math.floor(new Date().getTime() / 1000);
-}
-
 // Returns a list of auctions
 router.get("/auctions", async (req, res, next) => {
-  let t = curTimeInSec();
   try {
-    console.log(t, "GET request to /auctions from", req.ip);
     // pull list of files in bucket from fleek
     await fleek
       .listFiles({
@@ -82,14 +75,6 @@ router.get("/auctions", async (req, res, next) => {
 
 // Creates a new auction
 router.post("/auction", async (req, res, next) => {
-  let t = curTimeInSec();
-  console.log(
-    t,
-    "POST request to /auction from",
-    req.ip,
-    "with body params:",
-    req.body
-  );
   try {
     // check null and empty request fields
     let result = checkNullCreateFields(
@@ -124,12 +109,19 @@ router.post("/auction", async (req, res, next) => {
       currentBidder: "",
       currentBid: 0,
     };
+    
+    // generate auctionId
+    let idString = req.body.contractAddress + req.body.tokenID
+    let idStringBytes = ethers.utils.toUtf8Bytes(idString)
+    let auctionId = ethers.utils.keccak256(idStringBytes);
+    //console.log("New auctionId is", auctionId);
+
     // upload to fleek
     await fleek
       .upload({
         apiKey: secrets.apiKey,
         apiSecret: secrets.apiSecret,
-        key: t + req.body.account,
+        key: auctionId,
         data: JSON.stringify(data),
       })
       .then(() => res.status(200).send({ message: "Ok" }));
@@ -140,16 +132,6 @@ router.post("/auction", async (req, res, next) => {
 
 // Creates a new bid for an auction
 router.post("/auctions/:auctionID/bid", async (req, res, next) => {
-  let t = curTimeInSec();
-  console.log(
-    t,
-    "POST request to /auctions/",
-    req.params.auctionID,
-    "/bid from",
-    req.ip,
-    "with body params:",
-    req.body
-  );
   try {
     let result = checkNullBidFields(
       req.body.account, // account of the bidder
@@ -213,15 +195,7 @@ router.post("/auctions/:auctionID/bid", async (req, res, next) => {
 
 // Endpoint returns a specific auction, given an auction id
 router.get("/auctions/:auctionID", limiter, async (req, res, next) => {
-  let t = curTimeInSec();
   try {
-    console.log(
-      t,
-      "GET request to /auctions/",
-      req.params.auctionID,
-      "from",
-      req.ip
-    );
     if (req.params.auctionID == null || !/\S/.test(req.params.auctionID)) {
       return res.send({
         status: "false",
@@ -246,15 +220,7 @@ router.get("/auctions/:auctionID", limiter, async (req, res, next) => {
 
 // Endpoint to return bids, given an auction id
 router.get("/auctions/:auctionID/bids", limiter, async (req, res, next) => {
-  let t = curTimeInSec();
   try {
-    console.log(
-      t,
-      "GET request to /auctions/",
-      req.params.auctionID,
-      "/bids from",
-      req.ip
-    );
     if (req.params.auctionID == null || !/\S/.test(req.params.auctionID)) {
       return res.send({
         status: "false",
