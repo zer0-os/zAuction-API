@@ -67,7 +67,7 @@ router.get('/auctions', async (req, res, next) => {
   }
 });
 
-// Creates a new auction
+/* Creates a new auction
 router.post('/auction', async (req, res, next) => {
   var t = curTimeInSec();
   console.log(t,"POST request to /auction from", req.ip, "with body params:",req.body)
@@ -107,7 +107,7 @@ router.post('/auction', async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-});
+});*/
 
 // Creates a new bid for an auction
 router.post('/auctions/:auctionID/bid', async (req, res, next) => {
@@ -160,9 +160,7 @@ router.post('/auctions/:auctionID/bid', async (req, res, next) => {
       } else {
         return res.status(500).send({"message":"An error occurred when posting bid"});
       }
-
     });
-
   } catch (error) {
     next(error);
   }
