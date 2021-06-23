@@ -128,6 +128,7 @@ router.post("/auction", async (req, res, next) => {
 router.post("/auctions/:auctionID/bid", async (req, res, next) => {
   try {
     let result = checkNullBidFields(
+      req.body.seller,
       req.body.account, // account of the bidder
       req.body.tokenID,
       req.body.contractAddress,
@@ -138,7 +139,7 @@ router.post("/auctions/:auctionID/bid", async (req, res, next) => {
       return res.status(400).send({ message: result["data"] + " not found" });
     }
     // generate auctionId
-    let idString = req.body.contractAddress + req.body.tokenID;
+    let idString = req.body.contractAddress + req.body.tokenID + req.body.seller;
     let idStringBytes = ethers.utils.toUtf8Bytes(idString);
     let auctionId = ethers.utils.keccak256(idStringBytes);
     //console.log("New auctionId is", auctionId);
@@ -154,6 +155,7 @@ router.post("/auctions/:auctionID/bid", async (req, res, next) => {
         if (auction.data) {
           let oldAuction = JSON.parse(auction.data);
           const data = {
+            seller: oldAuction.seller,
             account: oldAuction.account,
             tokenID: oldAuction.tokenID,
             contractAddress: oldAuction.contractAddress,
@@ -181,6 +183,7 @@ router.post("/auctions/:auctionID/bid", async (req, res, next) => {
             });
         } else {
           const data = {
+            seller: req.body.seller,
             account: req.body.account,
             tokenID: req.body.tokenID,
             contractAddress: req.body.contractAddress,
@@ -230,14 +233,14 @@ router.get("/auctions/:auctionID", limiter, async (req, res, next) => {
 // Endpoint to return bids, given an auction id
 router.get("/auctions/:auctionID/currentBid", limiter, async (req, res, next) => {
   try {
-    if (req.params.contractAddress == null || req.params.tokenID) {
+    if (req.params.seller == null || req.params.contractAddress == null || req.params.tokenID == null) {
       return res.send({
         status: "false",
         message: "Please provide an account, contract address, and token id",
       });
     }
     // generate auctionId
-    let idString = req.body.contractAddress + req.body.tokenID;
+    let idString = req.body.contractAddress + req.body.tokenID + req.body.seller;
     let idStringBytes = ethers.utils.toUtf8Bytes(idString);
     let auctionId = ethers.utils.keccak256(idStringBytes);
     // get file with key from fleek
