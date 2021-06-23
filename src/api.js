@@ -57,75 +57,19 @@ function checkNullBidFields(...args) {
   return { data: null, value: true };
 }
 
-// Returns a list of auctions
-router.get("/auctions", async (req, res, next) => {
+// Returns a encoded data to be signed
+router.get("/encodebid", async (req, res, next) => {
   try {
-    // pull list of files in bucket from fleek
-    await fleek
-      .listFiles({
-        apiKey: secrets.apiKey,
-        apiSecret: secrets.apiSecret,
-        getOptions: ["key"],
-      })
-      .then((file) => res.send(file));
+    let params = ethers.utils.defaultAbiCoder(['uint256','address','uint8','uint256', 'address', 'uint256', 'uint256','uint256','uint256'],
+    [req.body.auctionID, req.body.zauctionAddress, req.body.chainId, req.body.bidAmt, req.body.contractAddress, req.body.tokenID, 0, 0, 9999999999999]);      
+    return ethers.utils.keccak256(params);
   } catch (error) {
     next(error);
   }
 });
 
-/* Creates a new auction
-router.post("/auction", async (req, res, next) => {
-  try {
-    // check null and empty request fields
-    let result = checkNullCreateFields(
-      req.body.account,
-      req.body.tokenID,
-      req.body.contractAddress,
-      req.body.startTime,
-      req.body.endTime,
-      req.body.minBid,
-      req.body.auctionType
-    );
-    if (result["value"] == false) {
-      return res.status(400).send({ message: result["data"] + " not found" });
-    }
-
-    // is this correct?
-    //try {
-    //  await storageContract.estimateGas.someFunction();
-    //} catch (err) {
-    //  return res.status(400).send({"message": "invalid auction"});
-    //}
-
-    // compile data from fields
-    const data = {
-      account: req.body.account,
-      tokenID: req.body.tokenID,
-      contractAddress: req.body.contractAddress,
-      startTime: req.body.startTime,
-      endTime: req.body.endTime,
-      minBid: req.body.minBid,
-      auctionType: req.body.auctionType,
-      currentBidder: "",
-      currentBid: 0,
-    };
-
-    // upload to fleek
-    await fleek
-      .upload({
-        apiKey: secrets.apiKey,
-        apiSecret: secrets.apiSecret,
-        key: auctionId,
-        data: JSON.stringify(data),
-      })
-      .then(() => res.status(200).send({ message: "Ok" }));
-  } catch (error) {
-    next(error);
-  }
-});*/
-
 // Creates a new bid for an auction
-router.post("/auctions/:auctionID/bid", async (req, res, next) => {
+router.post("/bid", async (req, res, next) => {
   try {
     let result = checkNullBidFields(
       req.body.seller,
@@ -205,33 +149,8 @@ router.post("/auctions/:auctionID/bid", async (req, res, next) => {
   }
 });
 
-/* Endpoint returns a specific auction, given an auction id
-router.get("/auctions/:auctionID", limiter, async (req, res, next) => {
-  try {
-    if (req.params.auctionID == null || !/\S/.test(req.params.auctionID)) {
-      return res.send({
-        status: "false",
-        message: "Please provide an auction id",
-      });
-    }
-    // get file with key from fleek
-    await fleek
-      .get({
-        apiKey: secrets.apiKey,
-        apiSecret: secrets.apiSecret,
-        key: req.params.auctionID,
-      })
-      .then((file) => {
-        //console.log(JSON.parse(file.data))
-        res.send(JSON.parse(file.data));
-      });
-  } catch (error) {
-    next(error);
-  }
-});*/
-
-// Endpoint to return bids, given an auction id
-router.get("/auctions/:auctionID/currentBid", limiter, async (req, res, next) => {
+// Endpoint to return current highest bid given seller, contract address, and tokenid
+router.get("/currentBid", limiter, async (req, res, next) => {
   try {
     if (req.params.seller == null || req.params.contractAddress == null || req.params.tokenID == null) {
       return res.send({
