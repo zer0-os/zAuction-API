@@ -68,7 +68,7 @@ function checkNullCurrentBidFields(...args) {
 }
 
 // Returns a encoded data to be signed
-router.put("/encodeBid", async (req, res, next) => {
+router.get("/encodeBid", async (req, res, next) => {
   try {
     let result = checkNullEncodeFields(
       req.body.auctionId,
@@ -81,9 +81,10 @@ router.put("/encodeBid", async (req, res, next) => {
     if (result["value"] == false) {
       return res.status(400).send({ message: result["data"] + " not found" });
     }
-    let params = ethers.utils.defaultAbiCoder(['uint256','address','uint8','uint256', 'address', 'uint256', 'uint256','uint256','uint256'],
-    [req.body.auctionId, req.body.zAuctionAddress, req.body.chainId, req.body.bidAmt, req.body.contractAddress, req.body.tokenId, 0, 0, 9999999999999]);      
-    return ethers.utils.keccak256(params);
+    let params = ethers.utils.defaultAbiCoder.encode(['uint256','address','uint8','uint256', 'address', 'uint256', 'uint256','uint256','uint256'],
+    [req.body.auctionId, req.body.zAuctionAddress, req.body.chainId, req.body.bidAmt, req.body.contractAddress, req.body.tokenId, '0', '0', '9999999999999']);      
+    let signage = ethers.utils.keccak256(params);
+    return res.status(200).send(signage);
   } catch (error) {
     next(error);
   }
