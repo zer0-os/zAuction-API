@@ -138,8 +138,8 @@ router.post("/auctions/:auctionID/bid", async (req, res, next) => {
       return res.status(400).send({ message: result["data"] + " not found" });
     }
     // generate auctionId
-    let idString = req.body.contractAddress + req.body.tokenID
-    let idStringBytes = ethers.utils.toUtf8Bytes(idString)
+    let idString = req.body.contractAddress + req.body.tokenID;
+    let idStringBytes = ethers.utils.toUtf8Bytes(idString);
     let auctionId = ethers.utils.keccak256(idStringBytes);
     //console.log("New auctionId is", auctionId);
     // pull auction from fleek
@@ -202,7 +202,7 @@ router.post("/auctions/:auctionID/bid", async (req, res, next) => {
   }
 });
 
-// Endpoint returns a specific auction, given an auction id
+/* Endpoint returns a specific auction, given an auction id
 router.get("/auctions/:auctionID", limiter, async (req, res, next) => {
   try {
     if (req.params.auctionID == null || !/\S/.test(req.params.auctionID)) {
@@ -225,23 +225,27 @@ router.get("/auctions/:auctionID", limiter, async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-});
+});*/
 
 // Endpoint to return bids, given an auction id
-router.get("/auctions/:auctionID/bids", limiter, async (req, res, next) => {
+router.get("/auctions/:auctionID/currentBid", limiter, async (req, res, next) => {
   try {
-    if (req.params.auctionID == null || !/\S/.test(req.params.auctionID)) {
+    if (req.params.contractAddress == null || req.params.tokenID) {
       return res.send({
         status: "false",
-        message: "Please provide an auction id",
+        message: "Please provide an account, contract address, and token id",
       });
     }
+    // generate auctionId
+    let idString = req.body.contractAddress + req.body.tokenID;
+    let idStringBytes = ethers.utils.toUtf8Bytes(idString);
+    let auctionId = ethers.utils.keccak256(idStringBytes);
     // get file with key from fleek
     await fleek
       .get({
         apiKey: secrets.apiKey,
         apiSecret: secrets.apiSecret,
-        key: req.params.auctionID,
+        key: auctionID,
       })
       .then((file) => {
         // parse file and return only bids
