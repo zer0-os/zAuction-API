@@ -68,7 +68,7 @@ function checkNullCurrentBidFields(...args) {
 }
 
 // Returns a encoded data to be signed
-router.get("/encodeBid", async (req, res, next) => {
+router.put("/encodeBid", async (req, res, next) => {
   try {
     let result = checkNullEncodeFields(
       req.body.auctionId,
@@ -150,7 +150,7 @@ router.post("/bid", async (req, res, next) => {
               });
 
           } else {
-            res.status(400).send({ message: "New bid amount must be greater than current bid amount"});
+            res.status(405).send({ message: "New bid amount must be greater than current bid amount"});
           }
         } else {
           const data = {
