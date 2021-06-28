@@ -2,17 +2,21 @@ import express from "express";
 import fleek from "@fleekhq/fleek-storage-js";
 import rateLimit from "express-rate-limit";
 import Ajv from "ajv";
-import ethers from "ethers";
+import { ethers } from "ethers";
+import * as env from 'env-var';
 //const abi = require("./abi.json");
 
 const router = express.Router();
 const ajv = new Ajv();
 
+
 // Ethers/Infura
-const infuraUrl = process.env.INFURA_URL;
-const provider = new ethers.providers.JsonRpcProvider(infuraUrl);
-const signer = provider.getSigner();
-const contractAddress = process.env.CONTRACT_ADDRESS;
+//const infuraUrl = process.env.INFURA_URL;
+//const contractAddress = process.env.CONTRACT_ADDRESS;
+const infuraUrl = env.get('INFURA_URL').required().asString();
+//const contractAddress = env.get('CONTRACT_ADDRESS').required().asString();
+const prov = new ethers.providers.JsonRpcProvider(infuraUrl);
+const signer = prov.getSigner();
 
 //const contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -24,9 +28,9 @@ const limiter = rateLimit({
 
 // Use .env.example as a basis for a .env file with the correct fleek credentials
 const secrets = {
-  apiKey: process.env.FLEEK_API_KEY,
-  apiSecret: process.env.FLEEK_API_SECRET,
-  infuraSecret: process.env.INFURA_API_SECRET,
+  apiKey: env.get('FLEEK_API_KEY').required().asString(),
+  apiSecret: env.get('FLEEK_API_SECRET').required().asString(),
+  infuraSecret: env.get('INFURA_API_SECRET').required().asString()
 };
 
 // Ajv Schemas
@@ -41,8 +45,7 @@ const BidPayloadPostSchema = {
     expireBlock: {type: "string"},
     bidder: {type: "string"},
   },
-  required: ["bidAmount", "nftAddress", "tokenId", "minBid", "startBlock", "expireBlock", "bidder"],
-  additionalPorperties: false
+  required: ["bidAmount", "nftAddress", "tokenId", "minBid", "startBlock", "expireBlock", "bidder"]
 }
 const validateBidPayloadSchema = ajv.compile(BidPayloadPostSchema);
 
@@ -59,8 +62,7 @@ const BidPostSchema = {
     auctionId: {type: "string"},
     signedBid: {type: "string"}
   },
-  required: ["bidAmount", "nftAddress", "tokenId", "minBid", "startBlock", "expireBlock", "bidder", "auctionId", "signedBid"],
-  additionalPorperties: false
+  required: ["bidAmount", "nftAddress", "tokenId", "minBid", "startBlock", "expireBlock", "bidder", "auctionId", "signedBid"]
 }
 const validateBidPostSchema = ajv.compile(BidPostSchema);
 
