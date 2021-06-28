@@ -1,10 +1,12 @@
-const express = require("express");
-const fleek = require("@fleekhq/fleek-storage-js");
-const rateLimit = require("express-rate-limit");
-const ethers = require("ethers");
+import express from "express";
+import fleek from "@fleekhq/fleek-storage-js";
+import rateLimit from "express-rate-limit";
+import Ajv from "ajv";
+import ethers from "ethers";
 //const abi = require("./abi.json");
 
 const router = express.Router();
+const ajv = new Ajv();
 
 // Ethers/Infura
 const infuraUrl = process.env.INFURA_URL;
@@ -27,8 +29,43 @@ const secrets = {
   infuraSecret: process.env.INFURA_API_SECRET,
 };
 
+// Ajv Schemas
+const BidPayloadPostSchema = {
+  type: "object",
+  properties: {
+    bidAmount: {type: "number"},
+    nftAddress: {type: "string"},
+    tokenId: {type: "string"},
+    minBid: {type: "number"},
+    startBlock: {type: "string"},
+    expireBlock: {type: "string"},
+    bidder: {type: "string"},
+  },
+  required: ["bidAmount", "nftAddress", "tokenId", "minBid", "startBlock", "expireBlock", "bidder"],
+  additionalPorperties: false
+}
+const validateBidPayloadSchema = ajv.compile(BidPayloadPostSchema);
+
+const BidPostSchema = {
+  type: "object",
+  properties: {
+    bidAmount: {type: "number"},
+    nftAddress: {type: "string"},
+    tokenId: {type: "string"},
+    minBid: {type: "number"},
+    startBlock: {type: "string"},
+    expireBlock: {type: "string"},
+    bidder: {type: "string"},
+    auctionId: {type: "string"},
+    signedBid: {type: "string"}
+  },
+  required: ["bidAmount", "nftAddress", "tokenId", "minBid", "startBlock", "expireBlock", "bidder", "auctionId", "signedBid"],
+  additionalPorperties: false
+}
+const validateBidPostSchema = ajv.compile(BidPostSchema);
+
 // Function to check null and empty encode bid fields
-function checkNullEncodeFields(...args) {
+function checkNullEncodeFields(...args: string[]) {
   let encodeFields = [
     "auctionId",
     "zAuctionAddress",
@@ -46,7 +83,7 @@ function checkNullEncodeFields(...args) {
 }
 
 // Function to check null and empty bid request fields
-function checkNullBidFields(...args) {
+function checkNullBidFields(...args: string[]) {
   let bidFields = ["seller", "account", "tokenId", "contractAddress", "bidAmt", "bidMsg"];
   for (let i = 0; i < args.length; i++) {
     if (args[i] == null || !/\S/.test(args[i])) {
@@ -57,7 +94,7 @@ function checkNullBidFields(...args) {
 }
 
 // Function to check null and empty current bid request fields
-function checkNullCurrentBidFields(...args) {
+function checkNullCurrentBidFields(...args: string[]) {
   let currentBidFields = ["seller", "contractAddress", "tokenId"];
   for (let i = 0; i < args.length; i++) {
     if (args[i] == null || !/\S/.test(args[i])) {
@@ -201,12 +238,11 @@ router.get("/currentBid", limiter, async (req, res, next) => {
       })
       .then((file) => {
         // parse file and return only bids
-        auction = JSON.parse(file.data);
+        let auction = JSON.parse(file.data);
         console.log(auction);
-        bids = {
+        let bids = {
           currentBidder: auction.currentBidder,
-          currentBid: auction.currentBid,
-          currentBidder: auction.currentBidder,
+          currentBid: auction.currentBid
         };
         res.json(bids);
       });
@@ -215,4 +251,4 @@ router.get("/currentBid", limiter, async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export = router;
