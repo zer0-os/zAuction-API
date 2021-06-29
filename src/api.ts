@@ -270,20 +270,16 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
 // Endpoint to return current highest bid given nftId
 router.get("/bids/:nftId", limiter, async (req, res, next) => {
   try {
-    if (validateCurrentBidSchema(req.body)) {
-      // get file with key from fleek
-      let file = await fleek
-        .get({
-          apiKey: secrets.apiKey,
-          apiSecret: secrets.apiSecret,
-          key: req.params.nftId,
-        });
-        // parse file and return list of bids
-        let auction = JSON.parse(file.data);
-        res.json(auction.bids);
-    } else {
-      return res.status(400).send(validateCurrentBidSchema.errors);
-    }
+    // get file with key from fleek
+    let file = await fleek
+      .get({
+        apiKey: secrets.apiKey,
+        apiSecret: secrets.apiSecret,
+        key: req.params.nftId,
+      });
+      // parse file and return list of bids
+      let auction = JSON.parse(file.data);
+      res.json(auction.bids);
   } catch (error) {
     next(error);
   }
