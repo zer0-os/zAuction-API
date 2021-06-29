@@ -154,6 +154,18 @@ router.post("/bid", limiter, async (req, res, next) => {
         req.body.contractAddress + req.body.tokenId + req.body.seller;
       let idStringBytes = ethers.utils.toUtf8Bytes(idString);
       let auctionId = ethers.utils.keccak256(idStringBytes);
+      //estimate gas of bid accept tx - return if infinite/error
+      let est = prov.estimateGas.acceptBid(
+          req.body.bidMsg, 
+          auctionId,
+          req.body.account,
+          req.body.bidAmt,
+          req.body.tokenId,
+          req.body.minBid,
+          req.body.startBlock,
+          req.body.expireBlock
+        );
+      if(!est){return;}
       // try to pull auction from fleek with given auctionId
       try {
         let auction = await fleek
