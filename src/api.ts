@@ -4,7 +4,7 @@ import rateLimit from "express-rate-limit";
 import Ajv, { JSONSchemaType } from "ajv";
 import { ethers } from "ethers";
 import * as env from "env-var";
-//const abi = require("./abi.json");
+import * as zauction from "./contract/Zauction.json";
 
 const router = express.Router();
 const ajv = new Ajv({ coerceTypes: true });
@@ -155,7 +155,9 @@ router.post("/bid", limiter, async (req, res, next) => {
 router.post("/bids/:nftId", limiter, async (req, res, next) => {
   try {
     if (validateBidPostSchema(req.body)) {
-      /*estimate gas of bid accept tx - return if infinite/error
+      //instantiate contract
+      const smartContract = new ethers.Contract(zauction.address, zauction.abi, signer)
+      //estimate gas of bid accept tx - return if infinite/error
       let est = prov.estimateGas.acceptBid(
           req.body.bidMsg, 
           req.body.auctionId,
@@ -166,7 +168,10 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           req.body.startBlock,
           req.body.expireBlock
         );
-      if(!est){return;}*/
+      if(!est){res.status(405).send({
+        message:
+          "Invalid bid, estimate gas of accept failed",
+      });}
       // try to pull auction from fleek with given auctionId
       try {
         let auction = await fleek
