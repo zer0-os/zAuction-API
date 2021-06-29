@@ -156,59 +156,55 @@ router.post("/bid", limiter, async (req, res, next) => {
       let auctionId = ethers.utils.keccak256(idStringBytes);
       // try to pull auction from fleek with given auctionId
       try {
-        await fleek
+        let auction = await fleek
           .get({
             apiKey: secrets.apiKey,
             apiSecret: secrets.apiSecret,
             key: auctionId,
-          })
-          .then(async (auction) => {
-            // then parse data & add currentBidder and currentBid
-            let oldAuction = JSON.parse(auction.data);
-            // if the new bid amount is greater than the highest bid amount
-            if (
-              req.body.bidAmt >
-              oldAuction.bids[oldAuction.bids.length - 1].bidAmt
-            ) {
-              const newBid = {
-                bidder: req.body.account,
-                bidAmt: req.body.bidAmt,
-              };
-              // place the new bid object at the end of the array
-              oldAuction.bids.push(newBid);
-              const data = {
-                seller: oldAuction.seller,
-                account: oldAuction.account,
-                tokenId: oldAuction.tokenId,
-                contractAddress: oldAuction.contractAddress,
-                bids: oldAuction.bids,
-                bidMsg: req.body.bidMsg,
-              };
-              // delete the old auction
+          });
+          // then parse data & add currentBidder and currentBid
+          let oldAuction = JSON.parse(auction.data);
+          // if the new bid amount is greater than the highest bid amount
+          if (
+            req.body.bidAmt >
+            oldAuction.bids[oldAuction.bids.length - 1].bidAmt
+          ) {
+            const newBid = {
+              bidder: req.body.account,
+              bidAmt: req.body.bidAmt,
+            };
+            // place the new bid object at the end of the array
+            oldAuction.bids.push(newBid);
+            const data = {
+              seller: oldAuction.seller,
+              account: oldAuction.account,
+              tokenId: oldAuction.tokenId,
+              contractAddress: oldAuction.contractAddress,
+              bids: oldAuction.bids,
+              bidMsg: req.body.bidMsg,
+            };
+            // delete the old auction
+            await fleek
+              .deleteFile({
+                apiKey: secrets.apiKey,
+                apiSecret: secrets.apiSecret,
+                key: auctionId,
+              });
+              // and upload new auction under the same name (key)
               await fleek
-                .deleteFile({
+                .upload({
                   apiKey: secrets.apiKey,
                   apiSecret: secrets.apiSecret,
                   key: auctionId,
-                })
-                .then(async () => {
-                  // and upload new auction under the same name (key)
-                  await fleek
-                    .upload({
-                      apiKey: secrets.apiKey,
-                      apiSecret: secrets.apiSecret,
-                      key: auctionId,
-                      data: JSON.stringify(data),
-                    })
-                    .then(() => res.status(200).send({ message: "Ok" }));
+                  data: JSON.stringify(data),
                 });
-            } else {
-              res.status(405).send({
-                message:
-                  "New bid amount must be greater than current bid amount",
-              });
-            }
-          });
+                res.status(200).send({ message: "Ok" });
+          } else {
+            res.status(405).send({
+              message:
+                "New bid amount must be greater than current bid amount",
+            });
+          }
       } catch (error) {
         // no file was found for auctionId, create a new one.
         const data = {
@@ -231,7 +227,7 @@ router.post("/bid", limiter, async (req, res, next) => {
             key: auctionId,
             data: JSON.stringify(data),
           })
-          .then(() => res.status(200).send({ message: "Ok" }));
+          res.status(200).send({ message: "Ok" })
         next(error);
       }
     } else {
@@ -252,17 +248,15 @@ router.get("/bids", limiter, async (req, res, next) => {
       let idStringBytes = ethers.utils.toUtf8Bytes(idString);
       let auctionId = ethers.utils.keccak256(idStringBytes);
       // get file with key from fleek
-      await fleek
+      let file = await fleek
         .get({
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
           key: auctionId,
-        })
-        .then((file) => {
-          // parse file and return list of bids
-          let auction = JSON.parse(file.data);
-          res.json(auction.bids);
         });
+        // parse file and return list of bids
+        let auction = JSON.parse(file.data);
+        res.json(auction.bids);
     } else {
       return res.status(400).send(validateCurrentBidSchema.errors);
     }
