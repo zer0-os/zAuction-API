@@ -139,10 +139,10 @@ router.post("/bid", limiter, async (req, res, next) => {
       let idString =
         req.body.contractAddress + req.body.tokenId;
       let idStringBytes = ethers.utils.toUtf8Bytes(idString);
-      let nftid = ethers.utils.keccak256(idStringBytes);
+      let nftId = ethers.utils.keccak256(idStringBytes);
       let payload = ethers.utils.keccak256(params);
       let auctionId = Math.floor(Math.random() * 42949672960);
-      return res.status(200).send({payload, auctionId, r});
+      return res.status(200).send({payload, auctionId, nftId});
     } else {
       return res.status(400).send(validateBidPayloadSchema.errors);
     }
