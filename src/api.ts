@@ -108,7 +108,7 @@ const CurrentBidSchema: JSONSchemaType<CurrentBidInterface> = {
 const validateCurrentBidSchema = ajv.compile(CurrentBidSchema);
 
 // Returns a encoded data to be signed
-router.get("/encodeBid", limiter, async (req, res, next) => {
+router.post("/bid", limiter, async (req, res, next) => {
   try {
     if (validateBidPayloadSchema(req.body)) {
       let params = ethers.utils.defaultAbiCoder.encode(
@@ -130,13 +130,19 @@ router.get("/encodeBid", limiter, async (req, res, next) => {
           req.body.bidAmt,
           req.body.contractAddress,
           req.body.tokenId,
-          "0",
-          "0",
-          "9999999999999",
+          req.body.minBid,
+          req.body.startBlock,
+          req.body.expireBlock
         ]
       );
-      let signage = ethers.utils.keccak256(params);
-      return res.status(200).send(signage);
+      // generate auctionid, nftid
+      let idString =
+        req.body.contractAddress + req.body.tokenId;
+      let idStringBytes = ethers.utils.toUtf8Bytes(idString);
+      let auctionId = ethers.utils.keccak256(idStringBytes);
+      let payload = ethers.utils.keccak256(params);
+      let r = Math.floor(Math.random() * 42949672960);
+      return res.status(200).send({payload, auctionId, r});
     } else {
       return res.status(400).send(validateBidPayloadSchema.errors);
     }
@@ -146,18 +152,14 @@ router.get("/encodeBid", limiter, async (req, res, next) => {
 });
 
 // Creates a new bid for an auction
-router.post("/bid", limiter, async (req, res, next) => {
+router.post("/bids/{nft_id}", limiter, async (req, res, next) => {
   try {
     if (validateBidPostSchema(req.body)) {
-      // generate auctionId
-      let idString =
-        req.body.contractAddress + req.body.tokenId + req.body.seller;
-      let idStringBytes = ethers.utils.toUtf8Bytes(idString);
-      let auctionId = ethers.utils.keccak256(idStringBytes);
+      
       //estimate gas of bid accept tx - return if infinite/error
       let est = prov.estimateGas.acceptBid(
           req.body.bidMsg, 
-          auctionId,
+          req.body.auctionId,
           req.body.account,
           req.body.bidAmt,
           req.body.tokenId,
@@ -172,7 +174,7 @@ router.post("/bid", limiter, async (req, res, next) => {
           .get({
             apiKey: secrets.apiKey,
             apiSecret: secrets.apiSecret,
-            key: auctionId,
+            key: req.body.auctionId,
           });
           // then parse data & add currentBidder and currentBid
           let oldAuction = JSON.parse(auction.data);
@@ -200,14 +202,14 @@ router.post("/bid", limiter, async (req, res, next) => {
               .deleteFile({
                 apiKey: secrets.apiKey,
                 apiSecret: secrets.apiSecret,
-                key: auctionId,
+                key: req.body.auctionId,
               });
               // and upload new auction under the same name (key)
               await fleek
                 .upload({
                   apiKey: secrets.apiKey,
                   apiSecret: secrets.apiSecret,
-                  key: auctionId,
+                  key: req.body.auctionId,
                   data: JSON.stringify(data),
                 });
                 res.status(200).send({ message: "Ok" });
@@ -251,20 +253,15 @@ router.post("/bid", limiter, async (req, res, next) => {
 });
 
 // Endpoint to return current highest bid given seller, contract address, and tokenid
-router.get("/bids", limiter, async (req, res, next) => {
+router.get("/bids/{nft_id}", limiter, async (req, res, next) => {
   try {
     if (validateCurrentBidSchema(req.body)) {
-      // generate auctionId
-      let idString =
-        req.body.contractAddress + req.body.tokenId + req.body.seller;
-      let idStringBytes = ethers.utils.toUtf8Bytes(idString);
-      let auctionId = ethers.utils.keccak256(idStringBytes);
       // get file with key from fleek
       let file = await fleek
         .get({
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
-          key: auctionId,
+          key: nft_id,
         });
         // parse file and return list of bids
         let auction = JSON.parse(file.data);
