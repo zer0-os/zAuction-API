@@ -4,6 +4,8 @@ REST proxy for zAuction
 
 # Includes
 
+- [AJV](https://www.npmjs.com/package/ajv)
+  - The fastest JSON validator for Node.js and browser.
 - [dotenv](https://www.npmjs.com/package/dotenv)
   - Dotenv is a zero-dependency module that loads environment variables from a `.env` file into `process.env`
 - [eslint](https://www.npmjs.com/package/eslint)
@@ -16,6 +18,8 @@ REST proxy for zAuction
   - HTTP request logger middleware for node.js
 - [nodemon](https://www.npmjs.com/package/nodemon)
   - nodemon is a tool that helps develop node.js based applications by automatically restarting the node application when file changes in the directory are detected.
+- [prettier](https://www.npmjs.com/package/prettier)
+  - Prettier is an opinionated code formatter.
 - [supertest](https://www.npmjs.com/package/supertest)
   - HTTP assertions made easy via superagent.
 
@@ -28,7 +32,13 @@ npm install
 ## Development
 
 ```
-npm run dev
+npm run start
+```
+
+## Build
+
+```
+npm run build
 ```
 
 ## Test
@@ -37,10 +47,10 @@ npm run dev
 npm run test
 ```
 
-## Lint
+## Cleanup
 
 ```
-npm run lint
+npx prettier --write .
 ```
 
 # API Documentation
