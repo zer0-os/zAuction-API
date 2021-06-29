@@ -238,7 +238,7 @@ router.post("/bids/{nft_id}", limiter, async (req, res, next) => {
           .upload({
             apiKey: secrets.apiKey,
             apiSecret: secrets.apiSecret,
-            key: auctionId,
+            key: req.body.auctionId,
             data: JSON.stringify(data),
           })
           res.status(200).send({ message: "Ok" })
