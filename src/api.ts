@@ -35,75 +35,85 @@ const secrets = {
 // Ajv Schemas
 interface BidPayloadPostInterface {
   auctionId: number;
-  zAuctionAddress: string;
-  chainId: number;
   bidAmt: number;
   contractAddress: string;
   tokenId: number;
+  minBid: number;
+  startBlock: number;
+  expireBlock: number;
 }
 const BidPayloadPostSchema: JSONSchemaType<BidPayloadPostInterface> = {
   type: "object",
   properties: {
     auctionId: { type: "integer" },
-    zAuctionAddress: { type: "string" },
-    chainId: { type: "integer" },
     bidAmt: { type: "integer" },
     contractAddress: { type: "string" },
     tokenId: { type: "integer" },
+    minBid: { type: "integer" },
+    startBlock: { type: "integer" },
+    expireBlock: { type: "integer" }
   },
   required: [
     "auctionId",
-    "zAuctionAddress",
-    "chainId",
     "bidAmt",
     "contractAddress",
     "tokenId",
+    "minBid",
+    "startBlock",
+    "expireBlock"
   ],
 };
 const validateBidPayloadSchema = ajv.compile(BidPayloadPostSchema);
 
 interface BidPostInterface {
-  seller: string;
   account: string;
+  auctionId: number;
   tokenId: number;
   contractAddress: string;
   bidAmt: number;
   bidMsg: string;
+  minBid: number;
+  startBlock: number;
+  expireBlock: number;
 }
 const BidPostSchema: JSONSchemaType<BidPostInterface> = {
   type: "object",
   properties: {
-    seller: { type: "string" },
     account: { type: "string" },
+    auctionId: { type: "integer" },
     tokenId: { type: "integer" },
     contractAddress: { type: "string" },
     bidAmt: { type: "integer" },
     bidMsg: { type: "string" },
+    minBid: { type: "integer" },
+    startBlock: { type: "integer" },
+    expireBlock: { type: "integer" }
   },
   required: [
-    "seller",
     "account",
+    "auctionId",
     "tokenId",
     "contractAddress",
     "bidAmt",
     "bidMsg",
+    "minBid",
+    "startBlock",
+    "expireBlock"
   ],
 };
 const validateBidPostSchema = ajv.compile(BidPostSchema);
 
 interface CurrentBidInterface {
-  seller: string;
   contractAddress: string;
   tokenId: number;
 }
 const CurrentBidSchema: JSONSchemaType<CurrentBidInterface> = {
   type: "object",
   properties: {
-    seller: { type: "string" },
     contractAddress: { type: "string" },
     tokenId: { type: "integer" },
   },
-  required: ["seller", "contractAddress", "tokenId"],
+  required: ["contractAddress", "tokenId"],
 };
 const validateCurrentBidSchema = ajv.compile(CurrentBidSchema);
 
@@ -125,8 +135,8 @@ router.post("/bid", limiter, async (req, res, next) => {
         ],
         [
           req.body.auctionId,
-          req.body.zAuctionAddress,
-          req.body.chainId,
+          zauction.address,
+          42, // chainId 42 is kovan
           req.body.bidAmt,
           req.body.contractAddress,
           req.body.tokenId,
@@ -156,22 +166,25 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
   try {
     if (validateBidPostSchema(req.body)) {
       //instantiate contract
-      const smartContract = new ethers.Contract(zauction.address, zauction.abi, signer)
-      //estimate gas of bid accept tx - return if infinite/error
-      let est = prov.estimateGas.acceptBid(
+      const zAuctionContract = new ethers.Contract(zauction.address, zauction.abi, signer);
+      try {
+        //estimate gas of bid accept tx - return if infinite/error
+        await zAuctionContract.estimateGas.acceptBid(
           req.body.bidMsg, 
           req.body.auctionId,
           req.body.account,
           req.body.bidAmt,
+          req.body.contractAddress,
           req.body.tokenId,
           req.body.minBid,
           req.body.startBlock,
           req.body.expireBlock
         );
-      if(!est){res.status(405).send({
-        message:
-          "Invalid bid, estimate gas of accept failed",
-      });}
+      } catch (error) {
+        res.status(405).send({
+          message: error
+        })
+      }
       // try to pull auction from fleek with given auctionId
       try {
         let auction = await fleek
@@ -194,7 +207,6 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
             // place the new bid object at the end of the array
             oldAuction.bids.push(newBid);
             const data = {
-              seller: oldAuction.seller,
               account: oldAuction.account,
               tokenId: oldAuction.tokenId,
               contractAddress: oldAuction.contractAddress,
@@ -206,14 +218,14 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
               .deleteFile({
                 apiKey: secrets.apiKey,
                 apiSecret: secrets.apiSecret,
-                key: req.body.auctionId,
+                key: req.params.nftId,
               });
               // and upload new auction under the same name (key)
               await fleek
                 .upload({
                   apiKey: secrets.apiKey,
                   apiSecret: secrets.apiSecret,
-                  key: req.body.nftId,
+                  key: req.params.nftId,
                   data: JSON.stringify(data),
                 });
                 res.status(200).send({ message: "Ok" });
@@ -224,15 +236,14 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
             });
           }
       } catch (error) {
-        // no file was found for auctionId, create a new one.
+        // no file was found for nftId, create a new one.
         const data = {
-          seller: req.body.seller,
           account: req.body.account,
           tokenId: req.body.tokenId,
           contractAddress: req.body.contractAddress,
           bids: [
             {
-              bidder: req.body.seller,
+              bidder: req.body.account,
               bidAmt: req.body.bidAmt,
             },
           ],
@@ -256,7 +267,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
   }
 });
 
-// Endpoint to return current highest bid given seller, contract address, and tokenid
+// Endpoint to return current highest bid given nftId
 router.get("/bids/:nftId", limiter, async (req, res, next) => {
   try {
     if (validateCurrentBidSchema(req.body)) {
