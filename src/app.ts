@@ -14,7 +14,11 @@ const App = express();
 // For rate limiting headers
 App.set("trust proxy", 1);
 
-App.use(morgan(':date[web] :method :remote-addr :url :status :response-time ms - :res[content-length]'));
+App.use(
+  morgan(
+    ":date[web] :method :remote-addr :url :status :response-time ms - :res[content-length]"
+  )
+);
 App.use(helmet());
 App.use(cors());
 App.use(express.json());
