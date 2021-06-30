@@ -34,7 +34,6 @@ const secrets = {
 
 // Ajv Schemas
 interface BidPayloadPostInterface {
-  auctionId: number;
   bidAmt: number;
   contractAddress: string;
   tokenId: number;
@@ -45,7 +44,6 @@ interface BidPayloadPostInterface {
 const BidPayloadPostSchema: JSONSchemaType<BidPayloadPostInterface> = {
   type: "object",
   properties: {
-    auctionId: { type: "integer" },
     bidAmt: { type: "integer" },
     contractAddress: { type: "string" },
     tokenId: { type: "integer" },
@@ -54,7 +52,6 @@ const BidPayloadPostSchema: JSONSchemaType<BidPayloadPostInterface> = {
     expireBlock: { type: "integer" }
   },
   required: [
-    "auctionId",
     "bidAmt",
     "contractAddress",
     "tokenId",
@@ -115,11 +112,17 @@ const CurrentBidSchema: JSONSchemaType<CurrentBidInterface> = {
   },
   required: ["contractAddress", "tokenId"],
 };
-const validateCurrentBidSchema = ajv.compile(CurrentBidSchema);
+//const validateCurrentBidSchema = ajv.compile(CurrentBidSchema);
 
-// Returns a encoded data to be signed
+// Returns encoded data to be signed, an random auction id, 
+//  and an nft id determined by nft contract address and token id
 router.post("/bid", limiter, async (req, res, next) => {
   try {
+    // generate auctionid, nftid
+    let idString = req.body.contractAddress + req.body.tokenId;
+    let idStringBytes = ethers.utils.toUtf8Bytes(idString);
+    let nftId = ethers.utils.keccak256(idStringBytes);
+    let auctionId = Math.floor(Math.random() * 42949672960);
     if (validateBidPayloadSchema(req.body)) {
       let params = ethers.utils.defaultAbiCoder.encode(
         [
@@ -134,7 +137,7 @@ router.post("/bid", limiter, async (req, res, next) => {
           "uint256",
         ],
         [
-          req.body.auctionId,
+          auctionId,
           zauction.address,
           42, // chainId 42 is kovan
           req.body.bidAmt,
@@ -145,13 +148,7 @@ router.post("/bid", limiter, async (req, res, next) => {
           req.body.expireBlock
         ]
       );
-      // generate auctionid, nftid
-      let idString =
-        req.body.contractAddress + req.body.tokenId;
-      let idStringBytes = ethers.utils.toUtf8Bytes(idString);
-      let nftId = ethers.utils.keccak256(idStringBytes);
       let payload = ethers.utils.keccak256(params);
-      let auctionId = Math.floor(Math.random() * 42949672960);
       return res.status(200).send({payload, auctionId, nftId});
     } else {
       return res.status(400).send(validateBidPayloadSchema.errors);
@@ -167,6 +164,29 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
     if (validateBidPostSchema(req.body)) {
       //instantiate contract
       const zAuctionContract = new ethers.Contract(zauction.address, zauction.abi, signer);
+      //check balance
+      let bal = await prov.getBalance(req.body.account);
+      if(bal <= req.body.bidAmt){
+        res.status(405).send({message: "Bidder has insufficient balance"});
+      }
+      //check start block/expire block
+      let blockNum = await prov.getBlockNumber();
+      if(blockNum < req.body.startBlock){
+        res.status(405).send({message: "Current block is less than start block"});
+      }
+      if(blockNum >= req.body.expireBlock){
+        res.status(405).send({message: "Current block is equal to or greater than expire block"});
+      }
+      //check if auctionid is consumed already
+      let alreadyConsumed = await zAuctionContract.consumed(req.body.account, req.body.auctionId);
+      if(alreadyConsumed){
+        res.status(405).send({message: "This account has already consumed this auction id"});
+      } 
+      //check signature recovers correct account
+      let recoveredAccount = await zAuctionContract.recover(req.body.bidMsg);
+      if(recoveredAccount != req.body.account){
+        res.status(405).send({message: "Account sent and account recovered from signature dont match"});
+      }
       try {
         //estimate gas of bid accept tx - return if infinite/error
         await zAuctionContract.estimateGas.acceptBid(
