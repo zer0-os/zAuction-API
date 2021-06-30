@@ -165,7 +165,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
       //instantiate contract
       const zAuctionContract = new ethers.Contract(zauction.address, zauction.abi, signer);
       //check balance
-      let bal = await prov.getBalance(req.body.account);
+      let bal = (await prov.getBalance(req.body.account)).toNumber();
       if(bal <= req.body.bidAmt){
         res.status(405).send({message: "Bidder has insufficient balance"});
       }
@@ -185,7 +185,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
       //check signature recovers correct account
       let recoveredAccount = await zAuctionContract.recover(req.body.bidMsg);
       if(recoveredAccount != req.body.account){
-        res.status(405).send({message: "Account sent and account recovered from signature dont match"});
+        res.status(405).send({message: "Account sent and account recovered from signature do not match"});
       }
       try {
         //estimate gas of bid accept tx - return if infinite/error
@@ -222,7 +222,8 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           ) {
             const newBid = {
               bidder: req.body.account,
-              bidAmt: req.body.bidAmt,
+              bidAmt: req.body.minBid,
+              bidMsg: req.body.bidMsg
             };
             // place the new bid object at the end of the array
             oldAuction.bids.push(newBid);
@@ -231,7 +232,8 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
               tokenId: oldAuction.tokenId,
               contractAddress: oldAuction.contractAddress,
               bids: oldAuction.bids,
-              bidMsg: req.body.bidMsg,
+              startBlock: oldAuction.startBlock,
+              expireBlock: oldAuction.expireBlock
             };
             // delete the old auction
             await fleek
@@ -265,9 +267,11 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
             {
               bidder: req.body.account,
               bidAmt: req.body.bidAmt,
+              bidMsg: req.body.bidMsg
             },
           ],
-          bidMsg: req.body.bidMsg,
+          startBlock: req.body.startBlock,
+          expireBlock: req.body.expireBlock
         };
         await fleek
           .upload({
