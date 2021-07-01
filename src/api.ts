@@ -10,14 +10,17 @@ const router = express.Router();
 const ajv = new Ajv({ coerceTypes: true });
 
 // Ethers/Infura
-//const infuraUrl = process.env.INFURA_URL;
-//const contractAddress = process.env.CONTRACT_ADDRESS;
+const infuraSecret = env.get("INFURA_API_SECRET").required().asString();
 const infuraUrl = env.get("INFURA_URL").required().asString();
-//const contractAddress = env.get('CONTRACT_ADDRESS').required().asString();
+const privateKey = env.get("PRIVATE_KEY").required().asString();
+//console.log("Infura secret is:",infuraSecret);
+//console.log("Infura URL is:",infuraUrl);
+//console.log("Private Key is:",privateKey);
 const prov = new ethers.providers.JsonRpcProvider(infuraUrl);
-const signer = prov.getSigner();
-
-//const contract = new ethers.Contract(contractAddress, abi, signer);
+const signer = new ethers.Wallet(privateKey,prov); // wallet inherits signer
+signer.connect(prov);
+//console.log("Address is:",signer.address);
+//console.log("Signer is:",signer);
 
 // User will receive a 429 error for being rate limited
 const limiter = rateLimit({
@@ -25,7 +28,7 @@ const limiter = rateLimit({
   max: 100, // limit each IP to 50 requests per windowMs
 });
 
-// Use .env.example as a basis for a .env file with the correct fleek credentials
+// Use .env.example as a basis for a .env file with the correct credentials
 const secrets = {
   apiKey: env.get("FLEEK_API_KEY").required().asString(),
   apiSecret: env.get("FLEEK_API_SECRET").required().asString(),
@@ -72,6 +75,7 @@ interface BidPostInterface {
   minBid: number;
   startBlock: number;
   expireBlock: number;
+  sig: string;
 }
 const BidPostSchema: JSONSchemaType<BidPostInterface> = {
   type: "object",
@@ -84,7 +88,8 @@ const BidPostSchema: JSONSchemaType<BidPostInterface> = {
     bidMsg: { type: "string" },
     minBid: { type: "integer" },
     startBlock: { type: "integer" },
-    expireBlock: { type: "integer" }
+    expireBlock: { type: "integer" },
+    sig: { type: "string" },
   },
   required: [
     "account",
@@ -95,7 +100,8 @@ const BidPostSchema: JSONSchemaType<BidPostInterface> = {
     "bidMsg",
     "minBid",
     "startBlock",
-    "expireBlock"
+    "expireBlock",
+    "sig"
   ],
 };
 const validateBidPostSchema = ajv.compile(BidPostSchema);
@@ -161,32 +167,41 @@ router.post("/bid", limiter, async (req, res, next) => {
 // Creates a new bid for an auction
 router.post("/bids/:nftId", limiter, async (req, res, next) => {
   try {
+    // validate input data
     if (validateBidPostSchema(req.body)) {
       //instantiate contract
       const zAuctionContract = new ethers.Contract(zauction.address, zauction.abi, signer);
       //check balance
       let bal = (await prov.getBalance(req.body.account)).toNumber();
+      console.log("Bal:",bal);
       if(bal <= req.body.bidAmt){
         res.status(405).send({message: "Bidder has insufficient balance"});
       }
+
       //check start block/expire block
       let blockNum = await prov.getBlockNumber();
+      console.log("Block Number:",blockNum);
       if(blockNum < req.body.startBlock){
         res.status(405).send({message: "Current block is less than start block"});
       }
       if(blockNum >= req.body.expireBlock){
         res.status(405).send({message: "Current block is equal to or greater than expire block"});
       }
+
       //check if auctionid is consumed already
       let alreadyConsumed = await zAuctionContract.consumed(req.body.account, req.body.auctionId);
+      console.log("Already Consumed?:",alreadyConsumed);
       if(alreadyConsumed){
         res.status(405).send({message: "This account has already consumed this auction id"});
       } 
+
       //check signature recovers correct account
-      let recoveredAccount = await zAuctionContract.recover(req.body.bidMsg);
+      let recoveredAccount = await zAuctionContract.recover(req.body.bidMsg, req.body.sig);
+      //console.log("Recovered Account:",recoveredAccount);
       if(recoveredAccount != req.body.account){
         res.status(405).send({message: "Account sent and account recovered from signature do not match"});
       }
+
       try {
         //estimate gas of bid accept tx - return if infinite/error
         await zAuctionContract.estimateGas.acceptBid(
@@ -273,6 +288,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           startBlock: req.body.startBlock,
           expireBlock: req.body.expireBlock
         };
+        // upload to fleek
         await fleek
           .upload({
             apiKey: secrets.apiKey,
