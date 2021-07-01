@@ -17,7 +17,7 @@ const privateKey = env.get("PRIVATE_KEY").required().asString();
 //console.log("Infura URL is:",infuraUrl);
 //console.log("Private Key is:",privateKey);
 const prov = new ethers.providers.JsonRpcProvider(infuraUrl);
-const signer = new ethers.Wallet(privateKey,prov); // wallet inherits signer
+const signer = new ethers.Wallet(privateKey, prov); // wallet inherits signer
 signer.connect(prov);
 //console.log("Address is:",signer.address);
 //console.log("Signer is:",signer);
@@ -52,7 +52,7 @@ const BidPayloadPostSchema: JSONSchemaType<BidPayloadPostInterface> = {
     tokenId: { type: "integer" },
     minBid: { type: "integer" },
     startBlock: { type: "integer" },
-    expireBlock: { type: "integer" }
+    expireBlock: { type: "integer" },
   },
   required: [
     "bidAmt",
@@ -60,7 +60,7 @@ const BidPayloadPostSchema: JSONSchemaType<BidPayloadPostInterface> = {
     "tokenId",
     "minBid",
     "startBlock",
-    "expireBlock"
+    "expireBlock",
   ],
 };
 const validateBidPayloadSchema = ajv.compile(BidPayloadPostSchema);
@@ -101,7 +101,7 @@ const BidPostSchema: JSONSchemaType<BidPostInterface> = {
     "minBid",
     "startBlock",
     "expireBlock",
-    "sig"
+    "sig",
   ],
 };
 const validateBidPostSchema = ajv.compile(BidPostSchema);
@@ -120,7 +120,7 @@ const CurrentBidSchema: JSONSchemaType<CurrentBidInterface> = {
 };
 //const validateCurrentBidSchema = ajv.compile(CurrentBidSchema);
 
-// Returns encoded data to be signed, an random auction id, 
+// Returns encoded data to be signed, an random auction id,
 //  and an nft id determined by nft contract address and token id
 router.post("/bid", limiter, async (req, res, next) => {
   try {
@@ -151,11 +151,11 @@ router.post("/bid", limiter, async (req, res, next) => {
           req.body.tokenId,
           req.body.minBid,
           req.body.startBlock,
-          req.body.expireBlock
+          req.body.expireBlock,
         ]
       );
       let payload = ethers.utils.keccak256(params);
-      return res.status(200).send({payload, auctionId, nftId});
+      return res.status(200).send({ payload, auctionId, nftId });
     } else {
       return res.status(400).send(validateBidPayloadSchema.errors);
     }
@@ -170,42 +170,67 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
     // validate input data
     if (validateBidPostSchema(req.body)) {
       //instantiate contract
-      const zAuctionContract = new ethers.Contract(zauction.address, zauction.abi, signer);
+      const zAuctionContract = new ethers.Contract(
+        zauction.address,
+        zauction.abi,
+        signer
+      );
       //check balance
       let bal = (await prov.getBalance(req.body.account)).toNumber();
-      console.log("Bal:",bal);
-      if(bal <= req.body.bidAmt){
-        res.status(405).send({message: "Bidder has insufficient balance"});
+      console.log("Bal:", bal);
+      if (bal <= req.body.bidAmt) {
+        res.status(405).send({ message: "Bidder has insufficient balance" });
       }
 
       //check start block/expire block
       let blockNum = await prov.getBlockNumber();
-      console.log("Block Number:",blockNum);
-      if(blockNum < req.body.startBlock){
-        res.status(405).send({message: "Current block is less than start block"});
+      console.log("Block Number:", blockNum);
+      if (blockNum < req.body.startBlock) {
+        res
+          .status(405)
+          .send({ message: "Current block is less than start block" });
       }
-      if(blockNum >= req.body.expireBlock){
-        res.status(405).send({message: "Current block is equal to or greater than expire block"});
+      if (blockNum >= req.body.expireBlock) {
+        res
+          .status(405)
+          .send({
+            message: "Current block is equal to or greater than expire block",
+          });
       }
 
       //check if auctionid is consumed already
-      let alreadyConsumed = await zAuctionContract.consumed(req.body.account, req.body.auctionId);
-      console.log("Already Consumed?:",alreadyConsumed);
-      if(alreadyConsumed){
-        res.status(405).send({message: "This account has already consumed this auction id"});
-      } 
+      let alreadyConsumed = await zAuctionContract.consumed(
+        req.body.account,
+        req.body.auctionId
+      );
+      console.log("Already Consumed?:", alreadyConsumed);
+      if (alreadyConsumed) {
+        res
+          .status(405)
+          .send({
+            message: "This account has already consumed this auction id",
+          });
+      }
 
       //check signature recovers correct account
-      let recoveredAccount = await zAuctionContract.recover(req.body.bidMsg, req.body.sig);
+      let recoveredAccount = await zAuctionContract.recover(
+        req.body.bidMsg,
+        req.body.sig
+      );
       //console.log("Recovered Account:",recoveredAccount);
-      if(recoveredAccount != req.body.account){
-        res.status(405).send({message: "Account sent and account recovered from signature do not match"});
+      if (recoveredAccount != req.body.account) {
+        res
+          .status(405)
+          .send({
+            message:
+              "Account sent and account recovered from signature do not match",
+          });
       }
 
       try {
         //estimate gas of bid accept tx - return if infinite/error
         await zAuctionContract.estimateGas.acceptBid(
-          req.body.bidMsg, 
+          req.body.bidMsg,
           req.body.auctionId,
           req.body.account,
           req.body.bidAmt,
@@ -217,61 +242,56 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         );
       } catch (error) {
         res.status(405).send({
-          message: error
-        })
+          message: error,
+        });
       }
       // try to pull auction from fleek with given auctionId
       try {
-        let auction = await fleek
-          .get({
+        let auction = await fleek.get({
+          apiKey: secrets.apiKey,
+          apiSecret: secrets.apiSecret,
+          key: req.params.nftId,
+        });
+        // then parse data & add currentBidder and currentBid
+        let oldAuction = JSON.parse(auction.data);
+        // if the new bid amount is greater than the highest bid amount
+        if (
+          req.body.bidAmt > oldAuction.bids[oldAuction.bids.length - 1].bidAmt
+        ) {
+          const newBid = {
+            bidder: req.body.account,
+            bidAmt: req.body.minBid,
+            bidMsg: req.body.bidMsg,
+          };
+          // place the new bid object at the end of the array
+          oldAuction.bids.push(newBid);
+          const data = {
+            account: oldAuction.account,
+            tokenId: oldAuction.tokenId,
+            contractAddress: oldAuction.contractAddress,
+            bids: oldAuction.bids,
+            startBlock: oldAuction.startBlock,
+            expireBlock: oldAuction.expireBlock,
+          };
+          // delete the old auction
+          await fleek.deleteFile({
             apiKey: secrets.apiKey,
             apiSecret: secrets.apiSecret,
             key: req.params.nftId,
           });
-          // then parse data & add currentBidder and currentBid
-          let oldAuction = JSON.parse(auction.data);
-          // if the new bid amount is greater than the highest bid amount
-          if (
-            req.body.bidAmt >
-            oldAuction.bids[oldAuction.bids.length - 1].bidAmt
-          ) {
-            const newBid = {
-              bidder: req.body.account,
-              bidAmt: req.body.minBid,
-              bidMsg: req.body.bidMsg
-            };
-            // place the new bid object at the end of the array
-            oldAuction.bids.push(newBid);
-            const data = {
-              account: oldAuction.account,
-              tokenId: oldAuction.tokenId,
-              contractAddress: oldAuction.contractAddress,
-              bids: oldAuction.bids,
-              startBlock: oldAuction.startBlock,
-              expireBlock: oldAuction.expireBlock
-            };
-            // delete the old auction
-            await fleek
-              .deleteFile({
-                apiKey: secrets.apiKey,
-                apiSecret: secrets.apiSecret,
-                key: req.params.nftId,
-              });
-              // and upload new auction under the same name (key)
-              await fleek
-                .upload({
-                  apiKey: secrets.apiKey,
-                  apiSecret: secrets.apiSecret,
-                  key: req.params.nftId,
-                  data: JSON.stringify(data),
-                });
-                res.status(200).send({ message: "Ok" });
-          } else {
-            res.status(405).send({
-              message:
-                "New bid amount must be greater than current bid amount",
-            });
-          }
+          // and upload new auction under the same name (key)
+          await fleek.upload({
+            apiKey: secrets.apiKey,
+            apiSecret: secrets.apiSecret,
+            key: req.params.nftId,
+            data: JSON.stringify(data),
+          });
+          res.status(200).send({ message: "Ok" });
+        } else {
+          res.status(405).send({
+            message: "New bid amount must be greater than current bid amount",
+          });
+        }
       } catch (error) {
         // no file was found for nftId, create a new one.
         const data = {
@@ -282,21 +302,20 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
             {
               bidder: req.body.account,
               bidAmt: req.body.bidAmt,
-              bidMsg: req.body.bidMsg
+              bidMsg: req.body.bidMsg,
             },
           ],
           startBlock: req.body.startBlock,
-          expireBlock: req.body.expireBlock
+          expireBlock: req.body.expireBlock,
         };
         // upload to fleek
-        await fleek
-          .upload({
-            apiKey: secrets.apiKey,
-            apiSecret: secrets.apiSecret,
-            key: req.params.nftId,
-            data: JSON.stringify(data),
-          })
-          res.status(200).send({ message: "Ok" })
+        await fleek.upload({
+          apiKey: secrets.apiKey,
+          apiSecret: secrets.apiSecret,
+          key: req.params.nftId,
+          data: JSON.stringify(data),
+        });
+        res.status(200).send({ message: "Ok" });
         next(error);
       }
     } else {
@@ -311,15 +330,14 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
 router.get("/bids/:nftId", limiter, async (req, res, next) => {
   try {
     // get file with key from fleek
-    let file = await fleek
-      .get({
-        apiKey: secrets.apiKey,
-        apiSecret: secrets.apiSecret,
-        key: req.params.nftId,
-      });
-      // parse file and return list of bids
-      let auction = JSON.parse(file.data);
-      res.json(auction.bids);
+    let file = await fleek.get({
+      apiKey: secrets.apiKey,
+      apiSecret: secrets.apiSecret,
+      key: req.params.nftId,
+    });
+    // parse file and return list of bids
+    let auction = JSON.parse(file.data);
+    res.json(auction.bids);
   } catch (error) {
     next(error);
   }
