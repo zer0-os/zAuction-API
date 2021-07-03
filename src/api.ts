@@ -170,6 +170,8 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           bidder: req.body.account,
           bidAmount: req.body.minimumBid,
           bidMessage: req.body.bidMessage,
+          startBlock: req.body.startBlock,
+          expireBlock: req.body.expireBlock
         };
         // place the new bid object at the end of the array
         oldAuction.bids.push(newBid);
@@ -177,9 +179,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           account: oldAuction.account,
           tokenId: oldAuction.tokenId,
           contractAddress: oldAuction.contractAddress,
-          bids: oldAuction.bids,
-          startBlock: oldAuction.startBlock,
-          expireBlock: oldAuction.expireBlock,
+          bids: oldAuction.bids
         };
         // delete the old auction
         await fleek.deleteFile({
@@ -206,10 +206,10 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
               bidder: req.body.account,
               bidAmount: req.body.bidAmount,
               bidMessage: req.body.bidMessage,
+              startBlock: req.body.startBlock,
+              expireBlock: req.body.expireBlock
             },
-          ],
-          startBlock: req.body.startBlock,
-          expireBlock: req.body.expireBlock,
+          ]
         };
         // upload to fleek
         await fleek.upload({
