@@ -92,8 +92,10 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
       );
       //check balance
       const bal = (await provider.getBalance(req.body.account)).toNumber();
+      const bigBal = ethers.BigNumber.from(bal);
+      const bidAmount = ethers.BigNumber.from(req.body.bidAmount);
       console.log("Bal:", bal);
-      if (bal <= req.body.bidAmount) {
+      if (bigBal.eq(bidAmount)) {
         return res
           .status(405)
           .send({ message: "Bidder has insufficient balance" });
@@ -101,13 +103,16 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
 
       //check start block/expire block
       const blockNum = await provider.getBlockNumber();
+      const bigBlockNum = ethers.BigNumber.from(blockNum);
+      const start = ethers.BigNumber.from(req.body.startBlock);
+      const expire = ethers.BigNumber.from(req.body.expireBlock);
       console.log("Block Number:", blockNum);
-      if (blockNum < req.body.startBlock) {
+      if (bigBlockNum.eq(start)) {
         return res
           .status(405)
           .send({ message: "Current block is less than start block" });
       }
-      if (blockNum >= req.body.expireBlock) {
+      if (bigBlockNum.eq(expire)) {
         return res.status(405).send({
           message: "Current block is equal to or greater than expire block",
         });
