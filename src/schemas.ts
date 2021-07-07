@@ -4,22 +4,22 @@ const ajv = new Ajv({ coerceTypes: true });
 
 // Ajv Schemas
 interface BidPayloadPostInterface {
-  bidAmount: number;
+  bidAmount: string;
+  tokenId: string;
   contractAddress: string;
-  tokenId: number;
-  minimumBid: number;
-  startBlock: number;
-  expireBlock: number;
+  minimumBid: string;
+  startBlock: string;
+  expireBlock: string;
 }
 const BidPayloadPostSchema: JSONSchemaType<BidPayloadPostInterface> = {
   type: "object",
   properties: {
-    bidAmount: { type: "integer" },
+    bidAmount: { type: "string" },
+    tokenId: { type: "string" },
     contractAddress: { type: "string" },
-    tokenId: { type: "integer" },
-    minimumBid: { type: "integer" },
-    startBlock: { type: "integer" },
-    expireBlock: { type: "integer" },
+    minimumBid: { type: "string" },
+    startBlock: { type: "string" },
+    expireBlock: { type: "string" },
   },
   required: [
     "bidAmount",
@@ -34,28 +34,28 @@ export const validateBidPayloadSchema = ajv.compile(BidPayloadPostSchema);
 
 interface BidPostInterface {
   account: string;
-  auctionId: number;
-  tokenId: number;
+  auctionId: string;
+  tokenId: string;
   contractAddress: string;
-  bidAmount: number;
+  bidAmount: string;
   bidMessage: string;
-  minimumBid: number;
-  startBlock: number;
-  expireBlock: number;
+  minimumBid: string;
+  startBlock: string;
+  expireBlock: string;
   signedMessage: string;
 }
 const BidPostSchema: JSONSchemaType<BidPostInterface> = {
   type: "object",
   properties: {
     account: { type: "string" },
-    auctionId: { type: "integer" },
-    tokenId: { type: "integer" },
+    auctionId: { type: "string" },
+    tokenId: { type: "string" },
     contractAddress: { type: "string" },
-    bidAmount: { type: "integer" },
+    bidAmount: { type: "string" },
     bidMessage: { type: "string" },
-    minimumBid: { type: "integer" },
-    startBlock: { type: "integer" },
-    expireBlock: { type: "integer" },
+    minimumBid: { type: "string" },
+    startBlock: { type: "string" },
+    expireBlock: { type: "string" },
     signedMessage: { type: "string" },
   },
   required: [
