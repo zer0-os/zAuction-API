@@ -294,6 +294,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           key: req.params.account,
           data: JSON.stringify(firstBid)
         });
+        return res.status(200).send({ message: "Ok" });
       }
     } else {
       return res.status(400).send(validateBidPostSchema.errors);
