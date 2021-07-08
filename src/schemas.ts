@@ -38,11 +38,10 @@ interface BidPostInterface {
   tokenId: string;
   contractAddress: string;
   bidAmount: string;
-  bidMessage: string;
+  signedMessage: string;
   minimumBid: string;
   startBlock: string;
   expireBlock: string;
-  signedMessage: string;
 }
 const BidPostSchema: JSONSchemaType<BidPostInterface> = {
   type: "object",
@@ -52,7 +51,6 @@ const BidPostSchema: JSONSchemaType<BidPostInterface> = {
     tokenId: { type: "string" },
     contractAddress: { type: "string" },
     bidAmount: { type: "string" },
-    bidMessage: { type: "string" },
     minimumBid: { type: "string" },
     startBlock: { type: "string" },
     expireBlock: { type: "string" },
@@ -64,7 +62,6 @@ const BidPostSchema: JSONSchemaType<BidPostInterface> = {
     "tokenId",
     "contractAddress",
     "bidAmount",
-    "bidMessage",
     "minimumBid",
     "startBlock",
     "expireBlock",

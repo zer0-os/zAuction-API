@@ -91,7 +91,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         signer
       );
       //check balance
-      const bal = (await provider.getBalance(req.body.account)).toNumber();
+      const bal = await provider.getBalance(req.body.account);
       const bigBal = ethers.BigNumber.from(bal);
       const bidAmount = ethers.BigNumber.from(req.body.bidAmount);
       console.log("Bal:", bal);
@@ -131,8 +131,33 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
       }
 
       //check signature recovers correct account
+      const params = ethers.utils.defaultAbiCoder.encode(
+        [
+          "uint256",
+          "address",
+          "uint8",
+          "uint256",
+          "address",
+          "uint256",
+          "uint256",
+          "uint256",
+          "uint256",
+        ],
+        [
+          req.body.auctionId,
+          zauction.address,
+          42, // chainId 42 is kovan
+          req.body.bidAmount,
+          req.body.contractAddress,
+          req.body.tokenId,
+          req.body.minimumBid,
+          req.body.startBlock,
+          req.body.expireBlock,
+        ]
+      );
+      const bidMessage = ethers.utils.keccak256(params);
       const recoveredAccount = await zAuctionContract.recover(
-        req.body.bidMessage,
+        bidMessage,
         req.body.signedMessage
       );
       //console.log("Recovered Account:",recoveredAccount);
@@ -146,7 +171,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
       try {
         //estimate gas of bid accept tx - return if infinite/error
         await zAuctionContract.estimateGas.acceptBid(
-          req.body.bidMessage,
+          req.body.signedMessage,
           req.body.auctionId,
           req.body.account,
           req.body.bidAmount,
@@ -172,11 +197,11 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         let oldAuction = JSON.parse(auction.data);
         // compile the new bid information
         const newBid = {
+          signedMessage: req.body.signedMessage,
           bidder: req.body.account,
           bidAmount: req.body.minimumBid,
-          bidMessage: req.body.bidMessage,
           startBlock: req.body.startBlock,
-          expireBlock: req.body.expireBlock
+          expireBlock: req.body.expireBlock,
         };
         // place the new bid object at the end of the array
         oldAuction.bids.push(newBid);
@@ -192,6 +217,12 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           apiSecret: secrets.apiSecret,
           key: req.params.nftId,
         });
+        // upload to fleek
+        await fleek.deleteFile({
+          apiKey: secrets.apiKey,
+          apiSecret: secrets.apiSecret,
+          key: req.params.account
+        });
         // and upload new auction under the same name (key)
         await fleek.upload({
           apiKey: secrets.apiKey,
@@ -199,28 +230,41 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           key: req.params.nftId,
           data: JSON.stringify(data),
         });
+        await fleek.upload({
+          apiKey: secrets.apiKey,
+          apiSecret: secrets.apiSecret,
+          key: req.params.account,
+          data: JSON.stringify(data),
+        });
         return res.status(200).send({ message: "Ok" });
       } catch (error) {
         // no file was found for nftId, create a new one.
         const data = {
-          account: req.body.account,
           tokenId: req.body.tokenId,
           contractAddress: req.body.contractAddress,
           bids: [
             {
+              account: req.body.account,
+              signedMessage: req.body.signedMessage,
               bidder: req.body.account,
               bidAmount: req.body.bidAmount,
-              bidMessage: req.body.bidMessage,
               startBlock: req.body.startBlock,
-              expireBlock: req.body.expireBlock
+              expireBlock: req.body.expireBlock,
             },
           ]
         };
-        // upload to fleek
+        // upload to fleek for nftid sort
         await fleek.upload({
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
           key: req.params.nftId,
+          data: JSON.stringify(data),
+        });
+        // upload to fleek for user sort
+        await fleek.upload({
+          apiKey: secrets.apiKey,
+          apiSecret: secrets.apiSecret,
+          key: req.params.account,
           data: JSON.stringify(data),
         });
         return res.status(200).send({ message: "Ok" });
@@ -242,6 +286,23 @@ router.get("/bids/:nftId", limiter, async (req, res, next) => {
       apiKey: secrets.apiKey,
       apiSecret: secrets.apiSecret,
       key: req.params.nftId,
+    });
+    // parse file and return list of bids
+    const auction = JSON.parse(file.data);
+    res.json(auction.bids);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Endpoint to return current highest bid given nftId
+router.get("/bids/:account", limiter, async (req, res, next) => {
+  try {
+    // get file with key from fleek
+    const file = await fleek.get({
+      apiKey: secrets.apiKey,
+      apiSecret: secrets.apiSecret,
+      key: req.params.account,
     });
     // parse file and return list of bids
     const auction = JSON.parse(file.data);
