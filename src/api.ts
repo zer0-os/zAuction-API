@@ -193,13 +193,15 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           apiSecret: secrets.apiSecret,
           key: req.params.nftId,
         });
-        // then parse data & add currentBidder and currentBid
+        // then parse data & add bid data
         let oldAuction = JSON.parse(auction.data);
         // compile the new bid information
         const newBid = {
           signedMessage: req.body.signedMessage,
+          auctionId: req.body.auctionId,
           bidder: req.body.account,
-          bidAmount: req.body.minimumBid,
+          bidAmount: req.body.bidAmount,
+          minimumBid: req.body.minimumBid,
           startBlock: req.body.startBlock,
           expireBlock: req.body.expireBlock,
         };
@@ -217,12 +219,6 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           apiSecret: secrets.apiSecret,
           key: req.params.nftId,
         });
-        // upload to fleek
-        await fleek.deleteFile({
-          apiKey: secrets.apiKey,
-          apiSecret: secrets.apiSecret,
-          key: req.params.account
-        });
         // and upload new auction under the same name (key)
         await fleek.upload({
           apiKey: secrets.apiKey,
@@ -230,13 +226,6 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           key: req.params.nftId,
           data: JSON.stringify(data),
         });
-        await fleek.upload({
-          apiKey: secrets.apiKey,
-          apiSecret: secrets.apiSecret,
-          key: req.params.account,
-          data: JSON.stringify(data),
-        });
-        return res.status(200).send({ message: "Ok" });
       } catch (error) {
         // no file was found for nftId, create a new one.
         const data = {
@@ -246,8 +235,9 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
             {
               account: req.body.account,
               signedMessage: req.body.signedMessage,
-              bidder: req.body.account,
+              auctionId: req.body.auctionId,
               bidAmount: req.body.bidAmount,
+              minimumBid: req.body.minimumBid,
               startBlock: req.body.startBlock,
               expireBlock: req.body.expireBlock,
             },
@@ -258,17 +248,52 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
           key: req.params.nftId,
-          data: JSON.stringify(data),
+          data: JSON.stringify(data)
+        });
+      }
+      //store bid by user
+      const userBid = {
+        signedMessage: req.body.signedMessage,
+        auctionId: req.body.auctionId,
+        bidAmount: req.body.bidAmount,
+        contractAddress: req.body.contractAddress,
+        tokenId: req.body.tokenId,
+        minimumBid: req.body.minimumBid,
+        startBlock: req.body.startBlock,
+        expireBlock: req.body.expireBlock,
+      }
+      try{
+        let oldBids = await fleek.get({
+          apiKey: secrets.apiKey,
+          apiSecret: secrets.apiSecret,
+          key: req.params.account,
+        });
+        let bids = JSON.parse(oldBids.data);
+        bids.push(userBid);
+         // delete the old auction
+         await fleek.deleteFile({
+          apiKey: secrets.apiKey,
+          apiSecret: secrets.apiSecret,
+          key: req.params.account,
         });
         // upload to fleek for user sort
         await fleek.upload({
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
           key: req.params.account,
-          data: JSON.stringify(data),
+          data: JSON.stringify(bids)
         });
         return res.status(200).send({ message: "Ok" });
-        next(error);
+      } catch (error) {
+        // upload to fleek for user sort
+        const firstBid = [];
+        firstBid.push(userBid);
+        await fleek.upload({
+          apiKey: secrets.apiKey,
+          apiSecret: secrets.apiSecret,
+          key: req.params.account,
+          data: JSON.stringify(firstBid)
+        });
       }
     } else {
       return res.status(400).send(validateBidPostSchema.errors);
@@ -308,7 +333,7 @@ router.get("/bids/:account", limiter, async (req, res, next) => {
     const auction = JSON.parse(file.data);
     res.json(auction.bids);
   } catch (error) {
-    next(error);
+    res.json([]);
   }
 });
 
