@@ -4,6 +4,7 @@ import rateLimit from "express-rate-limit";
 import { ethers } from "ethers";
 import * as env from "env-var";
 import * as zauction from "./contract/Zauction.json";
+import * as erc20 from "./contract/ERC20.json";
 const router = express.Router();
 
 // Ajv validation methods
@@ -84,14 +85,19 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
   try {
     // validate input data
     if (validateBidPostSchema(req.body)) {
-      //instantiate contract
+      //instantiate contracts
+      const erc20Contract = new ethers.Contract(
+        erc20.address,
+        erc20.abi,
+        signer
+      );
       const zAuctionContract = new ethers.Contract(
         zauction.address,
         zauction.abi,
         signer
       );
       //check balance
-      const bal = await provider.getBalance(req.body.account);
+      const bal = await erc20Contract.balanceOf(req.body.account);
       const bigBal = ethers.BigNumber.from(bal);
       const bidAmount = ethers.BigNumber.from(req.body.bidAmount);
       console.log("Bal:", bal);
