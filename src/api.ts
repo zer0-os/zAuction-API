@@ -324,7 +324,7 @@ router.get("/bids/:nftId", limiter, async (req, res, next) => {
     const auction = JSON.parse(file.data);
     res.json(auction.bids);
   } catch (error) {
-    res.json([]);
+    return res.json([]);
   }
 });
 
@@ -341,7 +341,7 @@ router.get("/bids/:account", limiter, async (req, res, next) => {
     const auction = JSON.parse(file.data);
     res.json(auction.bids);
   } catch (error) {
-    res.json([]);
+    return res.json([]);
   }
 });
 
