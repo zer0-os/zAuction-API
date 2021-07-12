@@ -162,11 +162,12 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         ]
       );
       const bidMessage = ethers.utils.keccak256(params);
+      const unsignedMessage = await zAuctionContract.toEthSignedMessageHash(bidMessage);
       const recoveredAccount = await zAuctionContract.recover(
-        bidMessage,
+        unsignedMessage,
         req.body.signedMessage
       );
-      //console.log("Recovered Account:",recoveredAccount);
+      console.log("Recovered Account:",recoveredAccount);
       if (recoveredAccount != req.body.account) {
         return res.status(405).send({
           message:
