@@ -204,6 +204,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         let oldAuction = JSON.parse(auction.data);
         // compile the new bid information
         const newBid = {
+          account: oldAuction.account,
           signedMessage: req.body.signedMessage,
           auctionId: req.body.auctionId,
           bidder: req.body.account,
@@ -215,7 +216,6 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         // place the new bid object at the end of the array
         oldAuction.bids.push(newBid);
         const data = {
-          account: oldAuction.account,
           tokenId: oldAuction.tokenId,
           contractAddress: oldAuction.contractAddress,
           bids: oldAuction.bids
@@ -276,9 +276,10 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           key: req.params.account,
         });
         let bids = JSON.parse(oldBids.data);
+        console.log("old bids ", bids);
         bids.push(userBid);
          // delete the old auction
-         await fleek.deleteFile({
+        await fleek.deleteFile({
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
           key: req.params.account,
@@ -295,6 +296,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         // upload to fleek for user sort
         let firstBid = [];
         firstBid.push(userBid);
+        console.log("first bid ", JSON.stringify(firstBid));
         await fleek.upload({
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
