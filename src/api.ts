@@ -293,7 +293,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         return res.status(200).send({ message: "Ok" });
       } catch (error) {
         // upload to fleek for user sort
-        const firstBid = [];
+        let firstBid = [];
         firstBid.push(userBid);
         await fleek.upload({
           apiKey: secrets.apiKey,
