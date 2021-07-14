@@ -175,9 +175,9 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         });
       }
 
-      /*try {
+      try {
         //estimate gas of bid accept tx - return if infinite/error
-        await zAuctionContract.estimateGas.acceptBid(
+        await zAuctionContract.test(
           req.body.signedMessage,
           req.body.auctionId,
           req.body.account,
@@ -192,7 +192,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         return res.status(405).send({
           message: error,
         });
-      }*/
+      }
       // try to pull auction from fleek with given auctionId
       try {
         const auction = await fleek.get({
