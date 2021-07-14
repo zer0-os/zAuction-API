@@ -207,7 +207,6 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           account: req.body.account,
           signedMessage: req.body.signedMessage,
           auctionId: req.body.auctionId,
-          bidder: req.body.account,
           bidAmount: req.body.bidAmount,
           minimumBid: req.body.minimumBid,
           startBlock: req.body.startBlock,
