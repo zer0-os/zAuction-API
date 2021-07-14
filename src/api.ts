@@ -339,8 +339,8 @@ router.get("/bids/:account", limiter, async (req, res, next) => {
       key: req.params.account,
     });
     // parse file and return list of bids
-    const auction = JSON.parse(file.data);
-    res.json(auction.bids);
+    const bids = JSON.parse(file.data);
+    res.json(bids);
   } catch (error) {
     return res.json([]);
   }
