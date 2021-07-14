@@ -204,7 +204,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         let oldAuction = JSON.parse(auction.data);
         // compile the new bid information
         const newBid = {
-          account: oldAuction.account,
+          account: req.body.account,
           signedMessage: req.body.signedMessage,
           auctionId: req.body.auctionId,
           bidder: req.body.account,
@@ -288,7 +288,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         await fleek.upload({
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
-          key: req.params.account,
+          key: req.body.account,
           data: JSON.stringify(bids)
         });
         return res.status(200).send({ message: "Ok" });
@@ -300,7 +300,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         await fleek.upload({
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
-          key: req.params.account,
+          key: req.body.account,
           data: JSON.stringify(firstBid)
         });
         return res.status(200).send({ message: "Ok" });
