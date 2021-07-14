@@ -272,7 +272,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         let oldBids = await fleek.get({
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
-          key: req.params.account,
+          key: req.body.account,
         });
         let bids = JSON.parse(oldBids.data);
         console.log("old bids ", bids);
@@ -281,7 +281,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         await fleek.deleteFile({
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
-          key: req.params.account,
+          key: req.body.account,
         });
         // upload to fleek for user sort
         await fleek.upload({
