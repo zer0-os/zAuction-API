@@ -287,7 +287,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         await fleek.upload({
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
-          key: req.body.account,
+          key: req.body.a7ccount,
           data: JSON.stringify(bids)
         });
         return res.status(200).send({ message: "Ok" });
@@ -319,7 +319,7 @@ router.get("/bids/:nftId", limiter, async (req, res, next) => {
     const file = await fleek.get({
       apiKey: secrets.apiKey,
       apiSecret: secrets.apiSecret,
-      key: req.params.nftId,
+      key: req.params.account,
     });
     // parse file and return list of bids
     const auction = JSON.parse(file.data);
@@ -329,8 +329,8 @@ router.get("/bids/:nftId", limiter, async (req, res, next) => {
   }
 });
 
-// Endpoint to return current highest bid given nftId
-router.get("/bids/:account", limiter, async (req, res, next) => {
+// Endpoint to return all bids by an account
+router.get("/bids/accounts/:account", limiter, async (req, res, next) => {
   try {
     // get file with key from fleek
     const file = await fleek.get({
