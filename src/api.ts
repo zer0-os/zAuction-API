@@ -287,7 +287,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         await fleek.upload({
           apiKey: secrets.apiKey,
           apiSecret: secrets.apiSecret,
-          key: req.body.a7ccount,
+          key: req.body.account,
           data: JSON.stringify(bids)
         });
         return res.status(200).send({ message: "Ok" });
