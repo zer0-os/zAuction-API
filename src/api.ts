@@ -319,7 +319,7 @@ router.get("/bids/:nftId", limiter, async (req, res, next) => {
     const file = await fleek.get({
       apiKey: secrets.apiKey,
       apiSecret: secrets.apiSecret,
-      key: req.params.account,
+      key: req.params.nftId,
     });
     // parse file and return list of bids
     const auction = JSON.parse(file.data);
