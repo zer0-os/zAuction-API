@@ -323,7 +323,7 @@ router.get("/bids/:nftId", limiter, async (req, res, next) => {
     });
     // parse file and return list of bids
     const auction = JSON.parse(file.data);
-    res.json(auction.bids);
+    res.json(auction);
   } catch (error) {
     return res.json([]);
   }
