@@ -329,6 +329,27 @@ router.get("/bids/:nftId", limiter, async (req, res, next) => {
   }
 });
 
+// Endpoint to return bids given nftId list
+router.get("/bids/list/:nftIds", limiter, async (req, res, next) => {
+  let a = [];
+  for(let i = 0; i < req.params.nftIds.length; i++){
+    try {
+      // get file with key from fleek
+      const file = await fleek.get({
+        apiKey: secrets.apiKey,
+        apiSecret: secrets.apiSecret,
+        key: req.params.nftIds[i],
+      });
+      // parse file and return list of bids
+      const auction = JSON.parse(file.data);
+      a.push(auction);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  return a;
+});
+
 // Endpoint to return all bids by an account
 router.get("/bids/accounts/:account", limiter, async (req, res, next) => {
   try {
