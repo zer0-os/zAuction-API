@@ -61,7 +61,7 @@ router.post("/bid", limiter, async (req, res, next) => {
         [
           auctionId,
           zauction.address,
-          42, // chainId 42 is kovan
+          1, // chainId 1 is mainnet
           req.body.bidAmount,
           req.body.contractAddress,
           req.body.tokenId,
