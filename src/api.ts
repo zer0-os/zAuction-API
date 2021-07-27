@@ -50,7 +50,7 @@ router.post("/bid", limiter, async (req, res, next) => {
         [
           "uint256",
           "address",
-          "uint8",
+          "uint256",
           "uint256",
           "address",
           "uint256",
