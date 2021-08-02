@@ -8,7 +8,7 @@ import * as erc20 from "./contract/ERC20.json";
 const router = express.Router();
 
 // Ajv validation methods
-import { validateBidPayloadSchema, validateBidPostSchema } from "./schemas";
+import { validateBidPayloadSchema, validateBidPostSchema, validateBidsListPostSchema } from "./schemas";
 
 // Ethers/Infura
 //const infuraSecret = env.get("INFURA_API_SECRET").required().asString();
@@ -35,6 +35,21 @@ const secrets = {
   apiSecret: env.get("FLEEK_API_SECRET").required().asString(),
   infuraSecret: env.get("INFURA_API_SECRET").required().asString(),
 };
+
+// Endpoint to ...
+router.post("/bids/list", limiter, async (req, res, next) => {
+  try {
+    if (validateBidsListPostSchema(req.body.nftIds)) {
+      console.log("NftIds Array",req.body);
+      return res.status(200).send({ message: "Ok", nftIds: req.body.nftIds });
+    } else {
+      console.log("Please provide nftIds JSON array");
+      return res.status(400).send({ message: "nftIds array required"});
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Returns encoded data to be signed, an random auction id,
 //  and an nft id determined by nft contract address and token id
