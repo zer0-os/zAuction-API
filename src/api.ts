@@ -36,12 +36,33 @@ const secrets = {
   infuraSecret: env.get("INFURA_API_SECRET").required().asString(),
 };
 
-// Endpoint to ...
+// Endpoint to return auctions based on an array of inputs
 router.post("/bids/list", limiter, async (req, res, next) => {
   try {
     if (validateBidsListPostSchema(req.body.nftIds)) {
       console.log("NftIds Array",req.body);
-      return res.status(200).send({ message: "Ok", nftIds: req.body.nftIds });
+      let auctions = [];
+      for(let i = 0; i < req.body.nftIds.length; i++){
+        try {
+          // get file with key from fleek
+          console.log("Attempting to fetch file",req.body.nftIds[i])
+          const file = await fleek.get({
+            apiKey: secrets.apiKey,
+            apiSecret: secrets.apiSecret,
+            key: req.body.nftIds[i],
+          });
+          // parse file and return list of bids
+          const auction = JSON.parse(file.data);
+          auctions.push(auction);
+        } catch (error) {
+          console.log(error);
+        }
+      }
+      if (auctions.length <= 0) {
+        return res.status(404).send({ message: "nftId(s) not found"});
+      } else {
+        return res.status(200).send(auctions);
+      }
     } else {
       console.log("Please provide nftIds JSON array");
       return res.status(400).send({ message: "nftIds array required"});
@@ -76,7 +97,7 @@ router.post("/bid", limiter, async (req, res, next) => {
         [
           auctionId,
           zauction.address,
-          42, // chainId 42 is kovan
+          1, // chainId 1 is mainnet
           req.body.bidAmount,
           req.body.contractAddress,
           req.body.tokenId,
@@ -209,6 +230,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         });
       }*/
       // try to pull auction from fleek with given auctionId
+      let datenow = new Date();  
       try {
         const auction = await fleek.get({
           apiKey: secrets.apiKey,
@@ -218,6 +240,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         // then parse data & add bid data
         let oldAuction = JSON.parse(auction.data);
         // compile the new bid information
+        
         const newBid = {
           account: req.body.account,
           signedMessage: req.body.signedMessage,
@@ -226,6 +249,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           minimumBid: req.body.minimumBid,
           startBlock: req.body.startBlock,
           expireBlock: req.body.expireBlock,
+          date: datenow
         };
         // place the new bid object at the end of the array
         oldAuction.bids.push(newBid);
@@ -261,6 +285,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
               minimumBid: req.body.minimumBid,
               startBlock: req.body.startBlock,
               expireBlock: req.body.expireBlock,
+              date: datenow
             },
           ]
         };
@@ -282,6 +307,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         minimumBid: req.body.minimumBid,
         startBlock: req.body.startBlock,
         expireBlock: req.body.expireBlock,
+        date: datenow
       }
       try{
         let oldBids = await fleek.get({
