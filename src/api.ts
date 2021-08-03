@@ -194,6 +194,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         });
       }*/
       // try to pull auction from fleek with given auctionId
+      let datenow = new Date();  
       try {
         const auction = await fleek.get({
           apiKey: secrets.apiKey,
@@ -203,7 +204,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         // then parse data & add bid data
         let oldAuction = JSON.parse(auction.data);
         // compile the new bid information
-        let datenow: Date = new Date();  
+        
         const newBid = {
           account: req.body.account,
           signedMessage: req.body.signedMessage,
