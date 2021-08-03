@@ -58,13 +58,9 @@ router.post("/bids/list", limiter, async (req, res, next) => {
           console.log(error);
         }
       }
-      if (auctions.length <= 0) {
-        return res.status(404).send({ message: "nftId(s) not found"});
-      } else {
         return res.status(200).send(auctions);
-      }
     } else {
-      console.log("Please provide nftIds JSON array");
+      console.log("nftIds array not provided, sending 400");
       return res.status(400).send({ message: "nftIds array required"});
     }
   } catch (error) {
