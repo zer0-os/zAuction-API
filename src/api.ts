@@ -203,6 +203,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         // then parse data & add bid data
         let oldAuction = JSON.parse(auction.data);
         // compile the new bid information
+        let datenow: Date = new Date();  
         const newBid = {
           account: req.body.account,
           signedMessage: req.body.signedMessage,
@@ -211,6 +212,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
           minimumBid: req.body.minimumBid,
           startBlock: req.body.startBlock,
           expireBlock: req.body.expireBlock,
+          date: datenow
         };
         // place the new bid object at the end of the array
         oldAuction.bids.push(newBid);
@@ -246,6 +248,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
               minimumBid: req.body.minimumBid,
               startBlock: req.body.startBlock,
               expireBlock: req.body.expireBlock,
+              date: datenow
             },
           ]
         };
@@ -267,6 +270,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         minimumBid: req.body.minimumBid,
         startBlock: req.body.startBlock,
         expireBlock: req.body.expireBlock,
+        date: datenow
       }
       try{
         let oldBids = await fleek.get({
