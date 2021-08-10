@@ -73,6 +73,6 @@ export const validateBidPostSchema = ajv.compile(BidPostSchema);
 const BidsListPostSchema = {
   type: "array",
   minItems: 1,
-  items: {type: "string"},
+  items: { type: "string" },
 };
 export const validateBidsListPostSchema = ajv.compile(BidsListPostSchema);
