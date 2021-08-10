@@ -6,7 +6,7 @@ import {
   ERC20__factory,
   Zauction,
   Zauction__factory,
-} from "types/contracts";
+} from "../types/contracts";
 
 // Ethers/Infura
 const infuraUrl = env.get("INFURA_URL").required().asString();

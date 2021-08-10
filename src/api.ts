@@ -15,7 +15,7 @@ import {
   ethersProvider,
   getTokenContract,
   getZAuctionContract,
-} from "util/contracts";
+} from "./util/contracts";
 
 const router = express.Router();
 
