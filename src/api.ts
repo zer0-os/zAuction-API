@@ -15,7 +15,7 @@ import {
   ethersProvider,
   getTokenContract,
   getZAuctionContract,
-} from "util/contracts";
+} from "./util/contracts";
 
 const router = express.Router();
 
@@ -57,6 +57,58 @@ router.post("/bid", limiter, async (req, res, next) => {
     return res.status(200).send({ payload, auctionId, nftId });
   } catch (error) {
     next(error);
+  }
+});
+
+// Endpoint to return auctions based on an array of inputs
+router.post("/bids/list", limiter, async (req, res, next) => {
+  try {
+    if (validateBidsListPostSchema(req.body.nftIds)) {
+      console.log("NftIds Array", req.body);
+      let auctions = [];
+
+      for (let i = 0; i < req.body.nftIds.length; i++) {
+        try {
+          // get file with key from fleek
+          console.log("Attempting to fetch file", req.body.nftIds[i]);
+          const file = await fleek.get({
+            apiKey: secrets.apiKey,
+            apiSecret: secrets.apiSecret,
+            key: req.body.nftIds[i],
+          });
+
+          // parse file and return list of bids
+          const auction = JSON.parse(file.data);
+          auctions.push(auction);
+        } catch (error) {
+          console.log(error);
+        }
+      }
+      return res.status(200).send(auctions);
+    } else {
+      console.log("nftIds array not provided, sending 400");
+      return res.status(400).send({ message: "nftIds array required" });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Endpoint to return all bids by an account
+router.get("/bids/accounts/:account", limiter, async (req, res, next) => {
+  try {
+    // get file with key from fleek
+    const file = await fleek.get({
+      apiKey: secrets.apiKey,
+      apiSecret: secrets.apiSecret,
+      key: req.params.account,
+    });
+
+    // parse file and return list of bids
+    const bids = JSON.parse(file.data);
+    return res.json(bids);
+  } catch (error) {
+    return res.json([]);
   }
 });
 
@@ -283,58 +335,6 @@ router.get("/bids/:nftId", limiter, async (req, res, next) => {
     // parse file and return list of bids
     const auction = JSON.parse(file.data);
     res.json(auction);
-  } catch (error) {
-    return res.json([]);
-  }
-});
-
-// Endpoint to return auctions based on an array of inputs
-router.post("/bids/list", limiter, async (req, res, next) => {
-  try {
-    if (validateBidsListPostSchema(req.body.nftIds)) {
-      console.log("NftIds Array", req.body);
-      let auctions = [];
-
-      for (let i = 0; i < req.body.nftIds.length; i++) {
-        try {
-          // get file with key from fleek
-          console.log("Attempting to fetch file", req.body.nftIds[i]);
-          const file = await fleek.get({
-            apiKey: secrets.apiKey,
-            apiSecret: secrets.apiSecret,
-            key: req.body.nftIds[i],
-          });
-
-          // parse file and return list of bids
-          const auction = JSON.parse(file.data);
-          auctions.push(auction);
-        } catch (error) {
-          console.log(error);
-        }
-      }
-      return res.status(200).send(auctions);
-    } else {
-      console.log("nftIds array not provided, sending 400");
-      return res.status(400).send({ message: "nftIds array required" });
-    }
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Endpoint to return all bids by an account
-router.get("/bids/accounts/:account", limiter, async (req, res, next) => {
-  try {
-    // get file with key from fleek
-    const file = await fleek.get({
-      apiKey: secrets.apiKey,
-      apiSecret: secrets.apiSecret,
-      key: req.params.account,
-    });
-
-    // parse file and return list of bids
-    const bids = JSON.parse(file.data);
-    return res.json(bids);
   } catch (error) {
     return res.json([]);
   }
