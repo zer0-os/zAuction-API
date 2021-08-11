@@ -1,5 +1,17 @@
 export type Maybe<T> = T | undefined;
 
+export interface BidPostDto {
+  account: string;
+  auctionId: string;
+  tokenId: string;
+  contractAddress: string;
+  bidAmount: string;
+  signedMessage: string;
+  minimumBid: string;
+  startBlock: string;
+  expireBlock: string;
+}
+
 export interface Bid {
   account: string;
   signedMessage: string;
@@ -20,4 +32,8 @@ export interface Auction {
   tokenId: string;
   contractAddress: string;
   bids: Bid[];
+}
+
+export interface UserAccount {
+  bids: AuctionBid[];
 }

@@ -1,7 +1,7 @@
 import * as fleek from "../backends/fleek";
 import * as env from "env-var";
 
-import { StorageService, UploadedFile } from "storage";
+import { SafeDownloadedFile, StorageService, UploadedFile } from "../";
 
 const defaultBucket = env.get("DEFAULT_FLEEK_BUCKET").asString();
 
@@ -9,11 +9,12 @@ export interface FleekUploadedFile extends UploadedFile {
   fleekHash: string;
 }
 
-export const create = (bucket?: string): StorageService => {
+export const create = (bucket?: string, prefix?: string): StorageService => {
   bucket = bucket ?? defaultBucket;
+  prefix = prefix ?? "";
 
   const uploadFile = async (filename: string, data: Buffer | string) => {
-    const res = await fleek.uploadFile(filename, data, bucket);
+    const res = await fleek.uploadFile(`${prefix}${filename}`, data, bucket);
     const file: FleekUploadedFile = {
       name: filename,
       publicUrl: res.publicUrl,
@@ -25,19 +26,31 @@ export const create = (bucket?: string): StorageService => {
   };
 
   const downloadFile = async (filename: string) => {
-    const res = await fleek.downloadFile(filename, bucket);
+    const res = await fleek.downloadFile(`${prefix}${filename}`, bucket);
     return res;
   }
 
-  const fileExists = async (filename: string) => {
-    const res = await fleek.fileExists(filename, bucket);
-    return res;
+  const safeDownloadFile = async (filename: string) => {
+    const safeFile: SafeDownloadedFile = {
+      exists: false,
+      data: undefined
+    };
+
+    try {
+      const res = await fleek.downloadFile(`${prefix}${filename}`, bucket);
+      safeFile.data = res;
+      safeFile.exists = true;
+    } catch {
+
+    }
+
+    return safeFile;
   }
 
   const storageService = {
     uploadFile,
     downloadFile,
-    fileExists
+    safeDownloadFile
   };
 
   return storageService;

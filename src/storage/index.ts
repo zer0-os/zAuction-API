@@ -6,6 +6,11 @@ export interface UploadedFile {
   ipfsHash: string;
 }
 
+export interface SafeDownloadedFile {
+  exists: boolean;
+  data: any;
+}
+
 export interface StorageService {
   uploadFile: (
     filename: string,
@@ -13,8 +18,8 @@ export interface StorageService {
   ) => Promise<UploadedFile>;
   downloadFile: (
     filename: string
-  ) => Promise<any>
-  fileExists: (
+  ) => Promise<any>;
+  safeDownloadFile: (
     filename: string
-  ) => Promise<boolean>
+  ) => Promise<SafeDownloadedFile>;
 }

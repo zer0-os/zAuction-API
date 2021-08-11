@@ -1,3 +1,4 @@
+import { ethers } from "ethers";
 import { StorageService } from "../storage";
 import { Auction, Bid } from "../types";
 
@@ -16,7 +17,9 @@ export async function getBidsForNft(storage: StorageService, nftId: string): Pro
 }
 
 export function calculateNftId(contractAddress: string, tokenId: string) {
-  const idString = req.body.contractAddress + req.body.tokenId;
+  const idString = contractAddress + tokenId;
   const idStringBytes = ethers.utils.toUtf8Bytes(idString);
   const nftId = ethers.utils.keccak256(idStringBytes);
+
+  return nftId;
 }

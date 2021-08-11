@@ -29,31 +29,10 @@ export const downloadFile = async (filename: string, bucket?: string) => {
   const downloadRequest: getInput = {
     ...fleekAuth(),
     key: filename,
-    bucket,
-    getOptions: [getOptionsValues.data]
+    bucket
   }
 
   const file = await fleekStorage.get(downloadRequest);
 
   return file.data;
-}
-
-export const fileExists = async (filename: string, bucket?: string) => {
-  const downloadRequest: getInput = {
-    ...fleekAuth(),
-    key: filename,
-    bucket,
-    getOptions: [getOptionsValues.hash]
-  }
-
-  try {
-    const file = await fleekStorage.get(downloadRequest);
-    if (file.hash) {
-      return true;
-    }
-  } catch {
-
-  }
-
-  return false;
 }
