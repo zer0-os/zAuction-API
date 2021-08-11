@@ -21,9 +21,6 @@ export interface Bid {
   startBlock: string;
   expireBlock: string;
   date: number;
-}
-
-export interface AuctionBid extends Bid {
   tokenId: string;
   contractAddress: string;
 }
@@ -35,5 +32,5 @@ export interface Auction {
 }
 
 export interface UserAccount {
-  bids: AuctionBid[];
+  bids: Bid[];
 }

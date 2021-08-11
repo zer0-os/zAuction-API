@@ -18,7 +18,7 @@ import {
   getZAuctionContract,
 } from "./util/contracts";
 import { adapters } from "./storage";
-import { Auction, AuctionBid, Bid, BidPostDto, Maybe, UserAccount } from "./types";
+import { Auction, Bid, BidPostDto, Maybe, UserAccount } from "./types";
 import { calculateNftId, getBidsForNft } from "./util";
 
 
@@ -86,18 +86,19 @@ router.post("/bids/list", limiter, async (req, res, next) => {
 
 // Endpoint to return all bids by an account
 router.get("/bids/accounts/:account", limiter, async (req, res, next) => {
-  const fileKey = req.params.account;
-  let userBids: AuctionBid[] = [];
+  const fileKey = req.params.account.toLowerCase();
+  let userBids: Bid[] = [];
 
   try {
     const fileContents = await storage.downloadFile(fileKey);
     const userAccount = JSON.parse(fileContents) as UserAccount;
     userBids = userAccount.bids;
+    console.log(userBids);
   } catch {
 
   }
 
-  return userBids;
+  return res.json(userBids);
 });
 
 // Creates a new bid for an auction
@@ -206,21 +207,18 @@ router.post("/bids", limiter, async (req, res, next) => {
       startBlock: dto.startBlock,
       expireBlock: dto.expireBlock,
       date: dateNow.getTime(),
+      tokenId: dto.tokenId,
+      contractAddress: dto.contractAddress,
     };
     auction.bids.push(newBid);
 
     await storage.uploadFile(auctionFileKey, JSON.stringify(auction));
 
     //store bid by user
-    const fullUserBid: AuctionBid = {
-      ...newBid,
-      tokenId: dto.tokenId,
-      contractAddress: dto.contractAddress
-    }
 
     let userAccount: Maybe<UserAccount>;
 
-    const userAccountFileKey = req.params.account;
+    const userAccountFileKey = dto.account.toLowerCase();
     const userAccountFile = await storage.safeDownloadFile(userAccountFileKey);
 
     if (userAccountFile.exists) {
@@ -229,7 +227,7 @@ router.post("/bids", limiter, async (req, res, next) => {
       userAccount = { bids: [] } as UserAccount;
     }
 
-    userAccount.bids.push(fullUserBid)
+    userAccount.bids.push(newBid)
 
     await storage.uploadFile(userAccountFileKey, JSON.stringify(userAccount));
 
