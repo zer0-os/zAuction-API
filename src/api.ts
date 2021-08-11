@@ -93,7 +93,6 @@ router.get("/bids/accounts/:account", limiter, async (req, res, next) => {
     const fileContents = await storage.downloadFile(fileKey);
     const userAccount = JSON.parse(fileContents) as UserAccount;
     userBids = userAccount.bids;
-    console.log(userBids);
   } catch {
 
   }
