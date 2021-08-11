@@ -1,9 +1,9 @@
-import Ajv, { JSONSchemaType } from "ajv";
+import Ajv, { JSONSchemaType, Schema } from "ajv";
 
 const ajv = new Ajv({ coerceTypes: true });
 
 // Ajv Schemas
-interface BidPayloadPostInterface {
+interface BidPayloadPostDto {
   bidAmount: string;
   tokenId: string;
   contractAddress: string;
@@ -11,7 +11,7 @@ interface BidPayloadPostInterface {
   startBlock: string;
   expireBlock: string;
 }
-const BidPayloadPostSchema: JSONSchemaType<BidPayloadPostInterface> = {
+const bidPayloadPostSchema: JSONSchemaType<BidPayloadPostDto> = {
   type: "object",
   properties: {
     bidAmount: { type: "string" },
@@ -29,10 +29,11 @@ const BidPayloadPostSchema: JSONSchemaType<BidPayloadPostInterface> = {
     "startBlock",
     "expireBlock",
   ],
+  additionalProperties: false
 };
-export const validateBidPayloadSchema = ajv.compile(BidPayloadPostSchema);
+export const validateBidPayloadSchema = ajv.compile(bidPayloadPostSchema);
 
-interface BidPostInterface {
+interface BidPostDto {
   account: string;
   auctionId: string;
   tokenId: string;
@@ -43,7 +44,8 @@ interface BidPostInterface {
   startBlock: string;
   expireBlock: string;
 }
-const BidPostSchema: JSONSchemaType<BidPostInterface> = {
+
+const bidPostSchema: JSONSchemaType<BidPostDto> = {
   type: "object",
   properties: {
     account: { type: "string" },
@@ -68,11 +70,27 @@ const BidPostSchema: JSONSchemaType<BidPostInterface> = {
     "signedMessage",
   ],
 };
-export const validateBidPostSchema = ajv.compile(BidPostSchema);
+export const validateBidPostSchema = ajv.compile(bidPostSchema);
 
-const BidsListPostSchema = {
-  type: "array",
-  minItems: 1,
-  items: { type: "string" },
-};
+
+
+export interface BidsListDto {
+  nftIds: string[]
+}
+
+const BidsListPostSchema: JSONSchemaType<BidsListDto> = {
+  type: "object",
+  properties: {
+    nftIds: {
+      type: "array", minItems: 1,
+      items: { type: "string" }
+    }
+  },
+  required: [
+    "nftIds"
+  ],
+  additionalProperties: false
+}
+
+
 export const validateBidsListPostSchema = ajv.compile(BidsListPostSchema);
