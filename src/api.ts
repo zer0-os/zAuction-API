@@ -19,7 +19,7 @@ import {
 } from "./util/contracts";
 import { adapters } from "./storage";
 import { Auction, AuctionBid, Bid, Maybe, UserAccount } from "./types";
-import { getBidsForNft } from "./util";
+import { calculateNftId, getBidsForNft } from "./util";
 
 
 const router = express.Router();
@@ -38,9 +38,8 @@ const storage = adapters.fleek.create(fleekBucket);
 router.post("/bid", limiter, async (req, res, next) => {
   try {
     // generate auctionid, nftid
-    const idString = req.body.contractAddress + req.body.tokenId;
-    const idStringBytes = ethers.utils.toUtf8Bytes(idString);
-    const nftId = ethers.utils.keccak256(idStringBytes);
+    const nftId = calculateNftId(req.body.contractAddress, req.body.tokenId);
+
     const auctionId = Math.floor(Math.random() * 42949672960);
     if (!validateBidPayloadSchema(req.body)) {
       return res.status(400).send(validateBidPayloadSchema.errors);
@@ -109,29 +108,32 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
       const erc20Contract = await getTokenContract();
       const zAuctionContract = await getZAuctionContract();
 
+      const nftId = calculateNftId(req.body.contractAddress, req.body.tokenId);
+      if (nftId !== req.params.nftId) {
+        return res.status(400).send({ message: `Malformed request: Invalid nftId param or contract address and token id in request.` });
+      }
+
       //check balance
-      const bal = await erc20Contract.balanceOf(req.body.account);
-      const bigBal = ethers.BigNumber.from(bal);
+      const userBalance = await erc20Contract.balanceOf(req.body.account);
       const bidAmount = ethers.BigNumber.from(req.body.bidAmount);
-      console.log("Bal:", bal);
-      if (bigBal.eq(bidAmount)) {
+      if (userBalance.lt(bidAmount)) {
         return res
           .status(405)
           .send({ message: "Bidder has insufficient balance" });
       }
 
       //check start block/expire block
-      const blockNum = await ethersProvider.getBlockNumber();
-      const bigBlockNum = ethers.BigNumber.from(blockNum);
+      const blockNum = ethers.BigNumber.from(await ethersProvider.getBlockNumber());
       const start = ethers.BigNumber.from(req.body.startBlock);
       const expire = ethers.BigNumber.from(req.body.expireBlock);
-      console.log("Block Number:", blockNum);
-      if (bigBlockNum.eq(start)) {
+
+      if (blockNum.lt(start)) {
         return res
           .status(405)
           .send({ message: "Current block is less than start block" });
       }
-      if (bigBlockNum.eq(expire)) {
+
+      if (blockNum.gt(expire)) {
         return res.status(405).send({
           message: "Current block is equal to or greater than expire block",
         });
@@ -142,7 +144,7 @@ router.post("/bids/:nftId", limiter, async (req, res, next) => {
         req.body.account,
         req.body.auctionId
       );
-      console.log("Already Consumed?:", alreadyConsumed);
+
       if (alreadyConsumed) {
         return res.status(405).send({
           message: "This account has already consumed this auction id",
