@@ -7,8 +7,8 @@ import cors from "cors";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require("dotenv").config();
 
-import middlewares from "./middlewares";
 import api from "./api";
+import { errorHandler } from "./middlewares";
 
 const App = express();
 
@@ -33,6 +33,6 @@ App.use(express.json());
 App.use("/api", api);
 
 //app.use(middlewares.notFound);
-App.use(middlewares.errorHandler);
+App.use(errorHandler);
 
 export = App;
