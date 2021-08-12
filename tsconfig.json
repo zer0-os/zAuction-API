@@ -1,9 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "ES2018",
-      "DOM"
-    ],
+    "lib": ["ES2018", "DOM"],
     "outDir": "build",
     "module": "CommonJS",
     "moduleResolution": "node",
@@ -13,8 +10,5 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": [
-    "./src",
-    "./test"
-  ]
+  "include": ["./src", "./test"]
 }

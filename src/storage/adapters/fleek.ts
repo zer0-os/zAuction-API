@@ -28,12 +28,12 @@ export const create = (bucket?: string, prefix?: string): StorageService => {
   const downloadFile = async (filename: string) => {
     const res = await fleek.downloadFile(`${prefix}${filename}`, bucket);
     return res;
-  }
+  };
 
   const safeDownloadFile = async (filename: string) => {
     const safeFile: SafeDownloadedFile = {
       exists: false,
-      data: undefined
+      data: undefined,
     };
 
     try {
@@ -41,16 +41,16 @@ export const create = (bucket?: string, prefix?: string): StorageService => {
       safeFile.data = res;
       safeFile.exists = true;
     } catch {
-
+      // intentional
     }
 
     return safeFile;
-  }
+  };
 
   const storageService = {
     uploadFile,
     downloadFile,
-    safeDownloadFile
+    safeDownloadFile,
   };
 
   return storageService;
