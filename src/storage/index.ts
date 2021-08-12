@@ -8,6 +8,7 @@ export interface UploadedFile {
 
 export interface SafeDownloadedFile {
   exists: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
 }
 
@@ -16,10 +17,7 @@ export interface StorageService {
     filename: string,
     data: Buffer | string
   ) => Promise<UploadedFile>;
-  downloadFile: (
-    filename: string
-  ) => Promise<any>;
-  safeDownloadFile: (
-    filename: string
-  ) => Promise<SafeDownloadedFile>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  downloadFile: (filename: string) => Promise<any>;
+  safeDownloadFile: (filename: string) => Promise<SafeDownloadedFile>;
 }

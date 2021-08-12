@@ -1,4 +1,4 @@
-import Ajv, { JSONSchemaType, Schema } from "ajv";
+import Ajv, { JSONSchemaType } from "ajv";
 import { BidPostDto } from "./types";
 
 const ajv = new Ajv({ coerceTypes: true });
@@ -30,7 +30,7 @@ const bidPayloadPostSchema: JSONSchemaType<BidPayloadPostDto> = {
     "startBlock",
     "expireBlock",
   ],
-  additionalProperties: false
+  additionalProperties: false,
 };
 export const validateBidPayloadSchema = ajv.compile(bidPayloadPostSchema);
 
@@ -61,25 +61,21 @@ const bidPostSchema: JSONSchemaType<BidPostDto> = {
 };
 export const validateBidPostSchema = ajv.compile(bidPostSchema);
 
-
-
 export interface BidsListDto {
-  nftIds: string[]
+  nftIds: string[];
 }
 
 const BidsListPostSchema: JSONSchemaType<BidsListDto> = {
   type: "object",
   properties: {
     nftIds: {
-      type: "array", minItems: 1,
-      items: { type: "string" }
-    }
+      type: "array",
+      minItems: 1,
+      items: { type: "string" },
+    },
   },
-  required: [
-    "nftIds"
-  ],
-  additionalProperties: false
-}
-
+  required: ["nftIds"],
+  additionalProperties: false,
+};
 
 export const validateBidsListPostSchema = ajv.compile(BidsListPostSchema);

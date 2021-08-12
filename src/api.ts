@@ -1,5 +1,4 @@
 import express from "express";
-import fleek from "@fleekhq/fleek-storage-js";
 import rateLimit from "express-rate-limit";
 import { ethers } from "ethers";
 import * as env from "env-var";
@@ -20,7 +19,6 @@ import {
 import { adapters } from "./storage";
 import { Auction, Bid, BidPostDto, Maybe, UserAccount } from "./types";
 import { calculateNftId, getBidsForNft } from "./util";
-
 
 const router = express.Router();
 
@@ -63,7 +61,7 @@ router.post("/bid", limiter, async (req, res, next) => {
 });
 
 // Endpoint to return auctions based on an array of inputs
-router.post("/bids/list", limiter, async (req, res, next) => {
+router.post("/bids/list", limiter, async (req, res) => {
   if (!validateBidsListPostSchema(req.body)) {
     return res.status(400).send(validateBidsListPostSchema.errors);
   }
@@ -76,7 +74,7 @@ router.post("/bids/list", limiter, async (req, res, next) => {
 
   const nftBids: BidsList = {};
 
-  for (let nftId of dto.nftIds) {
+  for (const nftId of dto.nftIds) {
     const bids = await getBidsForNft(storage, nftId);
     nftBids[nftId] = bids;
   }
@@ -85,7 +83,7 @@ router.post("/bids/list", limiter, async (req, res, next) => {
 });
 
 // Endpoint to return all bids by an account
-router.get("/bids/accounts/:account", limiter, async (req, res, next) => {
+router.get("/bids/accounts/:account", limiter, async (req, res) => {
   const fileKey = req.params.account.toLowerCase();
   let userBids: Bid[] = [];
 
@@ -94,7 +92,7 @@ router.get("/bids/accounts/:account", limiter, async (req, res, next) => {
     const userAccount = JSON.parse(fileContents) as UserAccount;
     userBids = userAccount.bids;
   } catch {
-
+    // intentional
   }
 
   return res.json(userBids);
@@ -125,7 +123,9 @@ router.post("/bids", limiter, async (req, res, next) => {
     }
 
     //check start block/expire block
-    const blockNum = ethers.BigNumber.from(await ethersProvider.getBlockNumber());
+    const blockNum = ethers.BigNumber.from(
+      await ethersProvider.getBlockNumber()
+    );
     const start = ethers.BigNumber.from(dto.startBlock);
     const expire = ethers.BigNumber.from(dto.expireBlock);
 
@@ -180,7 +180,7 @@ router.post("/bids", limiter, async (req, res, next) => {
     }
 
     // try to pull auction from fleek with given auctionId
-    let dateNow = new Date();
+    const dateNow = new Date();
 
     let auction: Maybe<Auction>;
 
@@ -193,7 +193,7 @@ router.post("/bids", limiter, async (req, res, next) => {
       auction = {
         tokenId: dto.tokenId,
         contractAddress: dto.contractAddress,
-        bids: []
+        bids: [],
       } as Auction;
     }
 
@@ -226,7 +226,7 @@ router.post("/bids", limiter, async (req, res, next) => {
       userAccount = { bids: [] } as UserAccount;
     }
 
-    userAccount.bids.push(newBid)
+    userAccount.bids.push(newBid);
 
     await storage.uploadFile(userAccountFileKey, JSON.stringify(userAccount));
 
@@ -237,7 +237,7 @@ router.post("/bids", limiter, async (req, res, next) => {
 });
 
 // Endpoint to return current highest bid given nftId
-router.get("/bids/:nftId", limiter, async (req, res, next) => {
+router.get("/bids/:nftId", limiter, async (req, res) => {
   const bids = await getBidsForNft(storage, req.params.nftId);
   return res.json(bids);
 });
