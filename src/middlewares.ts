@@ -20,6 +20,7 @@ export function errorHandler(
   /* eslint-enable no-unused-vars */
   const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
   res.status(statusCode);
+  console.error(err.message, err.stack);
   res.json({
     message: err.message,
     stack: isProduction() ? undefined : err.stack,
