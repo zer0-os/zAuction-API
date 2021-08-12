@@ -15,13 +15,13 @@ export function notFound(
 export function errorHandler(
   err: Error,
   req: express.Request,
-  res: express.Response
+  res: express.Response,
+  next: express.NextFunction
 ): void {
   /* eslint-enable no-unused-vars */
   const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
-  res.status(statusCode);
   console.error(err.message, err.stack);
-  res.json({
+  res.status(statusCode).json({
     message: err.message,
     stack: isProduction() ? undefined : err.stack,
   });
