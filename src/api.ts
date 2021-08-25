@@ -3,12 +3,15 @@ import rateLimit from "express-rate-limit";
 import { ethers } from "ethers";
 import * as env from "env-var";
 
+import { adapters } from "./storage";
+import { calculateNftId, getBidsForNft } from "./util";
+
 // Ajv validation methods
 import {
-  BidsListDto,
   validateBidPayloadSchema,
   validateBidPostSchema,
   validateBidsListPostSchema,
+  validateBidsAccountsGetSchema
 } from "./schemas";
 import {
   encodeBid,
@@ -16,9 +19,14 @@ import {
   getTokenContract,
   getZAuctionContract,
 } from "./util/contracts";
-import { adapters } from "./storage";
-import { Auction, Bid, BidPostDto, Maybe, UserAccount } from "./types";
-import { calculateNftId, getBidsForNft } from "./util";
+import { 
+  Auction,
+  Bid,
+  BidPostDto,
+  BidsList,
+  BidsListDto,
+  Maybe,
+  UserAccount } from "./types";
 
 const router = express.Router();
 
@@ -32,17 +40,39 @@ const fleekBucket = env.get("STORAGE_BUCKET").asString();
 const fileNamespace = env.get("NAMESPACE").asString();
 const storage = adapters.fleek.create(fleekBucket, fileNamespace);
 
-// Returns encoded data to be signed, an random auction id,
-//  and an nft id determined by nft contract address and token id
+// Returns encoded data to be signed, a generated auctionId,
+// and a generated nftId determined by the NFT contract address and tokenId
+//
+// POST <base-uri>/api/bid
+//
+// Headers:
+//   Content-Type: application/json
+//
+// Body:
+//   {
+//     "bidAmount": <string>,
+//     "contractAddress": <string>,
+//     "tokenId": <string>,
+//     "minimumBid": <string>,
+//     "startBlock": <string>,
+//     "expireBlock": <string>
+//   }
+//
+// Response:
+//   {
+//     "payload": <string>,
+//     "auctionId": <number>,
+//     "nftId": <string>
+//   }
 router.post("/bid", limiter, async (req, res, next) => {
   try {
-    // generate auctionid, nftid
-    const nftId = calculateNftId(req.body.contractAddress, req.body.tokenId);
-
-    const auctionId = Math.floor(Math.random() * 42949672960);
-    if (!validateBidPayloadSchema(req.body)) {
+    if (!validateBidPayloadSchema(req.body)) { // access before validation
       return res.status(400).send(validateBidPayloadSchema.errors);
     }
+
+    // Generate auctionId, nftId
+    const nftId = calculateNftId(req.body.contractAddress, req.body.tokenId);
+    const auctionId = Math.floor(Math.random() * 42949672960);
 
     const payload = await encodeBid(
       auctionId,
@@ -56,24 +86,52 @@ router.post("/bid", limiter, async (req, res, next) => {
 
     return res.status(200).send({ payload, auctionId, nftId });
   } catch (error) {
+    // TODO return more specific errors
     next(error);
   }
 });
 
-// Endpoint to return auctions based on an array of inputs
+// Endpoint to return auctions based on an array of given nftIds
+//
+// POST <base-uri>/api/bids/list
+//
+// Headers:
+//   Content-Type: application/json
+//
+// Body:
+//   {
+//     "nftIds": [
+//        <string>,
+//        <string>,
+//        ...
+//      ]
+//   }
+//
+// Response:
+//   {
+//     "0x123...": [
+//        "account": <string>,
+//        "signedMessage": <string>,
+//        "auctionId": <string>,
+//        "bidAmount": <string>,
+//        "minimumBid": <string>,
+//        "startBlock": <string>,
+//        "expireblock": <string>,
+//        "date": <number>,
+//        "tokenId": <string>,
+//        "contractAddress": <string>
+//      ],
+//      ...
+//   }
 router.post("/bids/list", limiter, async (req, res) => {
   if (!validateBidsListPostSchema(req.body)) {
     return res.status(400).send(validateBidsListPostSchema.errors);
   }
-
-  const dto: BidsListDto = req.body;
-
-  interface BidsList {
-    [nftId: string]: Bid[] | undefined;
-  }
+  const dto: BidsListDto = req.body as BidsListDto;
 
   const nftBids: BidsList = {};
 
+  // Get all of the bids on every provided nftId
   for (const nftId of dto.nftIds) {
     const bids = await getBidsForNft(storage, nftId);
     nftBids[nftId] = bids;
@@ -83,10 +141,36 @@ router.post("/bids/list", limiter, async (req, res) => {
 });
 
 // Endpoint to return all bids by an account
+//
+// GET <base-uri>/api/bids/accounts/:account
+//
+// Headers:
+//   Content-Type: application/json
+//
+// Body: N/A
+//
+// Response:
+//    [
+//      {
+//        "account": <string>,
+//        "signedMessage": <string>,
+//        "auctionId": <string>,
+//        "bidAmount": <string>,
+//        "minimumBid": <string>,
+//        "startBlock": <string>,
+//        "expireblock": <string>,
+//        "date": <number>,
+//        "tokenId": <string>,
+//        "contractAddress": <string>
+//      }
+//    ]
 router.get("/bids/accounts/:account", limiter, async (req, res) => {
+  if (!validateBidsAccountsGetSchema(req.params)) {
+    return res.status(400).send(validateBidsListPostSchema.errors);
+  }
+
   const fileKey = req.params.account.toLowerCase();
   let userBids: Bid[] = [];
-
   try {
     const fileContents = await storage.downloadFile(fileKey);
     const userAccount = JSON.parse(fileContents) as UserAccount;
@@ -98,7 +182,7 @@ router.get("/bids/accounts/:account", limiter, async (req, res) => {
   return res.json(userBids);
 });
 
-// Creates a new bid for an auction
+// Creates a new bid for an auction once signed
 router.post("/bids", limiter, async (req, res, next) => {
   if (!validateBidPostSchema(req.body)) {
     return res.status(400).send(validateBidPostSchema.errors);
@@ -136,9 +220,9 @@ router.post("/bids", limiter, async (req, res, next) => {
     }
 
     if (blockNum.gt(expire)) {
-      return res.status(405).send({
-        message: "Current block is equal to or greater than expire block",
-      });
+      return res
+      .status(405)
+      .send({ message: "Current block is equal to or greater than expire block" });
     }
 
     //check if auctionid is consumed already
@@ -148,9 +232,9 @@ router.post("/bids", limiter, async (req, res, next) => {
     );
 
     if (alreadyConsumed) {
-      return res.status(405).send({
-        message: "This account has already consumed this auction id",
-      });
+      return res
+      .status(405)
+      .send({ message: "This account has already consumed this auction id" });
     }
 
     //check signature recovers correct account
@@ -173,10 +257,9 @@ router.post("/bids", limiter, async (req, res, next) => {
     );
 
     if (recoveredAccount != dto.account) {
-      return res.status(405).send({
-        message:
-          "Account sent and account recovered from signature do not match",
-      });
+      return res
+      .status(405)
+      .send({ message: "Account sent and account recovered from signature do not match" });
     }
 
     // try to pull auction from fleek with given auctionId

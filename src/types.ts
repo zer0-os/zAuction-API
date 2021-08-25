@@ -1,5 +1,14 @@
 export type Maybe<T> = T | undefined;
 
+export interface BidPayloadPostDto {
+  bidAmount: string;
+  tokenId: string;
+  contractAddress: string;
+  minimumBid: string;
+  startBlock: string;
+  expireBlock: string;
+}
+
 export interface BidPostDto {
   account: string;
   auctionId: string;
@@ -10,6 +19,19 @@ export interface BidPostDto {
   minimumBid: string;
   startBlock: string;
   expireBlock: string;
+}
+
+export interface BidsList {
+  [nftId: string]: Bid[] | undefined;
+}
+
+export interface BidsListDto {
+  nftIds: string[];
+}
+
+
+export interface BidsAccountsDto {
+  account: string;
 }
 
 export interface Bid {
