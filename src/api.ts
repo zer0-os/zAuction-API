@@ -1,10 +1,10 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
-import { ethers } from "ethers";
+// import { ethers } from "ethers";
 import * as env from "env-var";
 
 import { adapters } from "./storage";
-import { calculateNftId, getBidsForNft } from "./util";
+import { calculateNftId, getBidsForNft, verifyEncodedBid } from "./util/auctions";
 
 // Ajv validation methods
 import {
@@ -15,7 +15,6 @@ import {
 } from "./schemas";
 import {
   encodeBid,
-  ethersProvider,
   getTokenContract,
   getZAuctionContract,
 } from "./util/contracts";
@@ -27,6 +26,7 @@ import {
   BidsListDto,
   Maybe,
   UserAccount } from "./types";
+import { Zauction } from "./types/contracts";
 
 const router = express.Router();
 
@@ -86,7 +86,6 @@ router.post("/bid", limiter, async (req, res, next) => {
 
     return res.status(200).send({ payload, auctionId, nftId });
   } catch (error) {
-    // TODO return more specific errors
     next(error);
   }
 });
@@ -188,81 +187,26 @@ router.post("/bids", limiter, async (req, res, next) => {
     return res.status(400).send(validateBidPostSchema.errors);
   }
 
+  // check balance, block number, if consumed, if account recoverable
   const dto: BidPostDto = req.body as BidPostDto;
 
   try {
-    //instantiate contracts
+    // Instantiate contracts
     const erc20Contract = await getTokenContract();
-    const zAuctionContract = await getZAuctionContract();
+    const zAuctionContract: Zauction = await getZAuctionContract();
+
+    // Perform necessary checks to ensure account is able to make the bid
+    const verification = await verifyEncodedBid(dto, erc20Contract, zAuctionContract);
+
+    if (!verification.verify) {
+      return res
+      .status(verification.status)
+      .send({ message: verification.message })
+    }
 
     const nftId = calculateNftId(dto.contractAddress, dto.tokenId);
 
-    //check balance
-    const userBalance = await erc20Contract.balanceOf(dto.account);
-    const bidAmount = ethers.BigNumber.from(dto.bidAmount);
-    if (userBalance.lt(bidAmount)) {
-      return res
-        .status(405)
-        .send({ message: "Bidder has insufficient balance" });
-    }
-
-    //check start block/expire block
-    const blockNum = ethers.BigNumber.from(
-      await ethersProvider.getBlockNumber()
-    );
-    const start = ethers.BigNumber.from(dto.startBlock);
-    const expire = ethers.BigNumber.from(dto.expireBlock);
-
-    if (blockNum.lt(start)) {
-      return res
-        .status(405)
-        .send({ message: "Current block is less than start block" });
-    }
-
-    if (blockNum.gt(expire)) {
-      return res
-      .status(405)
-      .send({ message: "Current block is equal to or greater than expire block" });
-    }
-
-    //check if auctionid is consumed already
-    const alreadyConsumed = await zAuctionContract.consumed(
-      dto.account,
-      dto.auctionId
-    );
-
-    if (alreadyConsumed) {
-      return res
-      .status(405)
-      .send({ message: "This account has already consumed this auction id" });
-    }
-
-    //check signature recovers correct account
-    const bidMessage = await encodeBid(
-      dto.auctionId,
-      dto.bidAmount,
-      dto.contractAddress,
-      dto.tokenId,
-      dto.minimumBid,
-      dto.startBlock,
-      dto.expireBlock
-    );
-
-    const unsignedMessage = await zAuctionContract.toEthSignedMessageHash(
-      bidMessage
-    );
-    const recoveredAccount = await zAuctionContract.recover(
-      unsignedMessage,
-      dto.signedMessage
-    );
-
-    if (recoveredAccount != dto.account) {
-      return res
-      .status(405)
-      .send({ message: "Account sent and account recovered from signature do not match" });
-    }
-
-    // try to pull auction from fleek with given auctionId
+    // Try to pull auction from fleek with given auctionId
     const dateNow = new Date();
 
     let auction: Maybe<Auction>;

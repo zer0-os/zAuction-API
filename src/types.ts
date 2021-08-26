@@ -29,7 +29,6 @@ export interface BidsListDto {
   nftIds: string[];
 }
 
-
 export interface BidsAccountsDto {
   account: string;
 }
