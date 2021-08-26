@@ -11,7 +11,8 @@ import {
   validateBidPayloadSchema,
   validateBidPostSchema,
   validateBidsListPostSchema,
-  validateBidsAccountsGetSchema
+  validateBidsAccountsGetSchema,
+  validateBidsGetSchema
 } from "./schemas";
 import {
   encodeBid,
@@ -25,7 +26,9 @@ import {
   BidsList,
   BidsListDto,
   Maybe,
-  UserAccount } from "./types";
+  UserAccount, 
+  VerifyBidResponse
+} from "./types";
 import { Zauction } from "./types/contracts";
 
 const router = express.Router();
@@ -49,21 +52,21 @@ const storage = adapters.fleek.create(fleekBucket, fileNamespace);
 //   Content-Type: application/json
 //
 // Body:
-//   {
-//     "bidAmount": <string>,
-//     "contractAddress": <string>,
-//     "tokenId": <string>,
-//     "minimumBid": <string>,
-//     "startBlock": <string>,
-//     "expireBlock": <string>
-//   }
+// {
+//   "bidAmount": <string>,
+//   "contractAddress": <string>,
+//   "tokenId": <string>,
+//   "minimumBid": <string>,
+//   "startBlock": <string>,
+//   "expireBlock": <string>
+// }
 //
 // Response:
-//   {
-//     "payload": <string>,
-//     "auctionId": <number>,
-//     "nftId": <string>
-//   }
+// {
+//   "payload": <string>,
+//   "auctionId": <number>,
+//   "nftId": <string>
+// }
 router.post("/bid", limiter, async (req, res, next) => {
   try {
     if (!validateBidPayloadSchema(req.body)) { // access before validation
@@ -98,30 +101,30 @@ router.post("/bid", limiter, async (req, res, next) => {
 //   Content-Type: application/json
 //
 // Body:
-//   {
-//     "nftIds": [
-//        <string>,
-//        <string>,
-//        ...
-//      ]
-//   }
+// {
+//   "nftIds": [
+//      <string>,
+//      <string>,
+//      ...
+//    ]
+// }
 //
 // Response:
-//   {
-//     "0x123...": [
-//        "account": <string>,
-//        "signedMessage": <string>,
-//        "auctionId": <string>,
-//        "bidAmount": <string>,
-//        "minimumBid": <string>,
-//        "startBlock": <string>,
-//        "expireblock": <string>,
-//        "date": <number>,
-//        "tokenId": <string>,
-//        "contractAddress": <string>
-//      ],
-//      ...
-//   }
+// {
+//   "0x123...": [
+//      "account": <string>,
+//      "signedMessage": <string>,
+//      "auctionId": <string>,
+//      "bidAmount": <string>,
+//      "minimumBid": <string>,
+//      "startBlock": <string>,
+//      "expireblock": <string>,
+//      "date": <number>,
+//      "tokenId": <string>,
+//      "contractAddress": <string>
+//    ],
+//    ...
+// }
 router.post("/bids/list", limiter, async (req, res) => {
   if (!validateBidsListPostSchema(req.body)) {
     return res.status(400).send(validateBidsListPostSchema.errors);
@@ -149,20 +152,20 @@ router.post("/bids/list", limiter, async (req, res) => {
 // Body: N/A
 //
 // Response:
-//    [
-//      {
-//        "account": <string>,
-//        "signedMessage": <string>,
-//        "auctionId": <string>,
-//        "bidAmount": <string>,
-//        "minimumBid": <string>,
-//        "startBlock": <string>,
-//        "expireblock": <string>,
-//        "date": <number>,
-//        "tokenId": <string>,
-//        "contractAddress": <string>
-//      }
-//    ]
+// [
+//   {
+//     "account": <string>,
+//     "signedMessage": <string>,
+//     "auctionId": <string>,
+//     "bidAmount": <string>,
+//     "minimumBid": <string>,
+//     "startBlock": <string>,
+//     "expireblock": <string>,
+//     "date": <number>,
+//     "tokenId": <string>,
+//     "contractAddress": <string>
+//   }
+// ]
 router.get("/bids/accounts/:account", limiter, async (req, res) => {
   if (!validateBidsAccountsGetSchema(req.params)) {
     return res.status(400).send(validateBidsListPostSchema.errors);
@@ -182,6 +185,26 @@ router.get("/bids/accounts/:account", limiter, async (req, res) => {
 });
 
 // Creates a new bid for an auction once signed
+//
+// POST <base-uri>/api/bids
+//
+// Headers:
+//   Content-Type: application/json
+//
+// Body: 
+// {
+//   "account": <string>,
+//   "auctionId": <string>,
+//   "bidAmount": <string>,
+//   "contractAddress": <string>
+//   "expireblock": <string>,
+//   "minimumBid": <string>,
+//   "signedMessage": <string>,
+//   "startBlock": <string>,
+//   "tokenId": <string>,
+// }
+// Response:
+// OK
 router.post("/bids", limiter, async (req, res, next) => {
   if (!validateBidPostSchema(req.body)) {
     return res.status(400).send(validateBidPostSchema.errors);
@@ -196,9 +219,9 @@ router.post("/bids", limiter, async (req, res, next) => {
     const zAuctionContract: Zauction = await getZAuctionContract();
 
     // Perform necessary checks to ensure account is able to make the bid
-    const verification = await verifyEncodedBid(dto, erc20Contract, zAuctionContract);
+    const verification: VerifyBidResponse = await verifyEncodedBid(dto, erc20Contract, zAuctionContract);
 
-    if (!verification.verify) {
+    if (!verification.pass) {
       return res
       .status(verification.status)
       .send({ message: verification.message })
@@ -264,7 +287,30 @@ router.post("/bids", limiter, async (req, res, next) => {
 });
 
 // Endpoint to return current highest bid given nftId
+//
+// POST <base-uri>/api/bids
+//
+// Headers:
+//   Content-Type: application/json
+//
+// Body: 
+// {
+//   "account": <string>,
+//   "auctionId": <string>,
+//   "bidAmount": <string>,
+//   "contractAddress": <string>
+//   "expireblock": <string>,
+//   "minimumBid": <string>,
+//   "signedMessage": <string>,
+//   "startBlock": <string>,
+//   "tokenId": <string>,
+// }
+// Response:
+// OK
 router.get("/bids/:nftId", limiter, async (req, res) => {
+  if (!validateBidsGetSchema(req.params)) {
+    return res.status(400).send(validateBidsGetSchema.errors);
+  }
   const bids = await getBidsForNft(storage, req.params.nftId);
   return res.json(bids);
 });

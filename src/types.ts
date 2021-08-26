@@ -33,6 +33,10 @@ export interface BidsAccountsDto {
   account: string;
 }
 
+export interface BidsDto {
+  nftId: string;
+}
+
 export interface Bid {
   account: string;
   signedMessage: string;
@@ -54,4 +58,10 @@ export interface Auction {
 
 export interface UserAccount {
   bids: Bid[];
+}
+
+export interface VerifyBidResponse {
+  pass: boolean,
+  status: number,
+  message: string
 }

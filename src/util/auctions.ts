@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { StorageService } from "../storage";
 import { ERC20, Zauction } from "../types/contracts"
-import { Auction, Bid, BidPostDto } from "../types";
+import { Auction, Bid, BidPostDto, VerifyBidResponse } from "../types";
 import { ethersProvider, encodeBid } from "./contracts";
 
 export async function getBidsForNft(
@@ -27,12 +27,16 @@ export function calculateNftId(
 
   return nftId;
 }
-  
-export async function verifyEncodedBid(dto: BidPostDto, erc20Contract: ERC20, zAuctionContract: Zauction) {
-  // Check account balance
-  const userBalance = await erc20Contract.balanceOf(dto.account);
-  const bidAmount = ethers.BigNumber.from(dto.bidAmount);
 
+export async function accountBalanceContext(dto: BidPostDto, erc20Contract: ERC20,) {
+    // Check account balance
+    const userBalance = await erc20Contract.balanceOf(dto.account);
+    const bidAmount = ethers.BigNumber.from(dto.bidAmount);
+
+    return [userBalance, bidAmount]
+}
+
+export async function blockNumContext(dto: BidPostDto) {
   // Check start block/expire block
   const blockNum = ethers.BigNumber.from(
     await ethersProvider.getBlockNumber()
@@ -40,6 +44,10 @@ export async function verifyEncodedBid(dto: BidPostDto, erc20Contract: ERC20, zA
   const start = ethers.BigNumber.from(dto.startBlock);
   const expire = ethers.BigNumber.from(dto.expireBlock);
 
+  return [blockNum, start, expire];
+}
+
+export async function accountRecoveryContext(dto: BidPostDto, zAuctionContract: Zauction) {
   // Check signature recovers correct account
   const bidMessage = await encodeBid(
     dto.auctionId,
@@ -58,6 +66,20 @@ export async function verifyEncodedBid(dto: BidPostDto, erc20Contract: ERC20, zA
     unsignedMessage,
     dto.signedMessage
   );
+
+  return recoveredAccount;
+}
+
+export async function verifyEncodedBid(
+  dto: BidPostDto,
+  erc20Contract: ERC20,
+  zAuctionContract: Zauction
+): Promise<VerifyBidResponse> {
+
+  // Perform necessary checks to verify a bid
+  const [userBalance, bidAmount] = await accountBalanceContext(dto, erc20Contract);
+  const [blockNum, start, expire] = await blockNumContext(dto);
+  const recoveredAccount = await accountRecoveryContext(dto, zAuctionContract);
 
   let conditions = [
     {
@@ -80,16 +102,16 @@ export async function verifyEncodedBid(dto: BidPostDto, erc20Contract: ERC20, zA
 
   conditions.forEach( (check) => {
     if(check.condition) return {
-      verify: false,
+      pass: false,
       status: 405,
       message: check.message
-    }
+    } as VerifyBidResponse
   })
 
   // If nothing is wrong, proceed with bid
   return {
-    verify: true,
+    pass: true,
     status: 200,
     message: ""
-  }
+  } as VerifyBidResponse
 }
