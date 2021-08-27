@@ -1,6 +1,5 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
-// import { ethers } from "ethers";
 import * as env from "env-var";
 
 import { adapters } from "./storage";
