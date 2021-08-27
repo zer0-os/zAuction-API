@@ -4,7 +4,6 @@ import rateLimit from "express-rate-limit";
 import * as env from "env-var";
 
 import { adapters } from "./storage";
-import { calculateNftId, getBidsForNft, verifyEncodedBid } from "./util/auctions";
 
 // Ajv validation methods
 import {
@@ -12,23 +11,32 @@ import {
   validateBidPostSchema,
   validateBidsListPostSchema,
   validateBidsAccountsGetSchema,
-  validateBidsGetSchema
+  validateBidsGetSchema,
 } from "./schemas";
+
 import {
   encodeBid,
   getTokenContract,
   getZAuctionContract,
 } from "./util/contracts";
+
 import { 
-  Auction,
+  calculateNftId,
+  getBidsForNft,
+  verifyEncodedBid,
+  createBidAuction,
+} from "./util/auctions";
+
+import { 
   Bid,
   BidPostDto,
   BidsList,
   BidsListDto,
   Maybe,
-  UserAccount, 
-  VerifyBidResponse
+  UserAccount,
+  VerifyBidResponse,
 } from "./types";
+
 import { Zauction } from "./types/contracts";
 
 const router = express.Router();
@@ -164,7 +172,8 @@ router.post("/bids/list", limiter, async (req, res) => {
 //     "date": <number>,
 //     "tokenId": <string>,
 //     "contractAddress": <string>
-//   }
+//   },
+//   ...
 // ]
 router.get("/bids/accounts/:account", limiter, async (req, res) => {
   if (!validateBidsAccountsGetSchema(req.params)) {
@@ -183,6 +192,7 @@ router.get("/bids/accounts/:account", limiter, async (req, res) => {
 
   return res.json(userBids);
 });
+
 
 // Creates a new bid for an auction once signed
 //
@@ -210,7 +220,6 @@ router.post("/bids", limiter, async (req, res, next) => {
     return res.status(400).send(validateBidPostSchema.errors);
   }
 
-  // check balance, block number, if consumed, if account recoverable
   const dto: BidPostDto = req.body as BidPostDto;
 
   try {
@@ -219,52 +228,25 @@ router.post("/bids", limiter, async (req, res, next) => {
     const zAuctionContract: Zauction = await getZAuctionContract();
 
     // Perform necessary checks to ensure account is able to make the bid
+    // Check balance, block number, if consumed, if account recoverable
     const verification: VerifyBidResponse = await verifyEncodedBid(dto, erc20Contract, zAuctionContract);
 
     if (!verification.pass) {
       return res
       .status(verification.status)
-      .send({ message: verification.message })
+      .send({ message: verification.message });
     }
 
-    const nftId = calculateNftId(dto.contractAddress, dto.tokenId);
-
     // Try to pull auction from fleek with given auctionId
-    const dateNow = new Date();
-
-    let auction: Maybe<Auction>;
-
+    const nftId = calculateNftId(dto.contractAddress, dto.tokenId);
     const auctionFileKey = nftId;
     const auctionFile = await storage.safeDownloadFile(auctionFileKey);
 
-    if (auctionFile.exists) {
-      auction = JSON.parse(auctionFile.data) as Auction;
-    } else {
-      auction = {
-        tokenId: dto.tokenId,
-        contractAddress: dto.contractAddress,
-        bids: [],
-      } as Auction;
-    }
-
-    const newBid: Bid = {
-      account: dto.account,
-      signedMessage: dto.signedMessage,
-      auctionId: dto.auctionId,
-      bidAmount: dto.bidAmount,
-      minimumBid: dto.minimumBid,
-      startBlock: dto.startBlock,
-      expireBlock: dto.expireBlock,
-      date: dateNow.getTime(),
-      tokenId: dto.tokenId,
-      contractAddress: dto.contractAddress,
-    };
-    auction.bids.push(newBid);
+    const [newBid, auction] = await createBidAuction(dto, auctionFile)
 
     await storage.uploadFile(auctionFileKey, JSON.stringify(auction));
 
-    //store bid by user
-
+    // Store bid by user on fleek
     let userAccount: Maybe<UserAccount>;
 
     const userAccountFileKey = dto.account.toLowerCase();
@@ -277,8 +259,6 @@ router.post("/bids", limiter, async (req, res, next) => {
     }
 
     userAccount.bids.push(newBid);
-
-    await storage.uploadFile(userAccountFileKey, JSON.stringify(userAccount));
 
     return res.sendStatus(200);
   } catch (error) {
@@ -306,7 +286,21 @@ router.post("/bids", limiter, async (req, res, next) => {
 //   "tokenId": <string>,
 // }
 // Response:
-// OK
+// [
+//   {
+//     "account": <string>,
+//     "signedMessage": <string>,
+//     "auctionId": <string>,
+//     "bidAmount": <string>,
+//     "minimumBid": <string>,
+//     "startBlock": <string>,
+//     "expireBlock": <string>,
+//     "date": <number>,
+//     "tokenId": <string>,
+//     "contractAddress": <string>
+//   },
+//   ...
+// ]
 router.get("/bids/:nftId", limiter, async (req, res) => {
   if (!validateBidsGetSchema(req.params)) {
     return res.status(400).send(validateBidsGetSchema.errors);

@@ -1,7 +1,14 @@
 import { ethers } from "ethers";
-import { StorageService } from "../storage";
+import { StorageService, SafeDownloadedFile } from "../storage";
 import { ERC20, Zauction } from "../types/contracts"
-import { Auction, Bid, BidPostDto, VerifyBidResponse } from "../types";
+
+import { Auction,
+  Bid,
+  BidPostDto,
+  VerifyBidResponse,
+  Maybe,
+} from "../types";
+
 import { ethersProvider, encodeBid } from "./contracts";
 
 export async function getBidsForNft(
@@ -28,15 +35,20 @@ export function calculateNftId(
   return nftId;
 }
 
-export async function accountBalanceContext(dto: BidPostDto, erc20Contract: ERC20,) {
-    // Check account balance
-    const userBalance = await erc20Contract.balanceOf(dto.account);
-    const bidAmount = ethers.BigNumber.from(dto.bidAmount);
+export async function accountBalanceContext(
+  dto: BidPostDto,
+  erc20Contract: ERC20
+): Promise<ethers.BigNumber[]> {
+  // Check account balance
+  const userBalance = await erc20Contract.balanceOf(dto.account);
+  const bidAmount = ethers.BigNumber.from(dto.bidAmount);
 
-    return [userBalance, bidAmount]
+  return [userBalance, bidAmount];
 }
 
-export async function blockNumContext(dto: BidPostDto) {
+export async function blockNumContext(
+  dto: BidPostDto
+): Promise<ethers.BigNumber[]> {
   // Check start block/expire block
   const blockNum = ethers.BigNumber.from(
     await ethersProvider.getBlockNumber()
@@ -47,7 +59,10 @@ export async function blockNumContext(dto: BidPostDto) {
   return [blockNum, start, expire];
 }
 
-export async function accountRecoveryContext(dto: BidPostDto, zAuctionContract: Zauction) {
+export async function accountRecoveryContext(
+  dto: BidPostDto,
+  zAuctionContract: Zauction
+): Promise<string> {
   // Check signature recovers correct account
   const bidMessage = await encodeBid(
     dto.auctionId,
@@ -115,3 +130,37 @@ export async function verifyEncodedBid(
     message: ""
   } as VerifyBidResponse
 }
+
+export async function createBidAuction(
+  dto: BidPostDto,
+  auctionFile: SafeDownloadedFile
+): Promise<[Bid, Auction]> {
+  const dateNow = new Date();
+  let auction: Maybe<Auction>;
+
+  if (auctionFile.exists) {
+    auction = JSON.parse(auctionFile.data) as Auction;
+  } else {
+    auction = {
+      tokenId: dto.tokenId,
+      contractAddress: dto.contractAddress,
+      bids: [],
+    } as Auction;
+  }
+
+  const newBid: Bid = {
+    account: dto.account,
+    signedMessage: dto.signedMessage,
+    auctionId: dto.auctionId,
+    bidAmount: dto.bidAmount,
+    minimumBid: dto.minimumBid,
+    startBlock: dto.startBlock,
+    expireBlock: dto.expireBlock,
+    date: dateNow.getTime(),
+    tokenId: dto.tokenId,
+    contractAddress: dto.contractAddress,
+  };
+
+  auction.bids.push(newBid);
+  return [newBid, auction];
+};
