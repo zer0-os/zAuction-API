@@ -76,7 +76,7 @@ const storage = adapters.fleek.create(fleekBucket, fileNamespace);
 // }
 router.post("/bid", limiter, async (req, res, next) => {
   try {
-    if (!validateBidPayloadSchema(req.body)) { // access before validation
+    if (!validateBidPayloadSchema(req.body)) {
       return res.status(400).send(validateBidPayloadSchema.errors);
     }
 
