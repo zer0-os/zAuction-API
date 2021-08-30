@@ -21,6 +21,17 @@ export interface BidPostDto {
   expireBlock: string;
 }
 
+export interface BidParams {
+  account: string;
+  auctionId: string;
+  bidAmount: string;
+  contractAddress: string;
+  tokenId: string;
+  minimumBid: string;
+  startBlock: string;
+  expireBlock: string;
+}
+
 export interface BidsList {
   [nftId: string]: Bid[] | undefined;
 }
@@ -61,7 +72,7 @@ export interface UserAccount {
 }
 
 export interface VerifyBidResponse {
-  pass: boolean,
-  status: number,
-  message: string
+  pass: boolean;
+  status: number;
+  message: string;
 }
