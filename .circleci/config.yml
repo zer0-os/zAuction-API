@@ -5,5 +5,4 @@ workflows:
   run-tests:
     jobs:
       - node/test:
-          app-dir: ~/
           version: 14.17.5
