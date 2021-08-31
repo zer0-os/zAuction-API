@@ -2,13 +2,7 @@ import { ethers } from "ethers";
 import { StorageService, SafeDownloadedFile } from "../storage";
 import { ERC20, Zauction } from "../types/contracts";
 
-import {
-  Auction,
-  Bid,
-  VerifyBidResponse,
-  Maybe,
-  BidParams,
-} from "../types";
+import { Auction, Bid, VerifyBidResponse, Maybe, BidParams } from "../types";
 
 import { ethersProvider, encodeBid } from "./contracts";
 
@@ -121,7 +115,7 @@ export async function verifyEncodedBid(
   } as VerifyBidResponse;
 }
 
-export async function createBidAuction(
+export async function getOrCreateAuction(
   newBid: Bid,
   auctionFile: SafeDownloadedFile
 ): Promise<Auction> {
@@ -137,6 +131,5 @@ export async function createBidAuction(
     } as Auction;
   }
 
-  auction.bids.push(newBid);
   return auction;
 }

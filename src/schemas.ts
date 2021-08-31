@@ -1,5 +1,11 @@
 import Ajv, { JSONSchemaType } from "ajv";
-import { BidPayloadPostDto, BidPostDto, BidsListDto, BidsAccountsDto, BidsDto } from "./types";
+import {
+  BidPayloadPostDto,
+  BidPostDto,
+  BidsListDto,
+  BidsAccountsDto,
+  BidsDto,
+} from "./types";
 
 const ajv = new Ajv({ coerceTypes: true });
 
@@ -71,19 +77,19 @@ export const validateBidsListPostSchema = ajv.compile(bidsListPostSchema);
 const bidsAccountsGetSchema: JSONSchemaType<BidsAccountsDto> = {
   type: "object",
   properties: {
-    account: { type: "string" }
+    account: { type: "string" },
   },
-  required: ["account"]
-}
+  required: ["account"],
+};
 
 export const validateBidsAccountsGetSchema = ajv.compile(bidsAccountsGetSchema);
 
 const bidsGetSchema: JSONSchemaType<BidsDto> = {
   type: "object",
   properties: {
-    nftId: { type: "string" }
+    nftId: { type: "string" },
   },
-  required: ["nftId"]
-}
+  required: ["nftId"],
+};
 
 export const validateBidsGetSchema = ajv.compile(bidsGetSchema);

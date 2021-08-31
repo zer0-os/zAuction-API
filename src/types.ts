@@ -25,11 +25,11 @@ export interface BidParams {
   account: string;
   auctionId: string;
   bidAmount: string;
-  contractAddress: string;
-  tokenId: string;
   minimumBid: string;
+  contractAddress: string;
   startBlock: string;
   expireBlock: string;
+  tokenId: string;
 }
 
 export interface BidsList {
@@ -48,17 +48,9 @@ export interface BidsDto {
   nftId: string;
 }
 
-export interface Bid {
-  account: string;
-  signedMessage: string;
-  auctionId: string;
-  bidAmount: string;
-  minimumBid: string;
-  startBlock: string;
-  expireBlock: string;
+export interface Bid extends BidParams {
   date: number;
-  tokenId: string;
-  contractAddress: string;
+  signedMessage: string;
 }
 
 export interface Auction {

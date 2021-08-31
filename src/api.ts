@@ -23,7 +23,7 @@ import {
   calculateNftId,
   getBidsForNft,
   verifyEncodedBid,
-  createBidAuction,
+  getOrCreateAuction,
 } from "./util/auctions";
 
 import {
@@ -162,7 +162,7 @@ router.post(
       const erc20Contract = await getTokenContract();
       const zAuctionContract: Zauction = await getZAuctionContract();
 
-      const params: BidParams = {
+      const bidParams: BidParams = {
         account: dto.account,
         auctionId: dto.auctionId,
         bidAmount: dto.bidAmount,
@@ -170,13 +170,13 @@ router.post(
         tokenId: dto.tokenId,
         minimumBid: dto.minimumBid,
         startBlock: dto.startBlock,
-        expireBlock: dto.expireBlock
-      }
+        expireBlock: dto.expireBlock,
+      };
 
       // Perform necessary checks to ensure account is able to make the bid
       // Check balance, block number, if consumed, if account recoverable
       const verification: VerifyBidResponse = await verifyEncodedBid(
-        params,
+        bidParams,
         dto.signedMessage,
         erc20Contract,
         zAuctionContract
@@ -193,21 +193,16 @@ router.post(
       const auctionFileKey = nftId;
       const auctionFile = await storage.safeDownloadFile(auctionFileKey);
       const dateNow = new Date();
-      
+
       const newBid: Bid = {
-        account: dto.account,
+        ...bidParams,
         signedMessage: dto.signedMessage,
-        auctionId: dto.auctionId,
-        bidAmount: dto.bidAmount,
-        minimumBid: dto.minimumBid,
-        startBlock: dto.startBlock,
-        expireBlock: dto.expireBlock,
         date: dateNow.getTime(),
-        tokenId: dto.tokenId,
-        contractAddress: dto.contractAddress,
       };
 
-      const auction = await createBidAuction(newBid, auctionFile);
+      // Updates file to store on fleek with new bid data
+      const auction = await getOrCreateAuction(newBid, auctionFile);
+      auction.bids.push(newBid);
 
       await storage.uploadFile(auctionFileKey, JSON.stringify(auction));
 

@@ -1,4 +1,3 @@
-
 import * as env from "env-var";
 export * from "./contracts";
 export * from "./auctions";
