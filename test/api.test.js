@@ -4,16 +4,6 @@ const app = require("../src/app");
 describe("API Endpoint Tests", () => {
 
   describe("/bid Tests", () => {
-    it("Fails on invalid input", () => {
-      const badPayload = {
-        foo: "bar"
-      }
-      
-      request(app)
-        .post("/bid")
-        .send(badPayload)
-        .expect(400)
-    }),
     // mock storage with sinon, don't touch fleek
     it("Returns 200 on expected input", () => {
       const payload = {
@@ -28,7 +18,18 @@ describe("API Endpoint Tests", () => {
         .send(payload)
         .expect(200)
         // expect the bids object not just status?
-    })
+    });
+
+    it("Fails on invalid input", () => {
+      const badPayload = {
+        foo: "bar"
+      }
+      
+      request(app)
+        .post("/bid")
+        .send(badPayload)
+        .expect(400)
+    });
   });
 
   describe("/bids/list Tests", () => {
