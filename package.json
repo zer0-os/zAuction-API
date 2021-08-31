@@ -7,7 +7,7 @@
     "dev": "nodemon",
     "lint": "eslint --fix src",
     "build": "tsc",
-    "test": "mocha -r ts-node/register 'test/**/*.ts' --exit",
+    "test": "mocha -r ts-node/register 'test/**/*.js' --exit",
     "typechain": "typechain --target=ethers-v5 --out-dir=src/types/contracts contracts/*.json",
     "style": "prettier --write ."
   },
@@ -33,6 +33,7 @@
     "@types/express-rate-limit": "5.1.2",
     "@types/mocha": "^9.0.0",
     "@types/morgan": "1.9.2",
+    "@types/supertest": "^2.0.11",
     "@typescript-eslint/eslint-plugin": "4.28.5",
     "@typescript-eslint/parser": "4.28.5",
     "chai": "^4.3.4",
