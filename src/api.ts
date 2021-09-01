@@ -2,8 +2,6 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import * as env from "env-var";
 
-import { adapters } from "./storage";
-
 // Ajv validation methods
 import {
   validateBidPayloadSchema,
@@ -39,6 +37,7 @@ import {
 } from "./types";
 
 import { Zauction } from "./types/contracts";
+import { getFleekConnection } from "./util";
 
 const router = express.Router();
 
@@ -47,10 +46,6 @@ const limiter = rateLimit({
   windowMs: 1 * 60 * 1000, // Window size
   max: 200, // limit each IP to X requests per windowMs
 });
-
-const fleekBucket = env.get("STORAGE_BUCKET").asString();
-const fileNamespace = env.get("NAMESPACE").asString();
-const storage = adapters.fleek.create(fleekBucket, fileNamespace);
 
 // Returns encoded data to be signed, a generated auctionId,
 // and a generated nftId determined by the NFT contract address and tokenId
@@ -104,8 +99,9 @@ router.post(
     if (!validateBidsListPostSchema(req.body)) {
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
-    const dto: BidsListDto = req.body as BidsListDto;
 
+    const storage = getFleekConnection();
+    const dto: BidsListDto = req.body as BidsListDto;
     const nftBids: BidsList = {};
 
     // Get all of the bids on every provided nftId
@@ -126,6 +122,8 @@ router.get(
     if (!validateBidsAccountsGetSchema(req.params)) {
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
+
+    const storage = getFleekConnection();
 
     const fileKey = req.params.account.toLowerCase();
     let userBids: Bid[] = [];
@@ -154,6 +152,8 @@ router.post(
     if (!validateBidPostSchema(req.body)) {
       return res.status(400).send(validateBidPostSchema.errors);
     }
+
+    const storage = getFleekConnection();
 
     const dto: BidPostDto = req.body as BidPostDto;
 
@@ -237,6 +237,8 @@ router.get(
     if (!validateBidsGetSchema(req.params)) {
       return res.status(400).send(validateBidsGetSchema.errors);
     }
+    const storage = getFleekConnection();
+
     const bids = await getBidsForNft(storage, req.params.nftId);
     return res.status(200).send(bids);
   }

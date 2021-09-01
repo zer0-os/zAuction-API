@@ -4,7 +4,7 @@ import { ERC20, Zauction } from "../types/contracts";
 
 import { Auction, Bid, VerifyBidResponse, Maybe, BidParams } from "../types";
 
-import { ethersProvider, encodeBid } from "./contracts";
+import { getEthersProvider, encodeBid } from "./contracts";
 
 export async function getBidsForNft(
   storage: StorageService,
@@ -68,6 +68,7 @@ export async function verifyEncodedBid(
   const userBalance = await erc20Contract.balanceOf(params.account);
   const bidAmount = ethers.BigNumber.from(params.bidAmount);
 
+  const ethersProvider = getEthersProvider();
   const blockNum = ethers.BigNumber.from(await ethersProvider.getBlockNumber());
   const start = ethers.BigNumber.from(params.startBlock);
   const expire = ethers.BigNumber.from(params.expireBlock);
