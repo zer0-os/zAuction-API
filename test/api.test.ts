@@ -27,7 +27,9 @@ describe("Cont", () => {
 
       done();
     });
-    it("Calculates the NFT ID")
+    it("Calculates the NFT ID", (done) => {
+      done();
+    })
     // mock storage with sinon, don't touch fleek
     // it("Returns 200 on expected input", (done) => {
     //   const payload = {

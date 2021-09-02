@@ -1,6 +1,5 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
-import * as env from "env-var";
 
 // Ajv validation methods
 import {
@@ -152,9 +151,7 @@ router.post(
     if (!validateBidPostSchema(req.body)) {
       return res.status(400).send(validateBidPostSchema.errors);
     }
-
     const storage = getFleekConnection();
-
     const dto: BidPostDto = req.body as BidPostDto;
 
     try {
