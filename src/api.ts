@@ -123,7 +123,7 @@ router.get(
     }
 
     const storage = getFleekConnection();
-
+    console.log(storage)
     const fileKey = req.params.account.toLowerCase();
     let userBids: Bid[] = [];
 
@@ -155,10 +155,6 @@ router.post(
     const dto: BidPostDto = req.body as BidPostDto;
 
     try {
-      // Instantiate contracts
-      const erc20Contract = await getTokenContract();
-      const zAuctionContract: Zauction = await getZAuctionContract();
-
       const bidParams: BidParams = {
         account: dto.account,
         auctionId: dto.auctionId,
@@ -175,8 +171,6 @@ router.post(
       const verification: VerifyBidResponse = await verifyEncodedBid(
         bidParams,
         dto.signedMessage,
-        erc20Contract,
-        zAuctionContract
       );
 
       if (!verification.pass) {
