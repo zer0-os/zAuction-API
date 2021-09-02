@@ -46,7 +46,7 @@ export async function getTokenContract(): Promise<ERC20> {
   return getTokenContract();
 }
 
-export async function encodeBid(
+export const encodeBid = async (
   auctionId: string | number,
   bidAmount: string,
   contractAddress: string,
@@ -54,7 +54,7 @@ export async function encodeBid(
   minimumBid: string,
   startBlock: string,
   expireBlock: string
-): Promise<string> {
+): Promise<string> => {
   const zAuction = await getZAuctionContract();
 
   const payload = await zAuction.createBid(
@@ -68,4 +68,4 @@ export async function encodeBid(
   );
 
   return payload;
-}
+};

@@ -1,35 +1,33 @@
 // import request from "supertest";
 import { expect } from "chai";
+import sinon from "sinon";
+import request from "supertest";
 import App from "../src/app";
-import { validateBidPayloadSchema } from "../src/schemas"
+import * as contracts from "../src/util/contracts";
 
 describe("Cont", () => {
   describe("POST /bid", () => {
     it("Validates the BidPayload schema correctly", (done) => {
       const payload = {
-        "bidAmount": "0",
-        "contractAddress": "0x1",
-        "tokenId": "0x1",
-        "minimumBid": "0",
-        "startBlock": "0",
-        "expireBlock": "1"
-      }
+        bidAmount: "0",
+        contractAddress: "0x1",
+        tokenId: "0x1",
+        minimumBid: "0",
+        startBlock: "0",
+        expireBlock: "1",
+      };
 
-      const badPayload = {
-        "foo": "bar"
-      }
+      sinon.stub(contracts, "encodeBid").returns(Promise.resolve(""));
 
-      const payloadIsValid = validateBidPayloadSchema(payload);
-      expect(payloadIsValid);
-
-      const badPayLoadIsValid = validateBidPayloadSchema(badPayload);
-      expect(!badPayLoadIsValid);
-
-      done();
+      request(App)
+        .post("/api/bid")
+        .set("Content-Type", "application/json")
+        .send(payload)
+        .expect(200, done);
     });
     it("Calculates the NFT ID", (done) => {
       done();
-    })
+    });
     // mock storage with sinon, don't touch fleek
     // it("Returns 200 on expected input", (done) => {
     //   const payload = {
@@ -50,7 +48,7 @@ describe("Cont", () => {
     //     .end((err) => {
     //       console.log("api.test.ts: " + process.env.INFURA_URL)
     //       // 404 error if not real NFT IDs, shouldn't care though
-    //       if (err) return done(err) 
+    //       if (err) return done(err)
     //       return done();
     //     });
     // });
