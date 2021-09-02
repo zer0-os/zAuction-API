@@ -1,10 +1,15 @@
 import { ethers } from "ethers";
 import { StorageService, SafeDownloadedFile } from "../storage";
-import { ERC20, Zauction } from "../types/contracts";
+import { Zauction } from "../types/contracts";
 
 import { Auction, Bid, VerifyBidResponse, Maybe, BidParams } from "../types";
 
-import { getEthersProvider, encodeBid, getTokenContract, getZAuctionContract } from "./contracts";
+import {
+  getEthersProvider,
+  encodeBid,
+  getTokenContract,
+  getZAuctionContract,
+} from "./contracts";
 
 export async function getBidsForNft(
   storage: StorageService,
@@ -60,9 +65,7 @@ async function calculateSigningAccount(
 
 export async function verifyEncodedBid(
   params: BidParams,
-  signedMessage: string,
-  // erc20Contract: ERC20,
-  // zAuctionContract: Zauction
+  signedMessage: string
 ): Promise<VerifyBidResponse> {
   // Instantiate contracts
   const erc20Contract = await getTokenContract();

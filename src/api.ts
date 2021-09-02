@@ -12,8 +12,6 @@ import {
 
 import {
   encodeBid,
-  getTokenContract,
-  getZAuctionContract,
 } from "./util/contracts";
 
 import {
@@ -35,7 +33,6 @@ import {
   VerifyBidResponse,
 } from "./types";
 
-import { Zauction } from "./types/contracts";
 import { getFleekConnection } from "./util";
 
 const router = express.Router();
@@ -123,7 +120,6 @@ router.get(
     }
 
     const storage = getFleekConnection();
-    console.log(storage)
     const fileKey = req.params.account.toLowerCase();
     let userBids: Bid[] = [];
 
