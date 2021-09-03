@@ -13,8 +13,8 @@ export function isProduction(): boolean {
 export function getFleekConnection(): StorageService {
   const fleekBucket = env.get("STORAGE_BUCKET").required().asString();
   const fileNamespace = env.get("NAMESPACE").required().asString();
-  if(!fleekBucket || !fileNamespace) {
-    throw new ReferenceError("Could not connect to Fleek")
+  if (!fleekBucket || !fileNamespace) {
+    throw new ReferenceError("Could not connect to Fleek");
   }
   const storage = adapters.fleek.create(fleekBucket, fileNamespace);
 

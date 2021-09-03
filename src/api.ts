@@ -10,9 +10,7 @@ import {
   validateBidsGetSchema,
 } from "./schemas";
 
-import {
-  encodeBid,
-} from "./util/contracts";
+import { encodeBid } from "./util/contracts";
 
 import {
   calculateNftId,
@@ -166,7 +164,7 @@ router.post(
       // Check balance, block number, if consumed, if account recoverable
       const verification: VerifyBidResponse = await verifyEncodedBid(
         bidParams,
-        dto.signedMessage,
+        dto.signedMessage
       );
 
       if (!verification.pass) {

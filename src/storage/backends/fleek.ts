@@ -6,12 +6,12 @@ const fleekAuth = () => {
   const secret = env.get("FLEEK_STORAGE_API_SECRET").required().asString();
 
   if (!key || !secret) {
-    throw new ReferenceError("Fleek environment variables are not present")
+    throw new ReferenceError("Fleek environment variables are not present");
   }
 
   return {
     apiKey: key,
-    apiSecret: secret
+    apiSecret: secret,
   };
 };
 
