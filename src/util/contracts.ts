@@ -40,8 +40,8 @@ export async function getTokenContract(): Promise<ERC20> {
     return contract;
   }
 
-  const zAuction = await getZAuctionContract(); // gets real contract
-  tokenAddressCache = await zAuction.token(); // causes infinite loop
+  const zAuction = await getZAuctionContract();
+  tokenAddressCache = await zAuction.token();
 
   return getTokenContract();
 }

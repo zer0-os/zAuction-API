@@ -51,7 +51,7 @@ describe("Test API Endpoints", async () => {
     .stub(auctions, "verifyEncodedBid")
     .returns(
       Promise.resolve(stubbedVerifyBidResponse)
-    ) as unknown as VerifyBidResponse;
+    )
 
   const stubbedGetOrCreateAuction = {
     tokenId: "0x123",
@@ -60,7 +60,7 @@ describe("Test API Endpoints", async () => {
   };
   sinon
     .stub(auctions, "getOrCreateAuction")
-    .returns(Promise.resolve(stubbedGetOrCreateAuction)) as unknown as Auction;
+    .returns(Promise.resolve(stubbedGetOrCreateAuction));
 
   sinon.stub(auctions, "getBidsForNft").returns(Promise.resolve([]));
 

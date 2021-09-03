@@ -1,7 +1,6 @@
 import App from "./app";
 
-// was : number specifically
-const PORT = process.env.PORT || 5000 //.asPortNumber();
+const PORT = process.env.PORT || 5000
 
 const port = PORT as number;
 App.listen(port, () => {
