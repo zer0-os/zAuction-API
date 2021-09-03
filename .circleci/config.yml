@@ -5,8 +5,8 @@ workflows:
   run-tests:
     jobs:
       - node/run:
-        pkg-manager: yarn
-        yarn-run: build
+          pkg-manager: yarn
+          yarn-run: build
       - node/test:
           pkg-manager: yarn
           run-command: test
