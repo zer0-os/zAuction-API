@@ -1,8 +1,9 @@
 import App from "./app";
+import env from "env-var"
 
-const PORT = process.env.PORT || 5000
+const PORT: number = env.get("PORT").default("5000").asPortNumber();
 
-const port = PORT as number;
+const port = PORT;
 App.listen(port, () => {
   /* eslint-disable no-console */
   console.log(`Listening: http://localhost:${port}`);

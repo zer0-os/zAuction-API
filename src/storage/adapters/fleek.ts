@@ -1,8 +1,9 @@
 import * as fleek from "../backends/fleek";
+import * as env from "env-var";
 
 import { SafeDownloadedFile, StorageService, UploadedFile } from "../";
 
-const defaultBucket = process.env.DEFAULT_FLEEK_BUCKET || "";
+const defaultBucket = env.get("DEFAULT_FLEEK_BUCKET").asString();
 
 export interface FleekUploadedFile extends UploadedFile {
   fleekHash: string;

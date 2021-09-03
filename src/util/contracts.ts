@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import * as env from "env-var";
 
 import {
   ERC20,
@@ -16,7 +17,7 @@ function getVoidSigner(): ethers.VoidSigner {
 }
 
 export function getEthersProvider(): ethers.providers.JsonRpcProvider {
-  const infuraUrl = process.env.INFURA_URL; //.required().asString();
+  const infuraUrl = env.get("INFURA_URL").required().asString();
   if (!infuraUrl) throw ReferenceError;
   const provider = new ethers.providers.JsonRpcProvider(infuraUrl);
 
@@ -25,7 +26,7 @@ export function getEthersProvider(): ethers.providers.JsonRpcProvider {
 
 export async function getZAuctionContract(): Promise<Zauction> {
   // Contract setup
-  const zAuctionAddress = process.env.ZAUCTION_ADDRESS; //.required().asString();
+  const zAuctionAddress = env.get("ZAUCTION_ADDRESS").required().asString();
   if (!zAuctionAddress) throw ReferenceError;
   const signer = getVoidSigner();
   const contract = Zauction__factory.connect(zAuctionAddress, signer);
