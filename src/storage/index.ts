@@ -24,7 +24,6 @@ export interface StorageService {
   safeDownloadFile: (filename: string) => Promise<SafeDownloadedFile>;
 }
 
-// TODO rename when successfully overridden existing StorageService
 export interface MongoStorageService {
   uploadData: (data: Bid) => Promise<InsertOneResult<Document>>;
   queryData: (query?: Object) => Promise<Document[]>;
