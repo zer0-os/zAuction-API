@@ -1,12 +1,25 @@
 import { ethers } from "ethers";
-import { StorageService, SafeDownloadedFile } from "../storage";
+import { Document } from "mongodb";
+import {
+  SafeDownloadedFile,
+  StorageService,
+  MongoStorageService,
+} from "../storage";
 import { ERC20, Zauction } from "../types/contracts";
-
 import { Auction, Bid, VerifyBidResponse, Maybe, BidParams } from "../types";
-
 import { ethersProvider, encodeBid } from "./contracts";
 
-export async function getBidsForNft(
+export async function getBidsForAccount(
+  storage: MongoStorageService,
+  account: string
+): Promise<Bid[]> {
+  const dataContents: Document[] = await storage.queryData({
+    account: `${account}`,
+  });
+  return dataContents as Bid[];
+}
+
+export async function getBidsForNftFleek(
   storage: StorageService,
   nftId: string
 ): Promise<Bid[]> {
@@ -15,7 +28,44 @@ export async function getBidsForNft(
     const auction = JSON.parse(fileContents) as Auction;
     return auction.bids;
   } catch {
-    return [];
+    throw Error(`Unable to get bids for NFT ${nftId}`)
+  }
+}
+
+export async function getBidsForNft(
+  storage: MongoStorageService,
+  nftId: string
+): Promise<Bid[]> {
+  try {
+    // where is nftid kept? how do we maintain that lookup?
+    const dataContents: Document[] = await storage.queryData({
+      nftId: `${nftId}`,
+    });
+
+    // check cursor.count === 0
+    const bids: Bid[] = [];
+
+    await dataContents.forEach((doc) => {
+      const bid: Bid = {
+        nftId: doc.nftId,
+        account: doc.account,
+        auctionId: doc.auctionId,
+        bidAmount: doc.bidAmount,
+        contractAddress: doc.contractAddress,
+        tokenId: doc.tokenId,
+        minimumBid: doc.minimumBid,
+        startBlock: doc.startBlock,
+        expireBlock: doc.expireBlock,
+        signedMessage: doc.signedMessage,
+        date: doc.date,
+      };
+
+      bids.push(bid);
+    });
+
+    return bids;
+  } catch {
+    throw Error(`Couldn't retrieve bid information for ${nftId}`);
   }
 }
 
