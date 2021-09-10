@@ -2,7 +2,7 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import * as env from "env-var";
 
-import { adapters, StorageService, MongoStorageService } from "./storage";
+import { adapters, MongoStorageService } from "./storage";
 
 // Ajv validation methods
 import {
@@ -13,11 +13,7 @@ import {
   validateBidsGetSchema,
 } from "./schemas";
 
-import {
-  encodeBid,
-  getTokenContract,
-  getZAuctionContract,
-} from "./util/contracts";
+import { encodeBid } from "./util/contracts";
 
 import {
   calculateNftId,
@@ -36,7 +32,7 @@ import {
   VerifyBidResponse,
 } from "./types";
 
-import { Zauction } from "./types/contracts";
+import { getFleekConnection } from "./util";
 
 const router = express.Router();
 
@@ -156,14 +152,10 @@ router.post(
     if (!validateBidPostSchema(req.body)) {
       return res.status(400).send(validateBidPostSchema.errors);
     }
-
+    const storage = getFleekConnection();
     const dto: BidPostDto = req.body as BidPostDto;
 
     try {
-      // Instantiate contracts
-      const erc20Contract = await getTokenContract();
-      const zAuctionContract: Zauction = await getZAuctionContract();
-
       const bidParams: BidParams = {
         nftId: calculateNftId(dto.contractAddress, dto.tokenId),
         account: dto.account,
@@ -180,9 +172,7 @@ router.post(
       // Check balance, block number, if consumed, if account recoverable
       const verification: VerifyBidResponse = await verifyEncodedBid(
         bidParams,
-        dto.signedMessage,
-        erc20Contract,
-        zAuctionContract
+        dto.signedMessage
       );
 
       if (!verification.pass) {

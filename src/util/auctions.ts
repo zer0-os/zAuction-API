@@ -5,9 +5,14 @@ import {
   StorageService,
   MongoStorageService,
 } from "../storage";
-import { ERC20, Zauction } from "../types/contracts";
+import { Zauction } from "../types/contracts";
 import { Auction, Bid, VerifyBidResponse, Maybe, BidParams } from "../types";
-import { ethersProvider, encodeBid } from "./contracts";
+import {
+  encodeBid,
+  getEthersProvider,
+  getTokenContract,
+  getZAuctionContract,
+} from "./contracts";
 
 export async function getBidsForAccount(
   storage: MongoStorageService,
@@ -28,7 +33,7 @@ export async function getBidsForNftFleek(
     const auction = JSON.parse(fileContents) as Auction;
     return auction.bids;
   } catch {
-    throw Error(`Unable to get bids for NFT ${nftId}`)
+    throw Error(`Unable to get bids for NFT ${nftId}`);
   }
 }
 
@@ -110,14 +115,17 @@ async function calculateSigningAccount(
 
 export async function verifyEncodedBid(
   params: BidParams,
-  signedMessage: string,
-  erc20Contract: ERC20,
-  zAuctionContract: Zauction
+  signedMessage: string
 ): Promise<VerifyBidResponse> {
+  // Instantiate contracts
+  const erc20Contract = await getTokenContract();
+  const zAuctionContract: Zauction = await getZAuctionContract();
+
   // Calculate user balance, block number, and the signing account
   const userBalance = await erc20Contract.balanceOf(params.account);
   const bidAmount = ethers.BigNumber.from(params.bidAmount);
 
+  const ethersProvider = getEthersProvider();
   const blockNum = ethers.BigNumber.from(await ethersProvider.getBlockNumber());
   const start = ethers.BigNumber.from(params.startBlock);
   const expire = ethers.BigNumber.from(params.expireBlock);

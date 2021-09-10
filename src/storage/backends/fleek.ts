@@ -1,10 +1,17 @@
-import * as env from "env-var";
 import fleekStorage, { getInput, uploadInput } from "@fleekhq/fleek-storage-js";
+import * as env from "env-var";
 
 const fleekAuth = () => {
+  const key = env.get("FLEEK_STORAGE_API_KEY").required().asString();
+  const secret = env.get("FLEEK_STORAGE_API_SECRET").required().asString();
+
+  if (!key || !secret) {
+    throw new ReferenceError("Fleek environment variables are not present");
+  }
+
   return {
-    apiKey: env.get(`FLEEK_STORAGE_API_KEY`).required().asString(),
-    apiSecret: env.get(`FLEEK_STORAGE_API_SECRET`).required().asString(),
+    apiKey: key,
+    apiSecret: secret,
   };
 };
 
