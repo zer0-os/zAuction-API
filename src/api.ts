@@ -2,7 +2,8 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import * as env from "env-var";
 
-import { adapters, MongoStorageService } from "./storage";
+import { BidDatabaseService } from "./database";
+import { adapters } from "./database/adapters";
 
 // Ajv validation methods
 import {
@@ -15,12 +16,7 @@ import {
 
 import { encodeBid } from "./util/contracts";
 
-import {
-  calculateNftId,
-  verifyEncodedBid,
-  getBidsForNft,
-  getBidsForAccount,
-} from "./util/auctions";
+import { calculateNftId, verifyEncodedBid } from "./util/auctions";
 
 import {
   Bid,
@@ -32,8 +28,6 @@ import {
   VerifyBidResponse,
 } from "./types";
 
-import { getFleekConnection } from "./util";
-
 const router = express.Router();
 
 // User will receive a 429 error for being rate limited
@@ -42,13 +36,9 @@ const limiter = rateLimit({
   max: 200, // limit each IP to X requests per windowMs
 });
 
-// const fleekBucket = env.get("STORAGE_BUCKET").asString();
-// const fileNamespace = env.get("NAMESPACE").asString();
-// const storage: StorageService = adapters.fleek.create(fleekBucket, fileNamespace);
-
 const db = env.get("MONGO_DB").required().asString();
 const collection = env.get("MONGO_COLLECTION").required().asString();
-const mongoStorage: MongoStorageService = adapters.mongo.create(db, collection);
+const database: BidDatabaseService = adapters.mongo.create(db, collection);
 
 // Returns encoded data to be signed, a generated auctionId,
 // and a generated nftId determined by the NFT contract address and tokenId
@@ -107,8 +97,8 @@ router.post(
     // Get all of the bids on every provided nftId
     for (const nftId of dto.nftIds) {
       try {
-        const mongoBids = await getBidsForNft(mongoStorage, nftId);
-        nftBids[nftId] = mongoBids;
+        const bids = await database.getBidsByNftId(nftId);
+        nftBids[nftId] = bids;
       } catch {
         // Returns 500
         throw Error(`Failed to list bids for NFT: ${nftId}`);
@@ -129,10 +119,7 @@ router.get(
     const accountId = req.params.account;
 
     try {
-      const accountBids: Bid[] = await getBidsForAccount(
-        mongoStorage,
-        accountId
-      );
+      const accountBids: Bid[] = await database.getBidsByAccount(accountId);
       return res.status(200).send(accountBids);
     } catch {
       throw Error(`Could not get bids for account ${accountId}`);
@@ -152,7 +139,7 @@ router.post(
     if (!validateBidPostSchema(req.body)) {
       return res.status(400).send(validateBidPostSchema.errors);
     }
-    const storage = getFleekConnection();
+
     const dto: BidPostDto = req.body as BidPostDto;
 
     try {
@@ -189,7 +176,7 @@ router.post(
       };
 
       // Add new bid document to database
-      await mongoStorage.uploadData(newBid);
+      await database.insertBid(newBid);
 
       return res.status(200).send("OK");
     } catch (error) {
@@ -206,8 +193,8 @@ router.get(
     if (!validateBidsGetSchema(req.params)) {
       return res.status(400).send(validateBidsGetSchema.errors);
     }
-    const mongoBids = await getBidsForNft(mongoStorage, req.params.nftId);
-    return res.status(200).send(mongoBids);
+    const bids = await database.getBidsByNftId(req.params.nftId);
+    return res.status(200).send(bids);
   }
 );
 

@@ -4,34 +4,31 @@ import {
   MongoClientOptions,
   InsertOneResult,
   FindCursor,
+  Filter,
   Document,
 } from "mongodb";
 
-export const createMongoClient = (dbName: string): MongoClient => {
-  const user = env.get("MONGO_USERNAME").required().asString();
-  const pass = env.get("MONGO_PASSWORD").required().asString();
-  const uri = env.get("MONGO_CLUSTER_URI").required().asString();
+const user = env.get("MONGO_USERNAME").required().asString();
+const pass = env.get("MONGO_PASSWORD").required().asString();
+const uri = env.get("MONGO_CLUSTER_URI").required().asString();
+const db = env.get("MONGO_DB").required().asString();
 
-  const fullUri = `mongodb+srv://${user}:${pass}@${uri}/${dbName}`;
+const fullUri = `mongodb+srv://${user}:${pass}@${uri}/${db}`;
 
-  const options: MongoClientOptions = {
-    connectTimeoutMS: 5000,
-    retryWrites: true,
-    w: "majority",
-  };
-
-  const client = new MongoClient(fullUri, options);
-
-  return client;
+const options: MongoClientOptions = {
+  connectTimeoutMS: 5000,
+  retryWrites: true,
+  w: "majority",
 };
 
+const client = new MongoClient(fullUri, options);
+
 // Will create the collection if it does not already exist
-export const insertOne = async (
-  data: Object,
+export const insertOne = async <T>(
+  data: T,
   db: string,
   collection: string
-): Promise<InsertOneResult<Document>> => {
-  const client: MongoClient = createMongoClient(db);
+): Promise<InsertOneResult> => {
   try {
     await client.connect();
     const database = client.db(db);
@@ -60,27 +57,25 @@ export const insertOne = async (
 // };
 
 // Note queries are case sensitive
-export const find = async (
+export const find = async <T>(
   db: string,
   collection: string,
-  query?: Object
-): Promise<Document[]> => {
-  const client = createMongoClient(db);
-
+  query?: Filter<Document>
+): Promise<T[]> => {
   try {
     await client.connect();
 
-    const database = client.db(db); //bp ?
+    const database = client.db(db);
     const usedCollection = database.collection(collection);
 
     if (query) {
-      const cursor: FindCursor<Document> = await usedCollection.find(query);
-      const results = await cursor.toArray();
-      return results;
+      const cursor: FindCursor<Document> = await usedCollection.find<T>(query);
+      const results: Document[] = await cursor.toArray();
+      return results as T[];
     } else {
       const cursor: FindCursor<Document> = await usedCollection.find();
-      const results = cursor.toArray();
-      return results;
+      const results: Document[] = await cursor.toArray();
+      return results as T[];
     }
   } catch (err) {
     throw Error;
