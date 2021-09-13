@@ -2,8 +2,7 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import * as env from "env-var";
 
-import { BidDatabaseService } from "./database";
-import { adapters } from "./database/adapters";
+import { adapters, BidDatabaseService } from "./database";
 
 // Ajv validation methods
 import {

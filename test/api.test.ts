@@ -1,16 +1,14 @@
 // import request from "supertest";
-import { expect, assert } from "chai";
+import { assert } from "chai";
 import sinon from "sinon";
 import request from "supertest";
 import App from "../src/app";
-import { adapters, StorageService } from "../src/storage";
+import { adapters, BidDatabaseService } from "../src/database";
 import {
   BidPayloadPostDto,
   BidsAccountsDto,
   BidsListDto,
   BidPostDto,
-  VerifyBidResponse,
-  Auction,
   BidsDto,
 } from "../src/types";
 import * as util from "../src/util";
@@ -20,26 +18,18 @@ import * as contracts from "../src/util/contracts";
 describe("Test API Endpoints", async () => {
   sinon.stub(contracts, "encodeBid").returns(Promise.resolve(""));
 
-  const stubbedStorageService = {
-    uploadFile: () => {},
-    downloadFile: () => {},
-    safeDownloadFile: (auctionFileKey: string) => {
-      return auctionFileKey;
-    },
+  const stubbedDatabaseService = {
+    insertBid: () => {},
+    getBidsByNftId: () => {},
+    getBidsByAccount: () => {},
   };
+
   sinon
-    .stub(adapters.fleek, "create")
+    .stub(adapters.mongo, "create")
     .returns(
       (await Promise.resolve(
-        stubbedStorageService
-      )) as unknown as StorageService
-    );
-  sinon
-    .stub(util, "getFleekConnection")
-    .returns(
-      (await Promise.resolve(
-        stubbedStorageService
-      )) as unknown as StorageService
+        stubbedDatabaseService
+      )) as unknown as BidDatabaseService
     );
 
   const stubbedVerifyBidResponse = {
@@ -53,16 +43,7 @@ describe("Test API Endpoints", async () => {
       Promise.resolve(stubbedVerifyBidResponse)
     )
 
-  const stubbedGetOrCreateAuction = {
-    tokenId: "0x123",
-    contractAddress: "0x456",
-    bids: [],
-  };
-  sinon
-    .stub(auctions, "getOrCreateAuction")
-    .returns(Promise.resolve(stubbedGetOrCreateAuction));
-
-  sinon.stub(auctions, "getBidsForNft").returns(Promise.resolve([]));
+  sinon.stub(auctions, "calculateNftId").returns("0x1");
 
   describe("POST /bid", () => {
     it("Validates the BidPayload schema correctly", (done) => {

@@ -1,4 +1,5 @@
 import { Bid } from "../types"
+export * from "./adapters"
 
 export interface BidDatabaseService {
   insertBid: (bid: Bid) => Promise<boolean>;
