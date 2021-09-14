@@ -11,9 +11,8 @@ import {
 const user = env.get("MONGO_USERNAME").required().asString();
 const pass = env.get("MONGO_PASSWORD").required().asString();
 const uri = env.get("MONGO_CLUSTER_URI").required().asString();
-const db = env.get("MONGO_DB").required().asString();
 
-const fullUri = `mongodb+srv://${user}:${pass}@${uri}/${db}`;
+const fullUri = `mongodb+srv://${user}:${pass}@${uri}/`;
 
 const options: MongoClientOptions = {
   connectTimeoutMS: 5000,
@@ -26,12 +25,12 @@ const client = new MongoClient(fullUri, options);
 // Will create the collection if it does not already exist
 export const insertOne = async <T>(
   data: T,
-  db: string,
+  databaseName: string,
   collection: string
 ): Promise<InsertOneResult> => {
   try {
     await client.connect();
-    const database = client.db(db);
+    const database = client.db(databaseName);
     const usedCollection = database.collection(collection);
 
     const result: InsertOneResult<Document> = await usedCollection.insertOne(
@@ -39,8 +38,10 @@ export const insertOne = async <T>(
     );
 
     return result;
-  } catch (err) {
-    throw Error;
+  } catch {
+    throw Error(
+      `Failed to "insertOne" on database: ${databaseName} with collection: ${collection}`
+    );
   } finally {
     await client.close();
   }
@@ -58,14 +59,14 @@ export const insertOne = async <T>(
 
 // Note queries are case sensitive
 export const find = async <T>(
-  db: string,
+  databaseName: string,
   collection: string,
   query?: Filter<Document>
 ): Promise<T[]> => {
   try {
     await client.connect();
 
-    const database = client.db(db);
+    const database = client.db(databaseName);
     const usedCollection = database.collection(collection);
 
     if (query) {
@@ -77,8 +78,10 @@ export const find = async <T>(
       const results: Document[] = await cursor.toArray();
       return results as T[];
     }
-  } catch (err) {
-    throw Error;
+  } catch {
+    throw Error(
+      `Failed to "find" on database: ${databaseName} with collection: ${collection}`
+    );
   } finally {
     await client.close();
   }
