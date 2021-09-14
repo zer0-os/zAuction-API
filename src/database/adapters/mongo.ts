@@ -19,14 +19,18 @@ export const create = (db: string, collection: string): BidDatabaseService => {
   };
 
   const getBidsByNftId = async (nftId: string): Promise<Bid[]> => {
-    const result: Bid[] = await mongo.find(database, usedCollection, { nftId: `${nftId}`});
+    const result: Bid[] = await mongo.find(database, usedCollection, {
+      nftId: `${nftId}`,
+    });
     return result;
-  }
+  };
 
   const getBidsByAccount = async (account: string): Promise<Bid[]> => {
-    const result: Bid[] = await mongo.find(database, usedCollection, { account: `${account}`});
+    const result: Bid[] = await mongo.find(database, usedCollection, {
+      account: `${account}`,
+    });
     return result;
-  }
+  };
 
   const storageService = {
     insertBid,

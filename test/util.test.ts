@@ -11,7 +11,7 @@ const utils = require("../src/util");
 
 describe("Utility Function Tests", () => {
   sinon.stub(auctions, "calculateNftId").returns("0x1");
-  
+
   describe("Auctions Utility Tests", () => {
     it("Calculates the NFT ID", (done) => {
       const contractAddress = "0x123";

@@ -39,9 +39,7 @@ describe("Test API Endpoints", async () => {
   };
   sinon
     .stub(auctions, "verifyEncodedBid")
-    .returns(
-      Promise.resolve(stubbedVerifyBidResponse)
-    )
+    .returns(Promise.resolve(stubbedVerifyBidResponse));
 
   sinon.stub(auctions, "calculateNftId").returns("0x1");
 
