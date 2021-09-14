@@ -1,7 +1,7 @@
 import { InsertOneResult, Filter, Document, DeleteResult } from "mongodb";
+
 import { BidDatabaseService } from "..";
 import { Bid } from "../../types";
-
 import * as mongo from "../backends/mongo";
 
 export const create = (db: string, collection: string): BidDatabaseService => {
@@ -32,11 +32,11 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result;
   };
 
-  const storageService = {
+  const databaseService = {
     insertBid,
     getBidsByNftId,
     getBidsByAccount,
   };
 
-  return storageService;
+  return databaseService;
 };
