@@ -22,6 +22,7 @@ export interface BidPostDto {
 }
 
 export interface BidParams {
+  nftId: string;
   account: string;
   auctionId: string;
   bidAmount: string;

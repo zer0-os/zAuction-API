@@ -1,28 +1,13 @@
 import { ethers } from "ethers";
-import { StorageService, SafeDownloadedFile } from "../storage";
+
 import { Zauction } from "../types/contracts";
-
-import { Auction, Bid, VerifyBidResponse, Maybe, BidParams } from "../types";
-
+import { VerifyBidResponse, BidParams } from "../types";
 import {
-  getEthersProvider,
   encodeBid,
+  getEthersProvider,
   getTokenContract,
   getZAuctionContract,
 } from "./contracts";
-
-export async function getBidsForNft(
-  storage: StorageService,
-  nftId: string
-): Promise<Bid[]> {
-  try {
-    const fileContents = await storage.downloadFile(nftId);
-    const auction = JSON.parse(fileContents) as Auction;
-    return auction.bids;
-  } catch {
-    return [];
-  }
-}
 
 export function calculateNftId(
   contractAddress: string,
@@ -121,23 +106,4 @@ export async function verifyEncodedBid(
     status: 200,
     message: "",
   } as VerifyBidResponse;
-}
-
-export async function getOrCreateAuction(
-  newBid: Bid,
-  auctionFile: SafeDownloadedFile
-): Promise<Auction> {
-  let auction: Maybe<Auction>;
-
-  if (auctionFile.exists) {
-    auction = JSON.parse(auctionFile.data) as Auction;
-  } else {
-    auction = {
-      tokenId: newBid.tokenId,
-      contractAddress: newBid.contractAddress,
-      bids: [],
-    } as Auction;
-  }
-
-  return auction;
 }

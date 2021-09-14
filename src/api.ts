@@ -1,5 +1,8 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
+import * as env from "env-var";
+
+import { adapters, BidDatabaseService } from "./database";
 
 // Ajv validation methods
 import {
@@ -12,12 +15,7 @@ import {
 
 import { encodeBid } from "./util/contracts";
 
-import {
-  calculateNftId,
-  getBidsForNft,
-  verifyEncodedBid,
-  getOrCreateAuction,
-} from "./util/auctions";
+import { calculateNftId, verifyEncodedBid } from "./util/auctions";
 
 import {
   Bid,
@@ -26,12 +24,8 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
-  Maybe,
-  UserAccount,
   VerifyBidResponse,
 } from "./types";
-
-import { getFleekConnection } from "./util";
 
 const router = express.Router();
 
@@ -40,6 +34,10 @@ const limiter = rateLimit({
   windowMs: 1 * 60 * 1000, // Window size
   max: 200, // limit each IP to X requests per windowMs
 });
+
+const db = env.get("MONGO_DB").required().asString();
+const collection = env.get("MONGO_COLLECTION").required().asString();
+const database: BidDatabaseService = adapters.mongo.create(db, collection);
 
 // Returns encoded data to be signed, a generated auctionId,
 // and a generated nftId determined by the NFT contract address and tokenId
@@ -55,7 +53,6 @@ router.post(
       if (!validateBidPayloadSchema(req.body)) {
         return res.status(400).send(validateBidPayloadSchema.errors);
       }
-
       const dto: BidPayloadPostDto = req.body as BidPayloadPostDto;
 
       // Generate auctionId, nftId
@@ -93,17 +90,19 @@ router.post(
     if (!validateBidsListPostSchema(req.body)) {
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
-
-    const storage = getFleekConnection();
     const dto: BidsListDto = req.body as BidsListDto;
     const nftBids: BidsList = {};
 
     // Get all of the bids on every provided nftId
     for (const nftId of dto.nftIds) {
-      const bids = await getBidsForNft(storage, nftId);
-      nftBids[nftId] = bids;
+      try {
+        const bids = await database.getBidsByNftId(nftId);
+        nftBids[nftId] = bids;
+      } catch {
+        // Returns 500
+        throw Error(`Failed to list bids for NFT: ${nftId}`);
+      }
     }
-
     return res.status(200).send(nftBids);
   }
 );
@@ -116,20 +115,14 @@ router.get(
     if (!validateBidsAccountsGetSchema(req.params)) {
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
-
-    const storage = getFleekConnection();
-    const fileKey = req.params.account.toLowerCase();
-    let userBids: Bid[] = [];
+    const accountId = req.params.account;
 
     try {
-      const fileContents = await storage.downloadFile(fileKey);
-      const userAccount = JSON.parse(fileContents) as UserAccount;
-      userBids = userAccount.bids;
+      const accountBids: Bid[] = await database.getBidsByAccount(accountId);
+      return res.status(200).send(accountBids);
     } catch {
-      // intentional
+      throw Error(`Could not get bids for account ${accountId}`);
     }
-
-    return res.status(200).send(userBids);
   }
 );
 
@@ -145,11 +138,12 @@ router.post(
     if (!validateBidPostSchema(req.body)) {
       return res.status(400).send(validateBidPostSchema.errors);
     }
-    const storage = getFleekConnection();
+
     const dto: BidPostDto = req.body as BidPostDto;
 
     try {
       const bidParams: BidParams = {
+        nftId: calculateNftId(dto.contractAddress, dto.tokenId),
         account: dto.account,
         auctionId: dto.auctionId,
         bidAmount: dto.bidAmount,
@@ -173,39 +167,15 @@ router.post(
           .send({ message: verification.message });
       }
 
-      // Try to pull auction from fleek with given auctionId
-      const nftId = calculateNftId(dto.contractAddress, dto.tokenId);
-      const auctionFileKey = nftId;
-      const auctionFile = await storage.safeDownloadFile(auctionFileKey);
       const dateNow = new Date();
-
       const newBid: Bid = {
         ...bidParams,
         signedMessage: dto.signedMessage,
         date: dateNow.getTime(),
       };
 
-      // Updates file to store on fleek with new bid data
-      const auction = await getOrCreateAuction(newBid, auctionFile);
-      auction.bids.push(newBid);
-
-      await storage.uploadFile(auctionFileKey, JSON.stringify(auction));
-
-      // Store bid by user on fleek
-      let userAccount: Maybe<UserAccount>;
-
-      const userAccountFileKey = dto.account.toLowerCase();
-      const userAccountFile = await storage.safeDownloadFile(
-        userAccountFileKey
-      );
-
-      if (userAccountFile.exists) {
-        userAccount = JSON.parse(userAccountFile.data) as UserAccount;
-      } else {
-        userAccount = { bids: [] } as UserAccount;
-      }
-
-      userAccount.bids.push(newBid);
+      // Add new bid document to database
+      await database.insertBid(newBid);
 
       return res.status(200).send("OK");
     } catch (error) {
@@ -222,9 +192,7 @@ router.get(
     if (!validateBidsGetSchema(req.params)) {
       return res.status(400).send(validateBidsGetSchema.errors);
     }
-    const storage = getFleekConnection();
-
-    const bids = await getBidsForNft(storage, req.params.nftId);
+    const bids = await database.getBidsByNftId(req.params.nftId);
     return res.status(200).send(bids);
   }
 );
