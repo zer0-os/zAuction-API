@@ -1,8 +1,4 @@
-import {
-  InsertOneResult,
-  Document,
-  InsertManyResult,
-} from "mongodb";
+import { InsertOneResult, Document, InsertManyResult } from "mongodb";
 
 import { BidDatabaseService } from "..";
 import { Bid } from "../../types";
