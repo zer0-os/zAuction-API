@@ -68,15 +68,12 @@ const getFile = async (auth: FleekAuth, fileInfo: listFilesOutput) => {
     };
 
     try {
-      // Get file from fleek and try to parse as JSON
+      // Get file from fleek and parse as JSON
       const outputFile: getOutput = await fleekStorage.get(input);
       const fileData = JSON.parse(outputFile.data);
       return fileData;
     } catch (error) {
-      // Using a "throw" will halt execution
-      // but some failures are expected in parsing
-      // as they are not JSON objects (e.g. pictures, videos)
-      console.log(error);
+      throw error;
     }
   }
 };
@@ -98,13 +95,13 @@ async function migrateExistingBids(auth: FleekAuth) {
 
     // Intentionally ignore top level `tokenId`
     // and `contractAddress` props, they are already in Bid
-    file.bids.forEach((bid) => {
+    for (const bid of file.bids) {
       const newBid = {
         nftId: calculateNftId(bid.contractAddress, bid.tokenId),
         ...bid,
       };
       bids.push(newBid);
-    });
+    };
   }
 
   const result = await database.insertBids(bids);
