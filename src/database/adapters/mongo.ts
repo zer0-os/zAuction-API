@@ -18,7 +18,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result.acknowledged;
   };
 
-  const insertBids = async <T>(data: Array<T>): Promise<boolean> => {
+  const insertBids = async (data: Bid[]): Promise<boolean> => {
     const result: InsertManyResult<Document> = await mongo.insertMany(
       data,
       database,
