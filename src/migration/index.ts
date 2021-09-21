@@ -10,7 +10,9 @@ import fleekStorage, {
 require("dotenv").config();
 
 import { FleekAuth } from "./types";
+import { Bid, Auction } from "../types";
 import { adapters, BidDatabaseService } from "../database/";
+import { calculateNftId } from "../util";
 
 const db = env.get("MONGO_DB").required().asString();
 const collection = env.get("MONGO_COLLECTION").required().asString();
@@ -23,7 +25,7 @@ const fleekAuth = (): FleekAuth => {
   } as FleekAuth;
 };
 
-const getBuckets = async (auth: FleekAuth): Promise<listBucketsOutput[]> => {
+const getAllBuckets = async (auth: FleekAuth): Promise<listBucketsOutput[]> => {
   try {
     const buckets: listBucketsOutput[] = await fleekStorage.listBuckets(auth);
     return buckets;
@@ -32,18 +34,18 @@ const getBuckets = async (auth: FleekAuth): Promise<listBucketsOutput[]> => {
   }
 };
 
-const getFileKeys = async (
+const getAllFileKeys = async (
   auth: FleekAuth,
-  buckets: listBucketsOutput[]
+  buckets: listBucketsOutput[],
+  folder: string
 ): Promise<listFilesOutput[]> => {
   let allFiles: listFilesOutput[] = [];
 
-  // Can't use .forEach to iterate here as we're
-  // unable to affect variables outside that scope
   for (const index in buckets) {
     const request: listFilesInput = {
       ...auth,
       bucket: buckets[index].name,
+      prefix: folder,
     };
 
     try {
@@ -80,20 +82,29 @@ const getFile = async (auth: FleekAuth, fileInfo: listFilesOutput) => {
 };
 
 async function migrateExistingBids(auth: FleekAuth) {
-  const buckets: listBucketsOutput[] = await getBuckets(auth);
-  const files: listFilesOutput[] = await getFileKeys(auth, buckets);
+  const buckets: listBucketsOutput[] = await getAllBuckets(auth);
 
-  let bids = [];
-  for (let i = 0; i < files.length; i++) {
-    const fileInfo: listFilesOutput = files[i];
-    const file = await getFile(auth, fileInfo);
+  const folder = "mainnet0/";
+  const fileKeys: listFilesOutput[] = await getAllFileKeys(
+    auth,
+    buckets,
+    folder
+  );
 
-    console.log("f: ", file);
-    if (file && file.bids) {
-      bids.push(file);
-    } else if (Array.isArray(file)) {
-      bids.push(...file);
-    }
+  const bids: Bid[] = [];
+
+  for (const fileKey of fileKeys) {
+    const file: Auction = await getFile(auth, fileKey);
+
+    // Intentionally ignore top level `tokenId`
+    // and `contractAddress` props, they are already in Bid
+    file.bids.forEach((bid) => {
+      const newBid = {
+        nftId: calculateNftId(bid.contractAddress, bid.tokenId),
+        ...bid,
+      };
+      bids.push(newBid);
+    });
   }
 
   const result = await database.insertBids(bids);
@@ -103,7 +114,8 @@ async function migrateExistingBids(auth: FleekAuth) {
 (async () => {
   try {
     const auth: FleekAuth = fleekAuth();
-    await migrateExistingBids(auth);
+    const result: boolean = await migrateExistingBids(auth);
+    console.log(result);
   } catch (error) {
     console.log(error);
   }
