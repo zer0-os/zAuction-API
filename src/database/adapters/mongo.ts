@@ -1,4 +1,4 @@
-import { InsertOneResult, Filter, Document, DeleteResult } from "mongodb";
+import { InsertOneResult, Document, InsertManyResult } from "mongodb";
 
 import { BidDatabaseService } from "..";
 import { Bid } from "../../types";
@@ -10,6 +10,16 @@ export const create = (db: string, collection: string): BidDatabaseService => {
 
   const insertBid = async (data: Bid): Promise<boolean> => {
     const result: InsertOneResult<Document> = await mongo.insertOne(
+      data,
+      database,
+      usedCollection
+    );
+
+    return result.acknowledged;
+  };
+
+  const insertBids = async (data: Bid[]): Promise<boolean> => {
+    const result: InsertManyResult<Document> = await mongo.insertMany(
       data,
       database,
       usedCollection
@@ -34,6 +44,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
 
   const databaseService = {
     insertBid,
+    insertBids,
     getBidsByNftId,
     getBidsByAccount,
   };

@@ -6,6 +6,7 @@ import {
   FindCursor,
   Filter,
   Document,
+  InsertManyResult,
 } from "mongodb";
 
 const user = env.get("MONGO_USERNAME").required().asString();
@@ -37,6 +38,27 @@ export const insertOne = async <T>(
       data
     );
 
+    return result;
+  } catch (error) {
+    throw error;
+  } finally {
+    await client.close();
+  }
+};
+
+export const insertMany = async <T>(
+  data: Array<T>,
+  databaseName: string,
+  collection: string
+): Promise<InsertManyResult> => {
+  try {
+    await client.connect();
+    const database = client.db(databaseName);
+    const usedCollection = database.collection(collection);
+
+    const result: InsertManyResult<Document> = await usedCollection.insertMany(
+      data
+    );
     return result;
   } catch (error) {
     throw error;
