@@ -21,14 +21,14 @@ const options: MongoClientOptions = {
   w: "majority",
 };
 
-const client = new MongoClient(fullUri, options);
-
 // Will create the collection if it does not already exist
 export const insertOne = async <T>(
   data: T,
   databaseName: string,
   collection: string
 ): Promise<InsertOneResult> => {
+  const client = new MongoClient(fullUri, options);
+
   try {
     await client.connect();
     const database = client.db(databaseName);
@@ -51,6 +51,8 @@ export const insertMany = async <T>(
   databaseName: string,
   collection: string
 ): Promise<InsertManyResult> => {
+  const client = new MongoClient(fullUri, options);
+
   try {
     await client.connect();
     const database = client.db(databaseName);
@@ -83,9 +85,10 @@ export const find = async <T>(
   collection: string,
   query?: Filter<Document>
 ): Promise<T[]> => {
+  const client = new MongoClient(fullUri, options);
+
   try {
     await client.connect();
-
     const database = client.db(databaseName);
     const usedCollection = database.collection(collection);
 
