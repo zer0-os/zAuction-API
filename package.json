@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "zAuction API server",
   "scripts": {
-    "start": "node ./build/index.js",
+    "start": "node ./build/src/index.js",
     "dev": "nodemon",
     "lint": "eslint --fix src",
     "build": "tsc",
