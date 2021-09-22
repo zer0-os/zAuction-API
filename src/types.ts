@@ -22,11 +22,7 @@ export interface BidPostDto {
 }
 
 export interface BidParams {
-<<<<<<< HEAD
   nftId?: string; // TODO remove nullable
-=======
-  nftId: string;
->>>>>>> ab740baa8263985e399412fdcdf105b98798c0a2
   account: string;
   auctionId: string;
   bidAmount: string;
