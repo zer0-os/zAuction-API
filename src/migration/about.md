@@ -1,0 +1,3 @@
+# Migration
+
+The migration is a one time move of all the existing bid data from Fleek to MongoDB. This is only a temporary fix, as having a MongoDB instance is much more centralized but is needed to provide scalability to the system. This will eventually be taken back to a more decentralized model when ETH L2 solutions are available that allow the scalability we need without the sacrifice of decentralization.

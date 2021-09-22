@@ -1,23 +1,13 @@
 import { ethers } from "ethers";
-import { StorageService, SafeDownloadedFile } from "../storage";
-import { ERC20, Zauction } from "../types/contracts";
 
-import { Auction, Bid, VerifyBidResponse, Maybe, BidParams } from "../types";
-
-import { ethersProvider, encodeBid } from "./contracts";
-
-export async function getBidsForNft(
-  storage: StorageService,
-  nftId: string
-): Promise<Bid[]> {
-  try {
-    const fileContents = await storage.downloadFile(nftId);
-    const auction = JSON.parse(fileContents) as Auction;
-    return auction.bids;
-  } catch {
-    return [];
-  }
-}
+import { Zauction } from "../types/contracts";
+import { VerifyBidResponse, BidParams } from "../types";
+import {
+  encodeBid,
+  getEthersProvider,
+  getTokenContract,
+  getZAuctionContract,
+} from "./contracts";
 
 export function calculateNftId(
   contractAddress: string,
@@ -60,14 +50,17 @@ async function calculateSigningAccount(
 
 export async function verifyEncodedBid(
   params: BidParams,
-  signedMessage: string,
-  erc20Contract: ERC20,
-  zAuctionContract: Zauction
+  signedMessage: string
 ): Promise<VerifyBidResponse> {
+  // Instantiate contracts
+  const erc20Contract = await getTokenContract();
+  const zAuctionContract: Zauction = await getZAuctionContract();
+
   // Calculate user balance, block number, and the signing account
   const userBalance = await erc20Contract.balanceOf(params.account);
   const bidAmount = ethers.BigNumber.from(params.bidAmount);
 
+  const ethersProvider = getEthersProvider();
   const blockNum = ethers.BigNumber.from(await ethersProvider.getBlockNumber());
   const start = ethers.BigNumber.from(params.startBlock);
   const expire = ethers.BigNumber.from(params.expireBlock);
@@ -113,23 +106,4 @@ export async function verifyEncodedBid(
     status: 200,
     message: "",
   } as VerifyBidResponse;
-}
-
-export async function getOrCreateAuction(
-  newBid: Bid,
-  auctionFile: SafeDownloadedFile
-): Promise<Auction> {
-  let auction: Maybe<Auction>;
-
-  if (auctionFile.exists) {
-    auction = JSON.parse(auctionFile.data) as Auction;
-  } else {
-    auction = {
-      tokenId: newBid.tokenId,
-      contractAddress: newBid.contractAddress,
-      bids: [],
-    } as Auction;
-  }
-
-  return auction;
 }
