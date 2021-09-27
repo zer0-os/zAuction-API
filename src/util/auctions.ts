@@ -87,18 +87,19 @@ export async function verifyEncodedBid(
     },
     {
       condition: recoveredAccount != params.account,
-      message: "Account sent and account recovered from signature do not match",
+      message:
+        "Bid was signed wrong by wallet. This may be due to your wallet software being out of date. If this problem persists try a different wallet.",
     },
   ];
 
-  conditions.forEach((check) => {
+  for (const check of conditions) {
     if (check.condition)
       return {
         pass: false,
         status: 405,
         message: check.message,
       } as VerifyBidResponse;
-  });
+  }
 
   // If nothing is wrong, proceed with bid
   return {
