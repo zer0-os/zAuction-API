@@ -11,6 +11,7 @@ import {
   validateBidsListPostSchema,
   validateBidsAccountsGetSchema,
   validateBidsGetSchema,
+  validateBidCancelSchema,
 } from "./schemas";
 
 import { encodeBid } from "./util/contracts";
@@ -26,6 +27,7 @@ import {
   BidsListDto,
   VerifyBidResponse,
 } from "./types";
+import { ethers } from "ethers";
 
 const router = express.Router();
 
@@ -184,7 +186,7 @@ router.post(
   }
 );
 
-// Endpoint to return current highest bid given nftId
+// Endpoint to return bids for a single nftId
 router.get(
   "/bids/:nftId",
   limiter,
@@ -194,6 +196,49 @@ router.get(
     }
     const bids = await database.getBidsByNftId(req.params.nftId);
     return res.status(200).send(bids);
+  }
+);
+
+// Endpoint to cancel an existing bid
+// Expecting signedBidMessage and signedCancelMessage in the body
+router.post(
+  "/bid/cancel",
+  limiter,
+  async (req: express.Request, res: express.Response) => {
+    if (!validateBidCancelSchema(req.body)) {
+      return res.status(400).send(validateBidCancelSchema.errors);
+    }
+    try {
+      const bidData: Bid | null = await database.getBidBySignedMessage(
+        req.body.bidMessageSignature
+      );
+
+      if (!bidData) return res.status(404);
+
+      const cancelMessage = "cancel - " + bidData.signedMessage;
+      const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
+
+      const signer = ethers.utils.verifyMessage(
+        hashedCancelMessage,
+        req.body.cancelMessageSignature
+      );
+
+      console.log(signer);
+      console.log(bidData.account);
+
+      if (signer !== bidData.account) {
+        return res.status(400).send("Incorrect signer address recovered");
+      }
+
+      // Once confirmed, remove bid from database
+      await database.cancelBid(bidData.signedMessage);
+
+      return res.status(200);
+    } catch {
+      throw new Error(
+        `Could not delete bid with signature: ${req.body.bidMessageSignature}`
+      );
+    }
   }
 );
 

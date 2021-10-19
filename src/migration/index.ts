@@ -39,7 +39,7 @@ const getAllFileKeys = async (
   buckets: listBucketsOutput[],
   folder: string
 ): Promise<listFilesOutput[]> => {
-  let allFiles: listFilesOutput[] = [];
+  const allFiles: listFilesOutput[] = [];
 
   for (const index in buckets) {
     const request: listFilesInput = {
@@ -101,7 +101,7 @@ async function migrateExistingBids(auth: FleekAuth) {
         ...bid,
       };
       bids.push(newBid);
-    };
+    }
   }
 
   const result = await database.insertBids(bids);

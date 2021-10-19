@@ -42,11 +42,29 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result;
   };
 
+  const getBidBySignedMessage = async (
+    signedMessage: string
+  ): Promise<Bid | null> => {
+    const result: Bid | null = await mongo.findOne(database, collection, {
+      signedMessage: `${signedMessage}`,
+    });
+    return result;
+  };
+
+  const cancelBid = async (signedMessage: string): Promise<boolean> => {
+    const result: boolean = await mongo.deleteOne(database, usedCollection, {
+      signedMessage: `${signedMessage}`,
+    });
+    return result;
+  };
+
   const databaseService = {
     insertBid,
     insertBids,
     getBidsByNftId,
     getBidsByAccount,
+    getBidBySignedMessage,
+    cancelBid,
   };
 
   return databaseService;
