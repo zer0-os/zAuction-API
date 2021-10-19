@@ -223,9 +223,6 @@ router.post(
         req.body.cancelMessageSignature
       );
 
-      console.log(signer);
-      console.log(bidData.account);
-
       if (signer !== bidData.account) {
         return res.status(400).send("Incorrect signer address recovered");
       }
