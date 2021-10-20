@@ -4,6 +4,7 @@ import {
   MongoClientOptions,
   InsertOneResult,
   FindCursor,
+  FindOptions,
   Filter,
   Document,
   InsertManyResult,
@@ -92,8 +93,12 @@ export const find = async <T>(
     const database = client.db(databaseName);
     const usedCollection = database.collection(collection);
 
+    const queryOptions: FindOptions<Document> = {
+      limit: 100
+    }
+
     if (query) {
-      const cursor: FindCursor<Document> = await usedCollection.find<T>(query);
+      const cursor: FindCursor<Document> = await usedCollection.find<T>(query, queryOptions);
       const results: Document[] = await cursor.toArray();
       return results as T[];
     } else {
