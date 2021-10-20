@@ -39,7 +39,7 @@ const getAllFileKeys = async (
   buckets: listBucketsOutput[],
   folder: string
 ): Promise<listFilesOutput[]> => {
-  let allFiles: listFilesOutput[] = [];
+  const allFiles: listFilesOutput[] = [];
 
   for (const index in buckets) {
     const request: listFilesInput = {
@@ -97,11 +97,12 @@ async function migrateExistingBids(auth: FleekAuth) {
     // and `contractAddress` props, they are already in Bid
     for (const bid of file.bids) {
       const newBid = {
-        nftId: calculateNftId(bid.contractAddress, bid.tokenId),
+        // Uncomment for any legacy bids that don't include nftId
+        // nftId: calculateNftId(bid.contractAddress, bid.tokenId),
         ...bid,
       };
       bids.push(newBid);
-    };
+    }
   }
 
   const result = await database.insertBids(bids);

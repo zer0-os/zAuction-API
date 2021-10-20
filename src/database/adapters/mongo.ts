@@ -28,9 +28,12 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result.acknowledged;
   };
 
-  const getBidsByNftId = async (nftId: string): Promise<Bid[]> => {
+  const getBidsByNftIds = async (nftIds: string[]): Promise<Bid[]> => {
+    const nftIdList = [...nftIds];
     const result: Bid[] = await mongo.find(database, usedCollection, {
-      nftId: `${nftId}`,
+      nftId: {
+        $in: nftIdList,
+      },
     });
     return result;
   };
@@ -45,7 +48,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
   const databaseService = {
     insertBid,
     insertBids,
-    getBidsByNftId,
+    getBidsByNftIds,
     getBidsByAccount,
   };
 
