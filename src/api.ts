@@ -93,16 +93,23 @@ router.post(
     const dto: BidsListDto = req.body as BidsListDto;
     const nftBids: BidsList = {};
 
-    // Get all of the bids on every provided nftId
+    // Create an empty array for each given nftId
     for (const nftId of dto.nftIds) {
-      try {
-        const bids = await database.getBidsByNftId(nftId);
-        nftBids[nftId] = bids;
-      } catch {
-        // Returns 500
-        throw Error(`Failed to list bids for NFT: ${nftId}`);
-      }
+      nftBids[nftId] = [];
     }
+
+    try {
+      const bids = await database.getBidsByNftIds(dto.nftIds);
+
+      // For each bid, map to appropriate nftId array
+      for (const bid of bids) {
+        const nftId = bid.nftId;
+        nftBids[nftId]?.push(bid);
+      }
+    } catch {
+      throw Error("Could not get bids for given nftIds");
+    }
+
     return res.status(200).send(nftBids);
   }
 );
@@ -192,7 +199,7 @@ router.get(
     if (!validateBidsGetSchema(req.params)) {
       return res.status(400).send(validateBidsGetSchema.errors);
     }
-    const bids = await database.getBidsByNftId(req.params.nftId);
+    const bids = await database.getBidsByNftIds([req.params.nftId]);
     return res.status(200).send(bids);
   }
 );
