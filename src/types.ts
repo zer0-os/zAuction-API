@@ -69,3 +69,8 @@ export interface VerifyBidResponse {
   status: number;
   message: string;
 }
+
+export interface BidCancelDto {
+  cancelMessageSignature: string;
+  bidMessageSignature: string;
+}
