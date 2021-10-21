@@ -7,6 +7,7 @@ import {
   Filter,
   Document,
   InsertManyResult,
+  DeleteResult,
 } from "mongodb";
 
 const user = env.get("MONGO_USERNAME").required().asString();
@@ -71,13 +72,26 @@ export const insertMany = async <T>(
 
 // Will be used in future logic for soft canceling a bid
 // and having a bid expire with a countdown
-// export const deleteOne = async (
-//   data: Object,
-//   db: string,
-//   collection: string
-// ) => {
-//   console.log("TODO implement");
-// };
+export const deleteOne = async (
+  databaseName: string,
+  collection: string,
+  query: Filter<Document>
+) => {
+  const client = new MongoClient(fullUri, options);
+
+  try {
+    await client.connect();
+    const database = client.db(databaseName);
+    const usedCollection = database.collection(collection);
+
+    const result: DeleteResult = await usedCollection.deleteOne(query);
+    return result.acknowledged;
+  } catch (error) {
+    throw error;
+  } finally {
+    await client.close();
+  }
+};
 
 // Note queries are case sensitive
 export const find = async <T>(
@@ -101,6 +115,27 @@ export const find = async <T>(
       const results: Document[] = await cursor.toArray();
       return results as T[];
     }
+  } catch (error) {
+    throw error;
+  } finally {
+    await client.close();
+  }
+};
+
+export const findOne = async <T>(
+  databaseName: string,
+  collection: string,
+  query: Filter<Document>
+): Promise<T | null> => {
+  const client = new MongoClient(fullUri, options);
+
+  try {
+    await client.connect();
+    const database = client.db(databaseName);
+    const usedCollection = database.collection(collection);
+
+    const result: T | null = await usedCollection.findOne<T>(query);
+    return result;
   } catch (error) {
     throw error;
   } finally {
