@@ -48,7 +48,7 @@
     "@opentelemetry/api" "^1.0.0"
     tslib "^2.2.0"
 
-"@azure/event-hubs@^5.6.0":
+"@azure/event-hubs@5.6.0":
   version "5.6.0"
   resolved "https://registry.yarnpkg.com/@azure/event-hubs/-/event-hubs-5.6.0.tgz#e6b3ada2c773c02ef404c2210b17b1bea125b0f2"
   integrity sha512-+JtP2SYqGZelvZ6nnA7T0xxcDjCu3O0K+8A8vEXOJgQPT8+hA11fz61DSpFQJH1KaXffoN5YeXnKSaU4idwiAQ==
