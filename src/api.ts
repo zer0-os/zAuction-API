@@ -1,7 +1,7 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
 import * as env from "env-var";
-import { EventHubProducerClient } from "@azure/event-hubs";
+import { EventHubProducerClient, EventDataBatch } from "@azure/event-hubs";
 
 import { adapters, BidDatabaseService } from "./database";
 
@@ -27,6 +27,8 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
+  CancelBidEvent,
+  CreateBidEvent,
   VerifyBidResponse,
 } from "./types";
 import { ethers } from "ethers";
@@ -195,21 +197,23 @@ router.post(
       await database.insertBid(newBid);
 
       // Create batch to send event to EventHub
-      const batch = await producer.createBatch();
+      const batch: EventDataBatch = await producer.createBatch();
+
+      const createEvent: CreateBidEvent = {
+        event: "Create Bid",
+        nftId: newBid.nftId,
+        tokenId: newBid.tokenId,
+        contractAddress: newBid.contractAddress,
+        account: newBid.account,
+        amount: newBid.bidAmount,
+        auctionId: newBid.auctionId,
+        signedMessage: newBid.signedMessage,
+        date: newBid.date
+    }
 
       batch.tryAdd({
         body: newBid,
-        properties: {
-          event: "Create Bid",
-          nftId: newBid.nftId,
-          tokenId: newBid.tokenId,
-          contractAddress: newBid.contractAddress,
-          account: newBid.account,
-          amount: newBid.bidAmount,
-          auction: newBid.auctionId,
-          signedMessage: newBid.signedMessage,
-          date: newBid.date
-        }
+        properties: createEvent
       });
 
       await producer.sendBatch(batch);
@@ -283,8 +287,19 @@ router.post(
       await database.cancelBid(bidData, archiveCollection);
 
       // Create batch to send event to EventHub
-      const batch = await producer.createBatch();
+      const batch: EventDataBatch = await producer.createBatch();
 
+      const cancelEvent: CancelBidEvent = {
+        event: "Cancel Bid",
+        nftId: bidData.nftId,
+        tokenId: bidData.tokenId,
+        contractAddress: bidData.contractAddress,
+        account: bidData.account,
+        amount: bidData.bidAmount,
+        auctionId: bidData.auctionId,
+        signedMessage: bidData.signedMessage,
+        date: bidData.date
+      }
       batch.tryAdd({
         body: bidData,
         properties: {
