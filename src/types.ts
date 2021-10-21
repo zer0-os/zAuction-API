@@ -77,27 +77,10 @@ export interface BidCancelDto extends BidCancelEncode{
   cancelMessageSignature: string;
 }
 
-export interface CreateBidEvent {
-  event: string;
-  nftId: string;
-  tokenId: string;
-  contractAddress: string;
-  account: string;
-  amount: string;
-  auctionId: string;
-  signedMessage: string;
-  date: number;
+export interface BaseMessageEvent {
+  body: string;
+  timestamp: number;
 }
-
-export interface CancelBidEvent  {
-  event: string;
-  nftId: string;
-  tokenId: string;
-  contractAddress: string;
-  account: string;
-  amount: string;
-  auctionId: string;
-  signedMessage: string;
-  date: number;
+export interface BidEvent extends BaseMessageEvent {
+  properties: Bid;
 }
-

@@ -22,13 +22,12 @@ import { calculateNftId, verifyEncodedBid } from "./util/auctions";
 
 import {
   Bid,
+  BidEvent,
   BidParams,
   BidPayloadPostDto,
   BidPostDto,
   BidsList,
   BidsListDto,
-  CancelBidEvent,
-  CreateBidEvent,
   VerifyBidResponse,
 } from "./types";
 import { ethers } from "ethers";
@@ -199,22 +198,13 @@ router.post(
       // Create batch to send event to EventHub
       const batch: EventDataBatch = await producer.createBatch();
 
-      const createEvent: CreateBidEvent = {
-        event: "Create Bid",
-        nftId: newBid.nftId,
-        tokenId: newBid.tokenId,
-        contractAddress: newBid.contractAddress,
-        account: newBid.account,
-        amount: newBid.bidAmount,
-        auctionId: newBid.auctionId,
-        signedMessage: newBid.signedMessage,
-        date: newBid.date
-    }
+      const createEvent: BidEvent = {
+        body: "Create Bid",
+        properties: newBid,
+        timestamp: new Date().getTime()
+      }
 
-      batch.tryAdd({
-        body: newBid,
-        properties: createEvent
-      });
+      batch.tryAdd(createEvent);
 
       await producer.sendBatch(batch);
       await producer.close();
@@ -289,31 +279,13 @@ router.post(
       // Create batch to send event to EventHub
       const batch: EventDataBatch = await producer.createBatch();
 
-      const cancelEvent: CancelBidEvent = {
-        event: "Cancel Bid",
-        nftId: bidData.nftId,
-        tokenId: bidData.tokenId,
-        contractAddress: bidData.contractAddress,
-        account: bidData.account,
-        amount: bidData.bidAmount,
-        auctionId: bidData.auctionId,
-        signedMessage: bidData.signedMessage,
-        date: bidData.date
+      const cancelEvent: BidEvent = {
+        body: "Cancel Bid",
+        timestamp: new Date().getTime(),
+        properties: bidData
       }
-      batch.tryAdd({
-        body: bidData,
-        properties: {
-          event: "Cancel Bid",
-          nftId: bidData.nftId,
-          tokenId: bidData.tokenId,
-          contractAddress: bidData.contractAddress,
-          account: bidData.account,
-          amount: bidData.bidAmount,
-          auction: bidData.auctionId,
-          signedMessage: bidData.signedMessage,
-          date: bidData.date
-        }
-      });
+
+      batch.tryAdd(cancelEvent);
 
       await producer.sendBatch(batch);
       await producer.close();
