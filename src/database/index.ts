@@ -7,5 +7,5 @@ export interface BidDatabaseService {
   getBidsByNftId: (nftId: string) => Promise<Bid[]>;
   getBidsByAccount: (account: string) => Promise<Bid[]>;
   getBidBySignedMessage: (signedMessage: string) => Promise<Bid | null>;
-  cancelBid: (signedMessage: string) => Promise<boolean>;
+  cancelBid: (bid: Bid, archiveCollection: string) => Promise<boolean>;
 }

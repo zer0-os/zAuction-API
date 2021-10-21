@@ -12,6 +12,7 @@ import {
   validateBidsAccountsGetSchema,
   validateBidsGetSchema,
   validateBidCancelSchema,
+  validateBidCancelEncodeSchema
 } from "./schemas";
 
 import { encodeBid } from "./util/contracts";
@@ -39,6 +40,7 @@ const limiter = rateLimit({
 
 const db = env.get("MONGO_DB").required().asString();
 const collection = env.get("MONGO_COLLECTION").required().asString();
+const archiveCollection = env.get("MONGO_ARCHIVE_COLLECTION").required().asString();
 const database: BidDatabaseService = adapters.mongo.create(db, collection);
 
 // Returns encoded data to be signed, a generated auctionId,
@@ -199,6 +201,21 @@ router.get(
   }
 );
 
+// Create the cancel message hash to be signed by the user
+router.get(
+  "/bid/cancel/encode",
+  limiter,
+  async (req: express.Request, res: express.Response) => {
+    if(!validateBidCancelEncodeSchema(req.body)) {
+      return res.status(400).send(validateBidCancelEncodeSchema.errors);
+    }
+    const cancelMessage = "cancel - " + req.body.bidMessageSignature;
+    const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
+
+    return res.status(200).send(hashedCancelMessage);
+  }
+)
+
 // Endpoint to cancel an existing bid
 // Expecting signedBidMessage and signedCancelMessage in the body
 router.post(
@@ -213,8 +230,9 @@ router.post(
         req.body.bidMessageSignature
       );
 
-      if (!bidData) return res.status(404);
+      if (!bidData) return res.status(400).send("Bid not found");
 
+      // Reconstruct the unsigned cancel message hash
       const cancelMessage = "cancel - " + bidData.signedMessage;
       const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
 
@@ -227,8 +245,8 @@ router.post(
         return res.status(400).send("Incorrect signer address recovered");
       }
 
-      // Once confirmed, remove bid from database
-      await database.cancelBid(bidData.signedMessage);
+      // Once confirmed, move to archive collection
+      await database.cancelBid(bidData, archiveCollection);
 
       return res.status(200);
     } catch {

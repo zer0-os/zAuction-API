@@ -70,7 +70,9 @@ export interface VerifyBidResponse {
   message: string;
 }
 
-export interface BidCancelDto {
-  cancelMessageSignature: string;
+export interface BidCancelEncode {
   bidMessageSignature: string;
+}
+export interface BidCancelDto extends BidCancelEncode{
+  cancelMessageSignature: string;
 }

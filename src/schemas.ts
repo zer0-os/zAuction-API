@@ -6,6 +6,7 @@ import {
   BidsAccountsDto,
   BidsDto,
   BidCancelDto,
+  BidCancelEncode,
 } from "./types";
 
 const ajv = new Ajv({ coerceTypes: true });
@@ -95,6 +96,17 @@ const bidsGetSchema: JSONSchemaType<BidsDto> = {
 
 export const validateBidsGetSchema = ajv.compile(bidsGetSchema);
 
+const bidCancelEncodeSchema: JSONSchemaType<BidCancelEncode> = {
+  type: "object",
+  properties: {
+    bidMessageSignature: { type: "string" },
+  },
+  required: ["bidMessageSignature"],
+  additionalProperties: false,
+};
+
+export const validateBidCancelEncodeSchema = ajv.compile(bidCancelEncodeSchema);
+
 const bidCancelSchema: JSONSchemaType<BidCancelDto> = {
   type: "object",
   properties: {
@@ -102,6 +114,7 @@ const bidCancelSchema: JSONSchemaType<BidCancelDto> = {
     bidMessageSignature: { type: "string" },
   },
   required: ["cancelMessageSignature", "bidMessageSignature"],
+  additionalProperties: false,
 };
 
 export const validateBidCancelSchema = ajv.compile(bidCancelSchema);
