@@ -1,6 +1,7 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
 import * as env from "env-var";
+import { EventHubProducerClient } from "@azure/event-hubs";
 
 import { adapters, BidDatabaseService } from "./database";
 
@@ -42,6 +43,11 @@ const db = env.get("MONGO_DB").required().asString();
 const collection = env.get("MONGO_COLLECTION").required().asString();
 const archiveCollection = env.get("MONGO_ARCHIVE_COLLECTION").required().asString();
 const database: BidDatabaseService = adapters.mongo.create(db, collection);
+
+const connectionString = env.get("EVENT_HUB_CONNECTION_STRING").required().asString();
+const name = env.get("EVENT_HUB_NAME").required().asString();
+
+const producer: EventHubProducerClient = new EventHubProducerClient(connectionString, name);
 
 // Returns encoded data to be signed, a generated auctionId,
 // and a generated nftId determined by the NFT contract address and tokenId
@@ -188,6 +194,27 @@ router.post(
       // Add new bid document to database
       await database.insertBid(newBid);
 
+      // Create batch to send event to EventHub
+      const batch = await producer.createBatch();
+
+      batch.tryAdd({
+        body: newBid,
+        properties: {
+          event: "Create Bid",
+          nftId: newBid.nftId,
+          tokenId: newBid.tokenId,
+          contractAddress: newBid.contractAddress,
+          account: newBid.account,
+          amount: newBid.bidAmount,
+          auction: newBid.auctionId,
+          signedMessage: newBid.signedMessage,
+          date: newBid.date
+        }
+      });
+
+      await producer.sendBatch(batch);
+      await producer.close();
+
       return res.status(200).send("OK");
     } catch (error) {
       next(error);
@@ -254,6 +281,27 @@ router.post(
 
       // Once confirmed, move to archive collection
       await database.cancelBid(bidData, archiveCollection);
+
+      // Create batch to send event to EventHub
+      const batch = await producer.createBatch();
+
+      batch.tryAdd({
+        body: bidData,
+        properties: {
+          event: "Cancel Bid",
+          nftId: bidData.nftId,
+          tokenId: bidData.tokenId,
+          contractAddress: bidData.contractAddress,
+          account: bidData.account,
+          amount: bidData.bidAmount,
+          auction: bidData.auctionId,
+          signedMessage: bidData.signedMessage,
+          date: bidData.date
+        }
+      });
+
+      await producer.sendBatch(batch);
+      await producer.close();
 
       return res.status(200);
     } catch {
