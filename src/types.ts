@@ -77,10 +77,19 @@ export interface BidCancelDto extends BidCancelEncode{
   cancelMessageSignature: string;
 }
 
-export interface BaseMessageEvent {
-  body: string;
+export interface BidCancellation {
+  account: string,
+  auctionId: string
+}
+
+export interface BaseMessage {
+  event: string;
   timestamp: number;
 }
-export interface BidEvent extends BaseMessageEvent {
-  properties: Bid;
+export interface BidPlacedMessage extends BaseMessage {
+  data: Bid;
+}
+
+export interface BidCancelledMessage extends BaseMessage {
+  data: BidCancellation;
 }

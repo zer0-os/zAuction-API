@@ -22,9 +22,11 @@ import { calculateNftId, verifyEncodedBid } from "./util/auctions";
 
 import {
   Bid,
+  BidCancelledMessage,
   BidEvent,
   BidParams,
   BidPayloadPostDto,
+  BidPlacedMessage,
   BidPostDto,
   BidsList,
   BidsListDto,
@@ -198,13 +200,13 @@ router.post(
       // Create batch to send event to EventHub
       const batch: EventDataBatch = await producer.createBatch();
 
-      const createEvent: BidEvent = {
-        body: "Create Bid",
-        properties: newBid,
+      const message: BidPlacedMessage = {
+        event: "BidPlaced",
+        data: newBid,
         timestamp: new Date().getTime()
       }
 
-      batch.tryAdd(createEvent);
+      batch.tryAdd(message);
 
       await producer.sendBatch(batch);
       await producer.close();
@@ -279,10 +281,13 @@ router.post(
       // Create batch to send event to EventHub
       const batch: EventDataBatch = await producer.createBatch();
 
-      const cancelEvent: BidEvent = {
-        body: "Cancel Bid",
+      const cancelEvent: BidCancelledMessage = {
+        event: "BidCancelled",
         timestamp: new Date().getTime(),
-        properties: bidData
+        data: {
+          account: signer,
+          auctionId: bidData.auctionId
+        }
       }
 
       batch.tryAdd(cancelEvent);
