@@ -1,24 +1,27 @@
-import { EventData, EventHubProducerClient } from "@azure/event-hubs"
-import { BidCancelledMessage, BidPlacedMessage, BaseMessage} from "../../types";
+import { EventData, EventHubProducerClient } from "@azure/event-hubs";
+import { BaseMessage } from "../../types";
 
 export const create = (connectionString: string, name: string) => {
-    const producer: EventHubProducerClient = new EventHubProducerClient(connectionString, name);
+  const producer: EventHubProducerClient = new EventHubProducerClient(
+    connectionString,
+    name
+  );
 
-    const sendMessage = async (message: BaseMessage) => {
-        const batch = await producer.createBatch();
+  const sendMessage = async (message: BaseMessage) => {
+    const batch = await producer.createBatch();
 
-        const event: EventData = {
-            body: message
-        }
+    const event: EventData = {
+      body: message,
+    };
 
-        batch.tryAdd(event);
+    batch.tryAdd(event);
 
-        await producer.sendBatch(batch);
-        await producer.close();
-    }
+    await producer.sendBatch(batch);
+    await producer.close();
+  };
 
-    const messageQueueService = {
-        sendMessage,
-    }
-    return messageQueueService
-}
+  const messageQueueService = {
+    sendMessage,
+  };
+  return messageQueueService;
+};

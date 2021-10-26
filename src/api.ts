@@ -13,7 +13,7 @@ import {
   validateBidsAccountsGetSchema,
   validateBidsGetSchema,
   validateBidCancelSchema,
-  validateBidCancelEncodeSchema
+  validateBidCancelEncodeSchema,
 } from "./schemas";
 
 import { encodeBid } from "./util/contracts";
@@ -43,12 +43,21 @@ const limiter = rateLimit({
 
 const db = env.get("MONGO_DB").required().asString();
 const collection = env.get("MONGO_COLLECTION").required().asString();
-const archiveCollection = env.get("MONGO_ARCHIVE_COLLECTION").required().asString();
+const archiveCollection = env
+  .get("MONGO_ARCHIVE_COLLECTION")
+  .required()
+  .asString();
 const database: BidDatabaseService = adapters.mongo.create(db, collection);
 
-const connectionString = env.get("EVENT_HUB_CONNECTION_STRING").required().asString();
+const connectionString = env
+  .get("EVENT_HUB_CONNECTION_STRING")
+  .required()
+  .asString();
 const name = env.get("EVENT_HUB_NAME").required().asString();
-const queue: MessageQueueService = queueAdapters.eventhub.create(connectionString, name);
+const queue: MessageQueueService = queueAdapters.eventhub.create(
+  connectionString,
+  name
+);
 
 // Returns encoded data to be signed, a generated auctionId,
 // and a generated nftId determined by the NFT contract address and tokenId
@@ -198,8 +207,8 @@ router.post(
       const message: BidPlacedMessage = {
         event: "BidPlaced",
         timestamp: new Date().getTime(),
-        data: newBid
-      }
+        data: newBid,
+      };
 
       // Add new bid to our event queue
       await queue.sendMessage(message);
@@ -229,7 +238,7 @@ router.get(
   "/bid/cancel/encode",
   limiter,
   async (req: express.Request, res: express.Response) => {
-    if(!validateBidCancelEncodeSchema(req.body)) {
+    if (!validateBidCancelEncodeSchema(req.body)) {
       return res.status(400).send(validateBidCancelEncodeSchema.errors);
     }
     const cancelMessage = "cancel - " + req.body.bidMessageSignature;
@@ -237,7 +246,7 @@ router.get(
 
     return res.status(200).send(hashedCancelMessage);
   }
-)
+);
 
 // Endpoint to cancel an existing bid
 // Expecting signedBidMessage and signedCancelMessage in the body
@@ -276,9 +285,9 @@ router.post(
         timestamp: new Date().getTime(),
         data: {
           account: signer,
-          auctionId: bidData.auctionId
-        }
-      }
+          auctionId: bidData.auctionId,
+        },
+      };
 
       await queue.sendMessage(message);
 

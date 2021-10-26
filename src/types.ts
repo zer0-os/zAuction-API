@@ -73,13 +73,13 @@ export interface VerifyBidResponse {
 export interface BidCancelEncode {
   bidMessageSignature: string;
 }
-export interface BidCancelDto extends BidCancelEncode{
+export interface BidCancelDto extends BidCancelEncode {
   cancelMessageSignature: string;
 }
 
 export interface BidCancellation {
-  account: string,
-  auctionId: string
+  account: string;
+  auctionId: string;
 }
 
 export interface BaseMessage {
