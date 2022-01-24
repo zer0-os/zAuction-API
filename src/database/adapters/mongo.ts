@@ -45,11 +45,36 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result;
   };
 
+  const getBidBySignedMessage = async (
+    signedMessage: string
+  ): Promise<Bid | null> => {
+    const result: Bid | null = await mongo.findOne(database, collection, {
+      signedMessage: `${signedMessage}`,
+    });
+    return result;
+  };
+
+  const cancelBid = async (bid: Bid, archiveCollection: string): Promise<boolean> => {
+    // Place bid into archive collection, then delete
+    const insertResult: InsertOneResult = await mongo.insertOne(bid, database, archiveCollection);
+
+    if (!insertResult.acknowledged) {
+      throw Error(`Failed to cancel bid with signed message: ${bid.signedMessage}`);
+    }
+
+    const result: boolean = await mongo.deleteOne(database, usedCollection, {
+      signedMessage: `${bid.signedMessage}`,
+    });
+    return result;
+  };
+
   const databaseService = {
     insertBid,
     insertBids,
     getBidsByNftIds,
     getBidsByAccount,
+    getBidBySignedMessage,
+    cancelBid,
   };
 
   return databaseService;
