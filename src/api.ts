@@ -277,8 +277,8 @@ router.get(
     if (!blockNumber) {
       throw Error("Looks like something went wrong with the Infura connection.");
     }
-
-    return res.status(200);
-  })
+    return res.status(200).send("OK");
+  }
+);
 
 export = router;
