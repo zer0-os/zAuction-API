@@ -263,5 +263,22 @@ router.post(
     }
   }
 );
+router.get(
+  "/ping",
+  limiter,
+  async (req: express.Request, res: express.Response) => {
+    const infuraUrl = process.env["INFURA_URL"];
+    if (!infuraUrl) {
+      throw Error("No Infura URL could be found")
+    }
+    const sampleProvider = new ethers.providers.JsonRpcProvider(infuraUrl);
+    const blockNumber = await sampleProvider.getBlockNumber();
+
+    if (!blockNumber) {
+      throw Error("Looks like something went wrong with the Infura connection.");
+    }
+
+    return res.status(200);
+  })
 
 export = router;
