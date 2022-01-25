@@ -3,5 +3,5 @@ import { BidCancelledMessage, BidPlacedMessage } from "../types";
 export * from "./adapters";
 
 export interface MessageQueueService {
-  sendMessage: (message: BidPlacedMessage | BidCancelledMessage) => void;
+  sendMessage: (message: BidPlacedMessage | BidCancelledMessage) => Promise<void>;
 }

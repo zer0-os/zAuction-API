@@ -87,9 +87,11 @@ export interface BaseMessage {
   timestamp: number;
 }
 export interface BidPlacedMessage extends BaseMessage {
+  version: "1.0";
   data: Bid;
 }
 
 export interface BidCancelledMessage extends BaseMessage {
+  version: "1.0";
   data: BidCancellation;
 }

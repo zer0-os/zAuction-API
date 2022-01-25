@@ -206,6 +206,7 @@ router.post(
 
       const message: BidPlacedMessage = {
         event: "BidPlaced",
+        version: "1.0",
         timestamp: new Date().getTime(),
         data: newBid,
       };
@@ -282,6 +283,7 @@ router.post(
 
       const message: BidCancelledMessage = {
         event: "BidCancelled",
+        version: "1.0",
         timestamp: new Date().getTime(),
         data: {
           account: signer,
