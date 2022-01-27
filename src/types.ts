@@ -85,13 +85,14 @@ export interface BidCancellation {
 export interface BaseMessage {
   event: string;
   timestamp: number;
+  logIndex: null;
+  blockNumber: null;
+  version: string;
 }
 export interface BidPlacedMessage extends BaseMessage {
-  version: "1.0";
   data: Bid;
 }
 
 export interface BidCancelledMessage extends BaseMessage {
-  version: "1.0";
   data: BidCancellation;
 }

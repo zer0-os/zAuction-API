@@ -208,6 +208,8 @@ router.post(
         event: "BidPlaced",
         version: "1.0",
         timestamp: new Date().getTime(),
+        logIndex: null,
+        blockNumber: null,
         data: newBid,
       };
 
@@ -285,6 +287,8 @@ router.post(
         event: "BidCancelled",
         version: "1.0",
         timestamp: new Date().getTime(),
+        logIndex: null,
+        blockNumber: null,
         data: {
           account: signer,
           auctionId: bidData.auctionId,
