@@ -2,6 +2,13 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import * as env from "env-var";
 
+import {
+  MessageType,
+  TypedMessage,
+  BidPlacedV1Data,
+  BidCancelledV1Data,
+} from "@zero-tech/zns-message-schemas";
+
 import { adapters, BidDatabaseService } from "./database";
 import { queueAdapters, MessageQueueService } from "./messagequeue";
 
@@ -22,15 +29,14 @@ import { calculateNftId, verifyEncodedBid } from "./util/auctions";
 
 import {
   Bid,
-  BidCancelledMessage,
   BidParams,
   BidPayloadPostDto,
-  BidPlacedMessage,
   BidPostDto,
   BidsList,
   BidsListDto,
   VerifyBidResponse,
 } from "./types";
+
 import { ethers } from "ethers";
 
 const router = express.Router();
@@ -204,12 +210,12 @@ router.post(
       // Add new bid document to database
       await database.insertBid(newBid);
 
-      const message: BidPlacedMessage = {
-        event: "BidPlaced",
+      const message: TypedMessage<BidPlacedV1Data> = {
+        event: MessageType.BidCancelled,
         version: "1.0",
-        timestamp: new Date().getTime(),
-        logIndex: null,
-        blockNumber: null,
+        timestamp: new Date(),
+        logIndex: undefined,
+        blockNumber: undefined,
         data: newBid,
       };
 
@@ -283,12 +289,12 @@ router.post(
       // Once confirmed, move to archive collection
       await database.cancelBid(bidData, archiveCollection);
 
-      const message: BidCancelledMessage = {
-        event: "BidCancelled",
+      const message: TypedMessage<BidCancelledV1Data> = {
+        event: MessageType.BidCancelled,
         version: "1.0",
-        timestamp: new Date().getTime(),
-        logIndex: null,
-        blockNumber: null,
+        timestamp: new Date(),
+        logIndex: undefined,
+        blockNumber: undefined,
         data: {
           account: signer,
           auctionId: bidData.auctionId,
@@ -311,13 +317,15 @@ router.get(
   async (req: express.Request, res: express.Response) => {
     const infuraUrl = process.env["INFURA_URL"];
     if (!infuraUrl) {
-      throw Error("No Infura URL could be found")
+      throw Error("No Infura URL could be found");
     }
     const sampleProvider = new ethers.providers.JsonRpcProvider(infuraUrl);
     const blockNumber = await sampleProvider.getBlockNumber();
 
     if (!blockNumber) {
-      throw Error("Looks like something went wrong with the Infura connection.");
+      throw Error(
+        "Looks like something went wrong with the Infura connection."
+      );
     }
     return res.status(200).send("OK");
   }

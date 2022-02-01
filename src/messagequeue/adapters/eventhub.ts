@@ -1,5 +1,5 @@
 import { EventData, EventHubProducerClient } from "@azure/event-hubs";
-import { BaseMessage } from "../../types";
+import { Message } from "@zero-tech/zns-message-schemas"
 
 export const create = (connectionString: string, name: string) => {
   const producer: EventHubProducerClient = new EventHubProducerClient(
@@ -7,7 +7,7 @@ export const create = (connectionString: string, name: string) => {
     name
   );
 
-  const sendMessage = async (message: BaseMessage) => {
+  const sendMessage = async (message: Message) => {
     const batch = await producer.createBatch();
 
     const event: EventData = {
