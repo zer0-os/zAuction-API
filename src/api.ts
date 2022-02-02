@@ -38,6 +38,7 @@ import {
 } from "./types";
 
 import { ethers } from "ethers";
+import { retry } from "./util/retry";
 
 const router = express.Router();
 
@@ -320,7 +321,7 @@ router.get(
       throw Error("No Infura URL could be found");
     }
     const sampleProvider = new ethers.providers.JsonRpcProvider(infuraUrl);
-    const blockNumber = await sampleProvider.getBlockNumber();
+    const blockNumber = await retry(sampleProvider.getBlockNumber);
 
     if (!blockNumber) {
       throw Error(
