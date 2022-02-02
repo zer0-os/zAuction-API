@@ -807,10 +807,10 @@
   resolved "https://registry.npmjs.org/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz"
   integrity sha512-sL/cEvJWAnClXw0wHk85/2L0G6Sj8UB0Ctc1TEMbKSsmpRosqhwj9gWgFRZSrBr2f9tiXISwNhCPmlfqUqyb9Q==
 
-"@zero-tech/zns-message-schemas@^1.1.3":
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/@zero-tech/zns-message-schemas/-/zns-message-schemas-1.1.3.tgz#79649a12f26723731d9893a3b37178324a873c2e"
-  integrity sha512-M/8SL+IyHS/VLBqOGnSDpGhXakCyzGpuEmOl/OV58neDCx/l/DET7/ggRk3SHRgCKpp5gFPjchTXy08uQfOoEA==
+"@zero-tech/zns-message-schemas@1.1.4":
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/@zero-tech/zns-message-schemas/-/zns-message-schemas-1.1.4.tgz#08faacb793d1ac489c4b9016e1526b6e3b68837c"
+  integrity sha512-7Tz4Cf50W9ueQmBcSLjFldpHD8ld+pU20H4M77lIik5U3fqa8cd+XN/BgkR/5a4acYPrv6n+0I4bNML8DW4Cjw==
 
 abbrev@1:
   version "1.1.1"
