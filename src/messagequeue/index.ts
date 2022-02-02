@@ -1,7 +1,7 @@
-import { BidCancelledMessage, BidPlacedMessage } from "../types";
+import { TypedMessage, BidPlacedV1Data, BidCancelledV1Data } from "@zero-tech/zns-message-schemas"
 
 export * from "./adapters";
 
 export interface MessageQueueService {
-  sendMessage: (message: BidPlacedMessage | BidCancelledMessage) => Promise<void>;
+  sendMessage: (message: TypedMessage<BidPlacedV1Data> | TypedMessage<BidCancelledV1Data>) => Promise<void>;
 }

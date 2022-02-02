@@ -81,18 +81,3 @@ export interface BidCancellation {
   account: string;
   auctionId: string;
 }
-
-export interface BaseMessage {
-  event: string;
-  timestamp: number;
-  logIndex: null;
-  blockNumber: null;
-  version: string;
-}
-export interface BidPlacedMessage extends BaseMessage {
-  data: Bid;
-}
-
-export interface BidCancelledMessage extends BaseMessage {
-  data: BidCancellation;
-}
