@@ -321,12 +321,12 @@ router.get(
       throw Error("No Infura URL could be found");
     }
 
-    let pokeProvider = async () => {
+    const pokeProvider = async () => {
       const sampleProvider = new ethers.providers.JsonRpcProvider(infuraUrl);
       return sampleProvider.getBlockNumber();
     }
 
-    let blockNumber = await retry(pokeProvider);
+    const blockNumber = await retry(pokeProvider);
 
     if (!blockNumber) {
       throw Error(
