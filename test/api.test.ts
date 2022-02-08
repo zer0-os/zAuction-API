@@ -209,4 +209,13 @@ describe("Test API Endpoints", async () => {
         .expect(200, done);
     });
   });
+
+  describe("GET /ping", () => {
+    it("Returns a success response when a provider connection can be established", (done) => {
+      request(App)
+        .get(`/api/ping`)
+        .set("Content-Type", "application/json")
+        .expect(200, done);
+    });
+  })
 });
