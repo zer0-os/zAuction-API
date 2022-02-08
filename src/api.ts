@@ -323,10 +323,10 @@ router.get(
 
     let pokeProvider = async () => {
       const sampleProvider = new ethers.providers.JsonRpcProvider(infuraUrl);
-      return await sampleProvider.getBlockNumber();
+      return sampleProvider.getBlockNumber();
     }
 
-    let blockNumber = retry(pokeProvider);
+    let blockNumber = await retry(pokeProvider);
 
     if (!blockNumber) {
       throw Error(
