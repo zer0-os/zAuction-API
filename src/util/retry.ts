@@ -14,6 +14,6 @@ export async function retry<Type>(fn: () => Promise<Type>) {
     }
   }
   console.warn(
-    `Could not successfully execute ${fn.name} after ${maxRetries}.`
+    `Could not successfully execute ${fn.name} after ${maxRetries} tries.`
   );
 }

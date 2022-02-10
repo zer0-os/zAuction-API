@@ -214,7 +214,7 @@ router.post(
       const message: TypedMessage<BidPlacedV1Data> = {
         event: MessageType.BidCancelled,
         version: "1.0",
-        timestamp: new Date(),
+        timestamp: new Date().getTime(),
         logIndex: undefined,
         blockNumber: undefined,
         data: newBid,
@@ -293,7 +293,7 @@ router.post(
       const message: TypedMessage<BidCancelledV1Data> = {
         event: MessageType.BidCancelled,
         version: "1.0",
-        timestamp: new Date(),
+        timestamp: new Date().getTime(),
         logIndex: undefined,
         blockNumber: undefined,
         data: {
@@ -320,8 +320,13 @@ router.get(
     if (!infuraUrl) {
       throw Error("No Infura URL could be found");
     }
-    const sampleProvider = new ethers.providers.JsonRpcProvider(infuraUrl);
-    const blockNumber = await retry(sampleProvider.getBlockNumber);
+
+    const pokeProvider = async () => {
+      const sampleProvider = new ethers.providers.JsonRpcProvider(infuraUrl);
+      return sampleProvider.getBlockNumber();
+    }
+
+    const blockNumber = await retry(pokeProvider);
 
     if (!blockNumber) {
       throw Error(
