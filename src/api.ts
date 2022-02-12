@@ -212,7 +212,7 @@ router.post(
       await database.insertBid(newBid);
 
       const message: TypedMessage<BidPlacedV1Data> = {
-        event: MessageType.BidCancelled,
+        event: MessageType.BidPlaced,
         version: "1.0",
         timestamp: new Date().getTime(),
         logIndex: undefined,
