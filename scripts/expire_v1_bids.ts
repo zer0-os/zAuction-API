@@ -2,12 +2,6 @@ import * as env from "env-var";
 import {
   MongoClient,
   MongoClientOptions,
-  InsertOneResult,
-  FindCursor,
-  Filter,
-  Document,
-  InsertManyResult,
-  DeleteResult,
 } from "mongodb";
 require("dotenv").config();
 
