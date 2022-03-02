@@ -254,7 +254,7 @@ router.post(
     const cancelMessage = "cancel - " + req.body.bidMessageSignature;
     const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
 
-    return res.status(200).send(hashedCancelMessage);
+    return res.status(200).send({ hashedCancelMessage });
   }
 );
 
