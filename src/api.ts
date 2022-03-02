@@ -244,7 +244,7 @@ router.get(
 );
 
 // Create the cancel message hash to be signed by the user
-router.get(
+router.post(
   "/bid/cancel/encode",
   limiter,
   async (req: express.Request, res: express.Response) => {
