@@ -113,7 +113,11 @@ router.post(
 router.post(
   "/bids/list",
   limiter,
-  async (req: express.Request, res: express.Response) => {
+  async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
     if (!validateBidsListPostSchema(req.body)) {
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
