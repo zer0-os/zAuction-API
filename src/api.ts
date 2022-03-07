@@ -134,7 +134,7 @@ router.post(
         nftBids[nftId]?.push(bid);
       }
     } catch {
-      throw Error("Could not get bids for given nftIds");
+      next(new Error("Could not get bids for given nftIds"));
     }
 
     return res.status(200).send(nftBids);
@@ -145,7 +145,11 @@ router.post(
 router.get(
   "/bids/accounts/:account",
   limiter,
-  async (req: express.Request, res: express.Response) => {
+  async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
     if (!validateBidsAccountsGetSchema(req.params)) {
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
@@ -155,7 +159,7 @@ router.get(
       const accountBids: Bid[] = await database.getBidsByAccount(accountId);
       return res.status(200).send(accountBids);
     } catch {
-      throw Error(`Could not get bids for account ${accountId}`);
+      next(new Error(`Could not get bids for account ${accountId}`));
     }
   }
 );
@@ -322,10 +326,14 @@ router.post(
 router.get(
   "/ping",
   limiter,
-  async (req: express.Request, res: express.Response) => {
+  async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
     const infuraUrl = process.env["INFURA_URL"];
     if (!infuraUrl) {
-      throw Error("No Infura URL could be found");
+      next(new Error("No Infura URL could be found"));
     }
 
     const pokeProvider = async () => {
@@ -336,8 +344,8 @@ router.get(
     const blockNumber = await retry(pokeProvider);
 
     if (!blockNumber) {
-      throw Error(
-        "Looks like something went wrong with the Infura connection."
+      next(
+        new Error("Looks like something went wrong with the Infura connection.")
       );
     }
     return res.status(200).send("OK");
