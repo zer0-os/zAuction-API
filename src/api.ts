@@ -316,9 +316,10 @@ router.post(
 
       return res.status(200);
     } catch (e) {
+      console.error(e.message, e.stack);
       next(
         new Error(
-          `Could not delete bid with signature: ${req.body.bidMessageSignature}\n${e?.stack}`
+          `Could not delete bid with signature: ${req.body.bidMessageSignature}`
         )
       );
     }
