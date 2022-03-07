@@ -316,7 +316,7 @@ router.post(
 
       // await queue.sendMessage(message);
 
-      return res.status(200);
+      return res.status(200).send();
     } catch (e) {
       console.error(e.message, e.stack);
       next(
