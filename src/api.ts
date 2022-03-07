@@ -319,7 +319,7 @@ router.post(
       // await queue.sendMessage(message);
 
       return res.status(200);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e.message, e.stack);
       next(
         new Error(
