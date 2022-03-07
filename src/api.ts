@@ -221,7 +221,7 @@ router.post(
       };
 
       // Add new bid to our event queue
-      await queue.sendMessage(message);
+      //await queue.sendMessage(message);
 
       return res.status(200).send("OK");
     } catch (error) {
@@ -287,32 +287,26 @@ router.post(
         req.body.cancelMessageSignature
       );
 
-      console.log(signer);
-
       if (signer !== bidData.account) {
         return res.status(400).send("Incorrect signer address recovered");
       }
 
-      console.log("cancelled in db");
-
       // Once confirmed, move to archive collection
       await database.cancelBid(bidData, archiveCollection);
 
-      const message: TypedMessage<BidCancelledV1Data> = {
-        event: MessageType.BidCancelled,
-        version: "1.0",
-        timestamp: new Date().getTime(),
-        logIndex: undefined,
-        blockNumber: undefined,
-        data: {
-          account: signer,
-          auctionId: bidData.auctionId,
-        },
-      };
+      // const message: TypedMessage<BidCancelledV1Data> = {
+      //   event: MessageType.BidCancelled,
+      //   version: "1.0",
+      //   timestamp: new Date().getTime(),
+      //   logIndex: undefined,
+      //   blockNumber: undefined,
+      //   data: {
+      //     account: signer,
+      //     auctionId: bidData.auctionId,
+      //   },
+      // };
 
-      console.log("send message");
-
-      await queue.sendMessage(message);
+      // await queue.sendMessage(message);
 
       return res.status(200);
     } catch (e) {
