@@ -263,7 +263,11 @@ router.post(
 router.post(
   "/bid/cancel",
   limiter,
-  async (req: express.Request, res: express.Response) => {
+  async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
     if (!validateBidCancelSchema(req.body)) {
       return res.status(400).send(validateBidCancelSchema.errors);
     }
@@ -283,9 +287,13 @@ router.post(
         req.body.cancelMessageSignature
       );
 
+      console.log(signer);
+
       if (signer !== bidData.account) {
         return res.status(400).send("Incorrect signer address recovered");
       }
+
+      console.log("cancelled in db");
 
       // Once confirmed, move to archive collection
       await database.cancelBid(bidData, archiveCollection);
@@ -302,12 +310,16 @@ router.post(
         },
       };
 
+      console.log("send message");
+
       await queue.sendMessage(message);
 
       return res.status(200);
     } catch {
-      throw new Error(
-        `Could not delete bid with signature: ${req.body.bidMessageSignature}`
+      next(
+        new Error(
+          `Could not delete bid with signature: ${req.body.bidMessageSignature}`
+        )
       );
     }
   }
@@ -324,7 +336,7 @@ router.get(
     const pokeProvider = async () => {
       const sampleProvider = new ethers.providers.JsonRpcProvider(infuraUrl);
       return sampleProvider.getBlockNumber();
-    }
+    };
 
     const blockNumber = await retry(pokeProvider);
 
