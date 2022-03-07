@@ -315,10 +315,10 @@ router.post(
       await queue.sendMessage(message);
 
       return res.status(200);
-    } catch {
+    } catch (e) {
       next(
         new Error(
-          `Could not delete bid with signature: ${req.body.bidMessageSignature}`
+          `Could not delete bid with signature: ${req.body.bidMessageSignature}\n${e?.stack}`
         )
       );
     }
