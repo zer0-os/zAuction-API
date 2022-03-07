@@ -1,5 +1,5 @@
 import { EventData, EventHubProducerClient } from "@azure/event-hubs";
-import { Message } from "@zero-tech/zns-message-schemas"
+import { Message } from "@zero-tech/zns-message-schemas";
 
 export const create = (connectionString: string, name: string) => {
   const producer: EventHubProducerClient = new EventHubProducerClient(
