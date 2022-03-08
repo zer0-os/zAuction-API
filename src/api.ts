@@ -317,10 +317,9 @@ router.post(
       };
 
       await queue.sendMessage(message);
-      // await queue.close(); 
 
       return res.status(200).send();
-    } catch (e: any) { // have to type message?
+    } catch (e) {
       console.error(e.message, e.stack);
       next(
         new Error(
