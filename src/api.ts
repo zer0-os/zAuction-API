@@ -231,7 +231,7 @@ router.post(
       };
 
       // Add new bid to our event queue
-      //await queue.sendMessage(message);
+      await queue.sendMessage(message);
 
       return res.status(200).send("OK");
     } catch (error) {
@@ -304,19 +304,19 @@ router.post(
       // Once confirmed, move to archive collection
       await database.cancelBid(bidData, archiveCollection);
 
-      // const message: TypedMessage<BidCancelledV1Data> = {
-      //   event: MessageType.BidCancelled,
-      //   version: "1.0",
-      //   timestamp: new Date().getTime(),
-      //   logIndex: undefined,
-      //   blockNumber: undefined,
-      //   data: {
-      //     account: signer,
-      //     uniqueBidId: bidData.uniqueBidId,
-      //   },
-      // };
+      const message: TypedMessage<BidCancelledV1Data> = {
+        event: MessageType.BidCancelled,
+        version: "1.0",
+        timestamp: new Date().getTime(),
+        logIndex: undefined,
+        blockNumber: undefined,
+        data: {
+          account: signer,
+          uniqueBidId: bidData.uniqueBidId,
+        },
+      };
 
-      // await queue.sendMessage(message);
+      await queue.sendMessage(message);
 
       return res.status(200).send();
     } catch (e) {
