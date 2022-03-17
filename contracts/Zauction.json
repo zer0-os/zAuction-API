@@ -352,6 +352,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "hub",
+      "outputs": [
+        {
+          "internalType": "contract IZNSHub",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "contract IERC20",
@@ -367,6 +380,19 @@
       "name": "initialize",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "legacyRegistrar",
+      "outputs": [
+        {
+          "internalType": "contract IRegistrar",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -432,19 +458,6 @@
     },
     {
       "inputs": [],
-      "name": "registrar",
-      "outputs": [
-        {
-          "internalType": "contract IRegistrar",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "renounceOwnership",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -482,6 +495,19 @@
         }
       ],
       "name": "setTopLevelDomainFee",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IZNSHub",
+          "name": "hubAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setZNSHub",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

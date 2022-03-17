@@ -356,6 +356,19 @@ const _abi = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "hub",
+    outputs: [
+      {
+        internalType: "contract IZNSHub",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       {
         internalType: "contract IERC20",
@@ -371,6 +384,19 @@ const _abi = [
     name: "initialize",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "legacyRegistrar",
+    outputs: [
+      {
+        internalType: "contract IRegistrar",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -436,19 +462,6 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "registrar",
-    outputs: [
-      {
-        internalType: "contract IRegistrar",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
     name: "renounceOwnership",
     outputs: [],
     stateMutability: "nonpayable",
@@ -486,6 +499,19 @@ const _abi = [
       },
     ],
     name: "setTopLevelDomainFee",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "contract IZNSHub",
+        name: "hubAddress",
+        type: "address",
+      },
+    ],
+    name: "setZNSHub",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
