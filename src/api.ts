@@ -233,7 +233,7 @@ router.post(
       // Add new bid to our event queue
       await queue.sendMessage(message);
 
-      return res.status(200).send("OK");
+      return res.status(200).send({});
     } catch (error) {
       next(error);
     }
