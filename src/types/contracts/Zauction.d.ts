@@ -28,14 +28,16 @@ interface ZauctionInterface extends ethers.utils.Interface {
     "cancelBid(address,uint256)": FunctionFragment;
     "consumed(address,uint256)": FunctionFragment;
     "createBid(uint256,uint256,address,uint256,uint256,uint256,uint256)": FunctionFragment;
+    "hub()": FunctionFragment;
     "initialize(address,address)": FunctionFragment;
+    "legacyRegistrar()": FunctionFragment;
     "owner()": FunctionFragment;
     "priceInfo(uint256)": FunctionFragment;
     "recover(bytes32,bytes)": FunctionFragment;
-    "registrar()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "setBuyPrice(uint256,uint256)": FunctionFragment;
     "setTopLevelDomainFee(uint256,uint256)": FunctionFragment;
+    "setZNSHub(address)": FunctionFragment;
     "toEthSignedMessageHash(bytes32)": FunctionFragment;
     "token()": FunctionFragment;
     "topLevelDomainFee(uint256)": FunctionFragment;
@@ -89,9 +91,14 @@ interface ZauctionInterface extends ethers.utils.Interface {
       BigNumberish
     ]
   ): string;
+  encodeFunctionData(functionFragment: "hub", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "initialize",
     values: [string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "legacyRegistrar",
+    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -102,7 +109,6 @@ interface ZauctionInterface extends ethers.utils.Interface {
     functionFragment: "recover",
     values: [BytesLike, BytesLike]
   ): string;
-  encodeFunctionData(functionFragment: "registrar", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
@@ -115,6 +121,7 @@ interface ZauctionInterface extends ethers.utils.Interface {
     functionFragment: "setTopLevelDomainFee",
     values: [BigNumberish, BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "setZNSHub", values: [string]): string;
   encodeFunctionData(
     functionFragment: "toEthSignedMessageHash",
     values: [BytesLike]
@@ -150,11 +157,15 @@ interface ZauctionInterface extends ethers.utils.Interface {
   decodeFunctionResult(functionFragment: "cancelBid", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "consumed", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "createBid", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "hub", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "legacyRegistrar",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "priceInfo", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "recover", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "registrar", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
@@ -167,6 +178,7 @@ interface ZauctionInterface extends ethers.utils.Interface {
     functionFragment: "setTopLevelDomainFee",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "setZNSHub", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "toEthSignedMessageHash",
     data: BytesLike
@@ -301,11 +313,15 @@ export class Zauction extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string] & { data: string }>;
 
+    hub(overrides?: CallOverrides): Promise<[string]>;
+
     initialize(
       tokenAddress: string,
       registrarAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    legacyRegistrar(overrides?: CallOverrides): Promise<[string]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
@@ -320,8 +336,6 @@ export class Zauction extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
-    registrar(overrides?: CallOverrides): Promise<[string]>;
-
     renounceOwnership(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -335,6 +349,11 @@ export class Zauction extends BaseContract {
     setTopLevelDomainFee(
       id: BigNumberish,
       amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setZNSHub(
+      hubAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -419,11 +438,15 @@ export class Zauction extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
+  hub(overrides?: CallOverrides): Promise<string>;
+
   initialize(
     tokenAddress: string,
     registrarAddress: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
+
+  legacyRegistrar(overrides?: CallOverrides): Promise<string>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -438,8 +461,6 @@ export class Zauction extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
-  registrar(overrides?: CallOverrides): Promise<string>;
-
   renounceOwnership(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -453,6 +474,11 @@ export class Zauction extends BaseContract {
   setTopLevelDomainFee(
     id: BigNumberish,
     amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setZNSHub(
+    hubAddress: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -537,11 +563,15 @@ export class Zauction extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    hub(overrides?: CallOverrides): Promise<string>;
+
     initialize(
       tokenAddress: string,
       registrarAddress: string,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    legacyRegistrar(overrides?: CallOverrides): Promise<string>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -556,8 +586,6 @@ export class Zauction extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
-    registrar(overrides?: CallOverrides): Promise<string>;
-
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
     setBuyPrice(
@@ -571,6 +599,8 @@ export class Zauction extends BaseContract {
       amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    setZNSHub(hubAddress: string, overrides?: CallOverrides): Promise<void>;
 
     toEthSignedMessageHash(
       hash: BytesLike,
@@ -718,11 +748,15 @@ export class Zauction extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    hub(overrides?: CallOverrides): Promise<BigNumber>;
+
     initialize(
       tokenAddress: string,
       registrarAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    legacyRegistrar(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -737,8 +771,6 @@ export class Zauction extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    registrar(overrides?: CallOverrides): Promise<BigNumber>;
-
     renounceOwnership(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -752,6 +784,11 @@ export class Zauction extends BaseContract {
     setTopLevelDomainFee(
       id: BigNumberish,
       amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setZNSHub(
+      hubAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -837,11 +874,15 @@ export class Zauction extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    hub(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     initialize(
       tokenAddress: string,
       registrarAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
+
+    legacyRegistrar(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -856,8 +897,6 @@ export class Zauction extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    registrar(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     renounceOwnership(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
@@ -871,6 +910,11 @@ export class Zauction extends BaseContract {
     setTopLevelDomainFee(
       id: BigNumberish,
       amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setZNSHub(
+      hubAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
