@@ -38,7 +38,7 @@ const bidPostSchema: JSONSchemaType<BidPostDto> = {
   type: "object",
   properties: {
     account: { type: "string" },
-    uniqueBidId: { type: "string" },
+    auctionId: { type: "string" },
     tokenId: { type: "string" },
     contractAddress: { type: "string" },
     bidAmount: { type: "string" },
@@ -49,7 +49,7 @@ const bidPostSchema: JSONSchemaType<BidPostDto> = {
   },
   required: [
     "account",
-    "uniqueBidId",
+    "auctionId",
     "tokenId",
     "contractAddress",
     "bidAmount",

@@ -27,7 +27,7 @@ async function calculateSigningAccount(
 ): Promise<string> {
   // Check signature recovers correct account
   const bidMessage = await encodeBid(
-    bidData.uniqueBidId,
+    bidData.auctionId,
     bidData.bidAmount,
     bidData.contractAddress,
     bidData.tokenId,
