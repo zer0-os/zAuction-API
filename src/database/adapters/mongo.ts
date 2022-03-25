@@ -1,10 +1,10 @@
 import { InsertOneResult, Document, InsertManyResult } from "mongodb";
 
 import { BidDatabaseService } from "..";
-import { Bid, MaybeBid } from "../../types";
+import { Bid, UncertainBid } from "../../types";
 import * as mongo from "../backends/mongo";
 
-const mapBids = (bids: MaybeBid[]): Bid[] => {
+const mapBids = (bids: UncertainBid[]): Bid[] => {
   // If a bid does not have a version number, it is a v1 bid
   // Append this property to create uniformity for consumers
   bids.map(bid => {
@@ -41,18 +41,18 @@ export const create = (db: string, collection: string): BidDatabaseService => {
 
   const getBidsByNftIds = async (nftIds: string[]): Promise<Bid[]> => {
     const nftIdList = [...nftIds];
-    const maybeResult: MaybeBid[] = await mongo.find(database, usedCollection, {
+    const versionlessResult: UncertainBid[] = await mongo.find(database, usedCollection, {
       nftId: {
         $in: nftIdList,
       },
     });
 
-    const result: Bid[] = mapBids(maybeResult);
+    const result: Bid[] = mapBids(versionlessResult);
     return result;
   };
 
   const getBidsByAccount = async (account: string): Promise<Bid[]> => {
-    const maybeResult: MaybeBid[] = await mongo.find(database, usedCollection, {
+    const maybeResult: UncertainBid[] = await mongo.find(database, usedCollection, {
       account: `${account}`,
     });
 
@@ -63,7 +63,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
   const getBidBySignedMessage = async (
     signedMessage: string
   ): Promise<Bid | null> => {
-    const maybeResult: MaybeBid | null = await mongo.findOne(database, collection, {
+    const maybeResult: UncertainBid | null = await mongo.findOne(database, collection, {
       signedMessage: `${signedMessage}`,
     });
 
@@ -81,7 +81,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return maybeResult as Bid;
   };
 
-  const cancelBid = async (bid: MaybeBid, archiveCollection: string): Promise<boolean> => {
+  const cancelBid = async (bid: UncertainBid, archiveCollection: string): Promise<boolean> => {
     // Place bid into archive collection, then delete
     const insertResult: InsertOneResult = await mongo.insertOne(
       bid,

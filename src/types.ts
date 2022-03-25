@@ -34,7 +34,7 @@ export interface BidParams {
 }
 
 export interface BidsList {
-  [nftId: string]: MaybeBid[] | undefined;
+  [nftId: string]: UncertainBid[] | undefined;
 }
 
 export interface BidsListDto {
@@ -55,7 +55,7 @@ export interface Bid extends BidParams {
   version: string
 }
 
-export interface MaybeBid extends BidParams {
+export interface UncertainBid extends BidParams {
   date: number;
   signedMessage: string;
   version?: string

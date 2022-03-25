@@ -34,7 +34,7 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
-  MaybeBid,
+  UncertainBid,
   VerifyBidResponse,
 } from "./types";
 
@@ -284,7 +284,7 @@ router.post(
       return res.status(400).send(validateBidCancelSchema.errors);
     }
     try {
-      const bidData: MaybeBid | null = await database.getBidBySignedMessage(
+      const bidData: UncertainBid | null = await database.getBidBySignedMessage(
         req.body.bidMessageSignature
       );
 
