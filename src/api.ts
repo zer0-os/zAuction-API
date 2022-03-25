@@ -183,6 +183,7 @@ router.post(
         ...bidParams,
         signedMessage: dto.signedMessage,
         date: dateNow.getTime(),
+        version: "2.0"
       };
 
       // Add new bid document to database
