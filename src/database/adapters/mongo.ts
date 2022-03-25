@@ -1,7 +1,7 @@
 import { InsertOneResult, Document, InsertManyResult } from "mongodb";
 
 import { BidDatabaseService } from "..";
-import { Bid } from "../../types";
+import { Bid, MaybeBid } from "../../types";
 import * as mongo from "../backends/mongo";
 
 export const create = (db: string, collection: string): BidDatabaseService => {
@@ -28,9 +28,9 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result.acknowledged;
   };
 
-  const getBidsByNftIds = async (nftIds: string[]): Promise<Bid[]> => {
+  const getBidsByNftIds = async (nftIds: string[]): Promise<MaybeBid[]> => {
     const nftIdList = [...nftIds];
-    const result: Bid[] = await mongo.find(database, usedCollection, {
+    const result: MaybeBid[] = await mongo.find(database, usedCollection, {
       nftId: {
         $in: nftIdList,
       },
@@ -38,8 +38,8 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result;
   };
 
-  const getBidsByAccount = async (account: string): Promise<Bid[]> => {
-    const result: Bid[] = await mongo.find(database, usedCollection, {
+  const getBidsByAccount = async (account: string): Promise<MaybeBid[]> => {
+    const result: MaybeBid[] = await mongo.find(database, usedCollection, {
       account: `${account}`,
     });
     return result;
@@ -47,17 +47,14 @@ export const create = (db: string, collection: string): BidDatabaseService => {
 
   const getBidBySignedMessage = async (
     signedMessage: string
-  ): Promise<Bid | null> => {
-    const result: Bid | null = await mongo.findOne(database, collection, {
+  ): Promise<MaybeBid | null> => {
+    const result: MaybeBid | null = await mongo.findOne(database, collection, {
       signedMessage: `${signedMessage}`,
     });
     return result;
   };
 
-  const cancelBid = async (
-    bid: Bid,
-    archiveCollection: string
-  ): Promise<boolean> => {
+  const cancelBid = async (bid: MaybeBid, archiveCollection: string): Promise<boolean> => {
     // Place bid into archive collection, then delete
     const insertResult: InsertOneResult = await mongo.insertOne(
       bid,

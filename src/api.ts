@@ -34,6 +34,7 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
+  MaybeBid,
   VerifyBidResponse,
 } from "./types";
 
@@ -132,7 +133,7 @@ router.post(
     }
 
     try {
-      const bids = await database.getBidsByNftIds(dto.nftIds);
+      const bids: MaybeBid[] = await database.getBidsByNftIds(dto.nftIds);
 
       // For each bid, map to appropriate nftId array
       for (const bid of bids) {
@@ -162,7 +163,7 @@ router.get(
     const accountId = req.params.account;
 
     try {
-      const accountBids: Bid[] = await database.getBidsByAccount(accountId);
+      const accountBids: MaybeBid[] = await database.getBidsByAccount(accountId);
       return res.status(200).send(accountBids);
     } catch {
       next(new Error(`Could not get bids for account ${accountId}`));
@@ -216,6 +217,7 @@ router.post(
         ...bidParams,
         signedMessage: dto.signedMessage,
         date: dateNow.getTime(),
+        version: "2.0"
       };
 
       // Add new bid document to database
@@ -282,7 +284,7 @@ router.post(
       return res.status(400).send(validateBidCancelSchema.errors);
     }
     try {
-      const bidData: Bid | null = await database.getBidBySignedMessage(
+      const bidData: MaybeBid | null = await database.getBidBySignedMessage(
         req.body.bidMessageSignature
       );
 
