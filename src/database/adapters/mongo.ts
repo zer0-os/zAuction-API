@@ -4,6 +4,17 @@ import { BidDatabaseService } from "..";
 import { Bid, MaybeBid } from "../../types";
 import * as mongo from "../backends/mongo";
 
+const mapBids = (bids: MaybeBid[]): Bid[] => {
+  // If a bid does not have a version number, it is a v1 bid
+  // Append this property to create uniformity for consumers
+  bids.map(bid => {
+    if(!bid.version) {
+      bid.version = "1.0"
+    }
+  });
+  return bids as Bid[];
+}
+
 export const create = (db: string, collection: string): BidDatabaseService => {
   const database = db;
   const usedCollection = collection;
@@ -28,30 +39,46 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result.acknowledged;
   };
 
-  const getBidsByNftIds = async (nftIds: string[]): Promise<MaybeBid[]> => {
+  const getBidsByNftIds = async (nftIds: string[]): Promise<Bid[]> => {
     const nftIdList = [...nftIds];
-    const result: MaybeBid[] = await mongo.find(database, usedCollection, {
+    const maybeResult: MaybeBid[] = await mongo.find(database, usedCollection, {
       nftId: {
         $in: nftIdList,
       },
     });
+
+    const result: Bid[] = mapBids(maybeResult);
     return result;
   };
 
-  const getBidsByAccount = async (account: string): Promise<MaybeBid[]> => {
-    const result: MaybeBid[] = await mongo.find(database, usedCollection, {
+  const getBidsByAccount = async (account: string): Promise<Bid[]> => {
+    const maybeResult: MaybeBid[] = await mongo.find(database, usedCollection, {
       account: `${account}`,
     });
+
+    const result: Bid[] = mapBids(maybeResult);
     return result;
   };
 
   const getBidBySignedMessage = async (
     signedMessage: string
-  ): Promise<MaybeBid | null> => {
-    const result: MaybeBid | null = await mongo.findOne(database, collection, {
+  ): Promise<Bid | null> => {
+    const maybeResult: MaybeBid | null = await mongo.findOne(database, collection, {
       signedMessage: `${signedMessage}`,
     });
-    return result;
+
+    if(!maybeResult) {
+      return null;
+    }
+
+    // If it already has a version number, it is a v2 bid
+    if(maybeResult.version) {
+      return maybeResult as Bid;
+    }
+
+    // Otherwise, we append the version number to it.
+    maybeResult.version = "1.0";
+    return maybeResult as Bid;
   };
 
   const cancelBid = async (bid: MaybeBid, archiveCollection: string): Promise<boolean> => {

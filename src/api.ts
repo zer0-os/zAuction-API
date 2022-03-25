@@ -133,9 +133,9 @@ router.post(
     }
 
     try {
-      const bids: MaybeBid[] = await database.getBidsByNftIds(dto.nftIds);
+      const bids: Bid[] = await database.getBidsByNftIds(dto.nftIds);
 
-      // For each bid, map to appropriate nftId array
+      // For each bid, push to appropriate nftId array
       for (const bid of bids) {
         const nftId = bid.nftId;
         nftBids[nftId]?.push(bid);
@@ -163,7 +163,7 @@ router.get(
     const accountId = req.params.account;
 
     try {
-      const accountBids: MaybeBid[] = await database.getBidsByAccount(accountId);
+      const accountBids: Bid[] = await database.getBidsByAccount(accountId);
       return res.status(200).send(accountBids);
     } catch {
       next(new Error(`Could not get bids for account ${accountId}`));
