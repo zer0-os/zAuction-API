@@ -11,7 +11,7 @@ export interface BidPayloadPostDto {
 
 export interface BidPostDto {
   account: string;
-  auctionId: string;
+  bidNonce: string;
   tokenId: string;
   contractAddress: string;
   bidAmount: string;
@@ -22,6 +22,18 @@ export interface BidPostDto {
 }
 
 export interface BidParams {
+  nftId: string;
+  account: string;
+  bidNonce: string;
+  bidAmount: string;
+  minimumBid: string;
+  contractAddress: string;
+  startBlock: string;
+  expireBlock: string;
+  tokenId: string;
+}
+
+export interface Version1BidParams {
   nftId: string;
   account: string;
   auctionId: string;
@@ -52,14 +64,15 @@ export interface BidsDto {
 export interface Bid extends BidParams {
   date: number;
   signedMessage: string;
-  version: string
+  version: string;
 }
-
-export interface UncertainBid extends BidParams {
+export interface BidVersion1 extends Version1BidParams {
   date: number;
   signedMessage: string;
-  version?: string
 }
+
+export type UncertainBid = Bid & BidVersion1;
+
 export interface Auction {
   tokenId: string;
   contractAddress: string;
@@ -85,5 +98,5 @@ export interface BidCancelDto extends BidCancelEncode {
 
 export interface BidCancellation {
   account: string;
-  auctionId: string;
+  bidNonce: string;
 }

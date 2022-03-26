@@ -7,13 +7,17 @@ import * as mongo from "../backends/mongo";
 const mapBids = (bids: UncertainBid[]): Bid[] => {
   // If a bid does not have a version number, it is a v1 bid
   // Append this property to create uniformity for consumers
-  bids.map(bid => {
-    if(!bid.version) {
-      bid.version = "1.0"
-    }
+  bids.map((bid) => {
+    const properBid: Bid = {
+      ...bid,
+      version: bid.version ?? "1.0",
+      bidNonce: bid.bidNonce ?? bid.auctionId,
+    };
+
+    return properBid;
   });
   return bids as Bid[];
-}
+};
 
 export const create = (db: string, collection: string): BidDatabaseService => {
   const database = db;
@@ -41,20 +45,28 @@ export const create = (db: string, collection: string): BidDatabaseService => {
 
   const getBidsByNftIds = async (nftIds: string[]): Promise<Bid[]> => {
     const nftIdList = [...nftIds];
-    const versionlessResult: UncertainBid[] = await mongo.find(database, usedCollection, {
-      nftId: {
-        $in: nftIdList,
-      },
-    });
+    const versionlessResult: UncertainBid[] = await mongo.find(
+      database,
+      usedCollection,
+      {
+        nftId: {
+          $in: nftIdList,
+        },
+      }
+    );
 
     const result: Bid[] = mapBids(versionlessResult);
     return result;
   };
 
   const getBidsByAccount = async (account: string): Promise<Bid[]> => {
-    const maybeResult: UncertainBid[] = await mongo.find(database, usedCollection, {
-      account: `${account}`,
-    });
+    const maybeResult: UncertainBid[] = await mongo.find(
+      database,
+      usedCollection,
+      {
+        account: `${account}`,
+      }
+    );
 
     const result: Bid[] = mapBids(maybeResult);
     return result;
@@ -63,16 +75,20 @@ export const create = (db: string, collection: string): BidDatabaseService => {
   const getBidBySignedMessage = async (
     signedMessage: string
   ): Promise<Bid | null> => {
-    const maybeResult: UncertainBid | null = await mongo.findOne(database, collection, {
-      signedMessage: `${signedMessage}`,
-    });
+    const maybeResult: UncertainBid | null = await mongo.findOne(
+      database,
+      collection,
+      {
+        signedMessage: `${signedMessage}`,
+      }
+    );
 
-    if(!maybeResult) {
+    if (!maybeResult) {
       return null;
     }
 
     // If it already has a version number, it is a v2 bid
-    if(maybeResult.version) {
+    if (maybeResult.version) {
       return maybeResult as Bid;
     }
 
@@ -81,7 +97,10 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return maybeResult as Bid;
   };
 
-  const cancelBid = async (bid: UncertainBid, archiveCollection: string): Promise<boolean> => {
+  const cancelBid = async (
+    bid: UncertainBid,
+    archiveCollection: string
+  ): Promise<boolean> => {
     // Place bid into archive collection, then delete
     const insertResult: InsertOneResult = await mongo.insertOne(
       bid,
