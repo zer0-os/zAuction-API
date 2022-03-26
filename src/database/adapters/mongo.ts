@@ -1,23 +1,21 @@
 import { InsertOneResult, Document, InsertManyResult } from "mongodb";
 
 import { BidDatabaseService } from "..";
-import { Bid, UncertainBid } from "../../types";
+import { Bid } from "../../types";
 import * as mongo from "../backends/mongo";
+import { UncertainBid } from "../types";
 
-const mapBids = (bids: UncertainBid[]): Bid[] => {
-  // If a bid does not have a version number, it is a v1 bid
-  // Append this property to create uniformity for consumers
-  bids.map((bid) => {
-    const properBid: Bid = {
-      ...bid,
-      version: bid.version ?? "1.0",
-      bidNonce: bid.bidNonce ?? bid.auctionId,
-    };
+const uncertainBidToBid = (bid: UncertainBid): Bid => {
+  const properBid: Bid = {
+    ...bid,
+    version: bid.version ?? "1.0",
+    bidNonce: bid.bidNonce ?? bid.auctionId,
+  };
 
-    return properBid;
-  });
-  return bids as Bid[];
+  return properBid;
 };
+
+const mapBids = (bids: UncertainBid[]): Bid[] => bids.map(uncertainBidToBid);
 
 export const create = (db: string, collection: string): BidDatabaseService => {
   const database = db;
@@ -87,18 +85,12 @@ export const create = (db: string, collection: string): BidDatabaseService => {
       return null;
     }
 
-    // If it already has a version number, it is a v2 bid
-    if (maybeResult.version) {
-      return maybeResult as Bid;
-    }
-
-    // Otherwise, we append the version number to it.
-    maybeResult.version = "1.0";
-    return maybeResult as Bid;
+    const bid = uncertainBidToBid(maybeResult);
+    return bid;
   };
 
   const cancelBid = async (
-    bid: UncertainBid,
+    bid: Bid,
     archiveCollection: string
   ): Promise<boolean> => {
     // Place bid into archive collection, then delete

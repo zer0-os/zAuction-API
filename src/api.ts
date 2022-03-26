@@ -34,12 +34,12 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
-  UncertainBid,
   VerifyBidResponse,
 } from "./types";
 
 import { ethers } from "ethers";
 import { retry } from "./util/retry";
+import e from "express";
 
 const router = express.Router();
 
@@ -229,7 +229,10 @@ router.post(
         timestamp: new Date().getTime(),
         logIndex: undefined,
         blockNumber: undefined,
-        data: newBid,
+        data: {
+          ...newBid,
+          auctionId: newBid.bidNonce, // compatibility with DSS
+        },
       };
 
       // Add new bid to our event queue
@@ -284,7 +287,7 @@ router.post(
       return res.status(400).send(validateBidCancelSchema.errors);
     }
     try {
-      const bidData: UncertainBid | null = await database.getBidBySignedMessage(
+      const bidData: Bid | null = await database.getBidBySignedMessage(
         req.body.bidMessageSignature
       );
 
@@ -314,7 +317,7 @@ router.post(
         blockNumber: undefined,
         data: {
           account: signer,
-          bidNonce: bidData.bidNonce,
+          auctionId: bidData.bidNonce,
         },
       };
 

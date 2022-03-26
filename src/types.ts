@@ -33,20 +33,8 @@ export interface BidParams {
   tokenId: string;
 }
 
-export interface Version1BidParams {
-  nftId: string;
-  account: string;
-  auctionId: string;
-  bidAmount: string;
-  minimumBid: string;
-  contractAddress: string;
-  startBlock: string;
-  expireBlock: string;
-  tokenId: string;
-}
-
 export interface BidsList {
-  [nftId: string]: UncertainBid[] | undefined;
+  [nftId: string]: Bid[] | undefined;
 }
 
 export interface BidsListDto {
@@ -66,12 +54,6 @@ export interface Bid extends BidParams {
   signedMessage: string;
   version: string;
 }
-export interface BidVersion1 extends Version1BidParams {
-  date: number;
-  signedMessage: string;
-}
-
-export type UncertainBid = Bid & BidVersion1;
 
 export interface Auction {
   tokenId: string;
