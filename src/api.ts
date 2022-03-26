@@ -34,6 +34,7 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
+  UncertainBid,
   VerifyBidResponse,
 } from "./types";
 
@@ -132,9 +133,9 @@ router.post(
     }
 
     try {
-      const bids = await database.getBidsByNftIds(dto.nftIds);
+      const bids: Bid[] = await database.getBidsByNftIds(dto.nftIds);
 
-      // For each bid, map to appropriate nftId array
+      // For each bid, push to appropriate nftId array
       for (const bid of bids) {
         const nftId = bid.nftId;
         nftBids[nftId]?.push(bid);
@@ -216,6 +217,7 @@ router.post(
         ...bidParams,
         signedMessage: dto.signedMessage,
         date: dateNow.getTime(),
+        version: "2.0"
       };
 
       // Add new bid document to database
@@ -282,7 +284,7 @@ router.post(
       return res.status(400).send(validateBidCancelSchema.errors);
     }
     try {
-      const bidData: Bid | null = await database.getBidBySignedMessage(
+      const bidData: UncertainBid | null = await database.getBidBySignedMessage(
         req.body.bidMessageSignature
       );
 

@@ -144,7 +144,7 @@ describe("Test API Endpoints", async () => {
   });
 
   describe("POST /bids", () => {
-    it("Validates BidPost schema correctly", (done) => {
+    it("Validates BidPostDto schema correctly", () => {
       const payload: BidPostDto = {
         account: "0x",
         auctionId: "0",
@@ -165,9 +165,9 @@ describe("Test API Endpoints", async () => {
           assert.isDefined(res.body);
           assert.isObject(res.body);
         })
-        .expect(200, done);
+        .expect(200);
     });
-    it("Fails on incorrect BidsListPost schema", (done) => {
+    it("Fails on incorrect BidsPostDto schema", (done) => {
       const payload = {
         account: "0x",
       };
