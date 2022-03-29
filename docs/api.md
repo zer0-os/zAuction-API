@@ -2,7 +2,7 @@
 
 ## `/bid`
 
-Returns encoded data to be signed, a generated uniqueBidId,
+Returns encoded data to be signed, a generated bidNonce,
 and a generated nftId determined by the NFT contract address and tokenId
 
 ```
@@ -24,7 +24,7 @@ Body:
 Response:
 {
   "payload": <string>,
-  "uniqueBidId": <number>,
+  "bidNonce": <number>,
   "nftId": <string>
 }
 ```
@@ -53,7 +53,7 @@ Response:
   "0x123...": [
      "account": <string>,
      "signedMessage": <string>,
-     "uniqueBidId": <string>,
+     "bidNonce": <string>,
      "bidAmount": <string>,
      "minimumBid": <string>,
      "startBlock": <string>,
@@ -83,7 +83,7 @@ Response:
   {
     "account": <string>,
     "signedMessage": <string>,
-    "uniqueBidId": <string>,
+    "bidNonce": <string>,
     "bidAmount": <string>,
     "minimumBid": <string>,
     "startBlock": <string>,
@@ -109,7 +109,7 @@ Headers:
 Body: 
 {
   "account": <string>,
-  "uniqueBidId": <string>,
+  "bidNonce": <string>,
   "bidAmount": <string>,
   "contractAddress": <string>
   "expireblock": <string>,
@@ -135,7 +135,7 @@ Headers:
 Body: 
 {
   "account": <string>,
-  "uniqueBidId": <string>,
+  "bidNonce": <string>,
   "bidAmount": <string>,
   "contractAddress": <string>
   "expireblock": <string>,
@@ -149,7 +149,7 @@ Response:
   {
     "account": <string>,
     "signedMessage": <string>,
-    "uniqueBidId": <string>,
+    "bidNonce": <string>,
     "bidAmount": <string>,
     "minimumBid": <string>,
     "startBlock": <string>,

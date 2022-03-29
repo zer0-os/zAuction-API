@@ -60,7 +60,7 @@ describe("Test API Endpoints", async () => {
         .send(payload)
         .expect((res) => {
           assert.isDefined(res.body.payload);
-          assert.isDefined(res.body.uniqueBidId);
+          assert.isDefined(res.body.bidNonce);
           assert.isDefined(res.body.nftId);
         })
         .expect(200, done);
@@ -147,7 +147,7 @@ describe("Test API Endpoints", async () => {
     it("Validates BidPost schema correctly", (done) => {
       const payload: BidPostDto = {
         account: "0x",
-        uniqueBidId: "0",
+        bidNonce: "0",
         bidAmount: "0",
         tokenId: "0x1",
         contractAddress: "0x1",

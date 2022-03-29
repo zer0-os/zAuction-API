@@ -11,7 +11,7 @@ export interface BidPayloadPostDto {
 
 export interface BidPostDto {
   account: string;
-  uniqueBidId: string;
+  bidNonce: string;
   tokenId: string;
   contractAddress: string;
   bidAmount: string;
@@ -24,7 +24,7 @@ export interface BidPostDto {
 export interface BidParams {
   nftId: string;
   account: string;
-  uniqueBidId: string;
+  bidNonce: string;
   bidAmount: string;
   minimumBid: string;
   contractAddress: string;
@@ -79,5 +79,5 @@ export interface BidCancelDto extends BidCancelEncode {
 
 export interface BidCancellation {
   account: string;
-  uniqueBidId: string;
+  bidNonce: string;
 }

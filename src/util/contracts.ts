@@ -48,7 +48,7 @@ export async function getTokenContract(): Promise<ERC20> {
 }
 
 export const encodeBid = async (
-  uniqueBidId: string | number,
+  bidNonce: string | number,
   bidAmount: string,
   contractAddress: string,
   tokenId: string,
@@ -59,7 +59,7 @@ export const encodeBid = async (
   const zAuction = await getZAuctionContract();
 
   const payload = await zAuction.createBid(
-    uniqueBidId,
+    bidNonce,
     bidAmount,
     contractAddress,
     tokenId,

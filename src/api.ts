@@ -66,7 +66,7 @@ const queue: MessageQueueService = queueAdapters.eventhub.create(
   name
 );
 
-// Returns encoded data to be signed, a generated uniqueBidId,
+// Returns encoded data to be signed, a generated bidNonce,
 // and a generated nftId determined by the NFT contract address and tokenId
 router.post(
   "/bid",
@@ -82,14 +82,14 @@ router.post(
       }
       const dto: BidPayloadPostDto = req.body as BidPayloadPostDto;
 
-      // Generate uniqueBidId, nftId
+      // Generate bidNonce, nftId
       const nftId = calculateNftId(dto.contractAddress, dto.tokenId);
-      const uniqueBidId = Math.floor(Math.random() * 42949672960);
+      const bidNonce = Math.floor(Math.random() * 42949672960);
 
-      // We use `uniqueBidId` to be clearer about what the variable actually represents
+      // We use `bidNonce` to be clearer about what the variable actually represents
       // but any existing database records will still show `auctionId`
       const payload = await encodeBid(
-        uniqueBidId,
+        bidNonce,
         dto.bidAmount,
         dto.contractAddress,
         dto.tokenId,
@@ -100,7 +100,7 @@ router.post(
 
       const responseData = {
         payload,
-        uniqueBidId,
+        bidNonce,
         nftId,
       };
 
@@ -189,7 +189,7 @@ router.post(
       const bidParams: BidParams = {
         nftId: calculateNftId(dto.contractAddress, dto.tokenId),
         account: dto.account,
-        uniqueBidId: dto.uniqueBidId,
+        bidNonce: dto.bidNonce,
         bidAmount: dto.bidAmount,
         contractAddress: dto.contractAddress,
         tokenId: dto.tokenId,
@@ -312,7 +312,7 @@ router.post(
         blockNumber: undefined,
         data: {
           account: signer,
-          uniqueBidId: bidData.uniqueBidId,
+          bidNonce: bidData.bidNonce,
         },
       };
 
