@@ -52,6 +52,7 @@ export interface BidsDto {
 export interface Bid extends BidParams {
   date: number;
   signedMessage: string;
+  version?: string;
 }
 
 export interface Auction {

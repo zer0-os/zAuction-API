@@ -3,6 +3,19 @@ import { InsertOneResult, Document, InsertManyResult } from "mongodb";
 import { BidDatabaseService } from "..";
 import { Bid } from "../../types";
 import * as mongo from "../backends/mongo";
+import { UncertainBid } from "../types";
+
+const uncertainBidToBid = (bid: UncertainBid): Bid => {
+  const properBid: Bid = {
+    ...bid,
+    version: bid.version ?? "1.0",
+    bidNonce: bid.bidNonce ?? bid.auctionId,
+  };
+
+  return properBid;
+};
+
+const mapBids = (bids: UncertainBid[]): Bid[] => bids.map(uncertainBidToBid);
 
 export const create = (db: string, collection: string): BidDatabaseService => {
   const database = db;
@@ -30,28 +43,50 @@ export const create = (db: string, collection: string): BidDatabaseService => {
 
   const getBidsByNftIds = async (nftIds: string[]): Promise<Bid[]> => {
     const nftIdList = [...nftIds];
-    const result: Bid[] = await mongo.find(database, usedCollection, {
-      nftId: {
-        $in: nftIdList,
-      },
-    });
+    const versionlessResult: UncertainBid[] = await mongo.find(
+      database,
+      usedCollection,
+      {
+        nftId: {
+          $in: nftIdList,
+        },
+      }
+    );
+
+    const result: Bid[] = mapBids(versionlessResult);
     return result;
   };
 
   const getBidsByAccount = async (account: string): Promise<Bid[]> => {
-    const result: Bid[] = await mongo.find(database, usedCollection, {
-      account: `${account}`,
-    });
+    const maybeResult: UncertainBid[] = await mongo.find(
+      database,
+      usedCollection,
+      {
+        account: `${account}`,
+      }
+    );
+
+    const result: Bid[] = mapBids(maybeResult);
     return result;
   };
 
   const getBidBySignedMessage = async (
     signedMessage: string
   ): Promise<Bid | null> => {
-    const result: Bid | null = await mongo.findOne(database, collection, {
-      signedMessage: `${signedMessage}`,
-    });
-    return result;
+    const maybeResult: UncertainBid | null = await mongo.findOne(
+      database,
+      collection,
+      {
+        signedMessage: `${signedMessage}`,
+      }
+    );
+
+    if (!maybeResult) {
+      return null;
+    }
+
+    const bid = uncertainBidToBid(maybeResult);
+    return bid;
   };
 
   const cancelBid = async (
