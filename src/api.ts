@@ -221,15 +221,28 @@ router.post(
       // Add new bid document to database
       await database.insertBid(newBid);
 
+      const data: BidPlacedV1Data = {
+        nftId: newBid.nftId,
+        account: newBid.account,
+        auctionId: newBid.bidNonce, //translate here
+        bidAmount: newBid.bidAmount,
+        minimumBid: newBid.minimumBid,
+        contractAddress: newBid.contractAddress,
+        startBlock: newBid.startBlock,
+        expireBlock: newBid.expireBlock,
+        tokenId: newBid.tokenId,
+        date: newBid.date,
+        signedMessage: newBid.signedMessage,
+
+      }
+
       const message: TypedMessage<BidPlacedV1Data> = {
         event: MessageType.BidPlaced,
         version: "1.0",
         timestamp: new Date().getTime(),
         logIndex: undefined,
         blockNumber: undefined,
-        data: {
-          ...newBid
-        },
+        data: data
       };
 
       // Add new bid to our event queue
@@ -306,16 +319,18 @@ router.post(
       // Once confirmed, move to archive collection
       await database.cancelBid(bidData, archiveCollection);
 
+      const data: BidCancelledV1Data = {
+        account: bidData.account,
+        auctionId: bidData.bidNonce // translate here
+      }
+
       const message: TypedMessage<BidCancelledV1Data> = {
         event: MessageType.BidCancelled,
         version: "1.0",
         timestamp: new Date().getTime(),
         logIndex: undefined,
         blockNumber: undefined,
-        data: {
-          account: bidData.account,
-          bidNonce: bidData.bidNonce
-        },
+        data: data
       };
 
       await queue.sendMessage(message);
