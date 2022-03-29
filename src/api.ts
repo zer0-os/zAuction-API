@@ -228,17 +228,7 @@ router.post(
         logIndex: undefined,
         blockNumber: undefined,
         data: {
-          date: newBid.date,
-          signedMessage: newBid.signedMessage,
-          nftId: newBid.nftId,
-          account: newBid.account,
-          bidAmount: newBid.bidAmount,
-          minimumBid: newBid.minimumBid,
-          contractAddress: newBid.contractAddress,
-          startBlock: newBid.startBlock,
-          expireBlock: newBid.expireBlock,
-          tokenId: newBid.tokenId,
-          auctionId: newBid.bidNonce // translate
+          ...newBid
         },
       };
 
@@ -323,8 +313,8 @@ router.post(
         logIndex: undefined,
         blockNumber: undefined,
         data: {
-          account: signer,
-          auctionId: bidData.bidNonce, // translate
+          account: bidData.account,
+          bidNonce: bidData.bidNonce
         },
       };
 
