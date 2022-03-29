@@ -227,7 +227,19 @@ router.post(
         timestamp: new Date().getTime(),
         logIndex: undefined,
         blockNumber: undefined,
-        data: newBid,
+        data: {
+          date: newBid.date,
+          signedMessage: newBid.signedMessage,
+          nftId: newBid.nftId,
+          account: newBid.account,
+          bidAmount: newBid.bidAmount,
+          minimumBid: newBid.minimumBid,
+          contractAddress: newBid.contractAddress,
+          startBlock: newBid.startBlock,
+          expireBlock: newBid.expireBlock,
+          tokenId: newBid.tokenId,
+          auctionId: newBid.bidNonce // translate
+        },
       };
 
       // Add new bid to our event queue
@@ -312,7 +324,7 @@ router.post(
         blockNumber: undefined,
         data: {
           account: signer,
-          bidNonce: bidData.bidNonce,
+          auctionId: bidData.bidNonce, // translate
         },
       };
 
