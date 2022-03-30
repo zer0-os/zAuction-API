@@ -112,7 +112,7 @@ router.post(
   }
 );
 
-// Endpoint to return auctions based on an array of given nftIds
+// Endpoint to return auctions based on an array of given tokenIds
 router.post(
   "/bids/list",
   limiter,
@@ -125,26 +125,26 @@ router.post(
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
     const dto: BidsListDto = req.body as BidsListDto;
-    const nftBids: BidsList = {};
+    const tokenIdBids: BidsList = {};
 
     // Create an empty array for each given nftId
-    for (const nftId of dto.nftIds) {
-      nftBids[nftId] = [];
+    for (const tokenId of dto.tokenIds) {
+      tokenIdBids[tokenId] = [];
     }
 
     try {
-      const bids: Bid[] = await database.getBidsByNftIds(dto.nftIds);
+      const bids: Bid[] = await database.getBidsByTokenIds(dto.tokenIds);
 
-      // For each bid, push to appropriate nftId array
+      // For each bid, map to appropriate tokenId array
       for (const bid of bids) {
-        const nftId = bid.nftId;
-        nftBids[nftId]?.push(bid);
+        const tokenId = bid.tokenId;
+        tokenIdBids[tokenId]?.push(bid);
       }
     } catch {
       next(new Error("Could not get bids for given nftIds"));
     }
 
-    return res.status(200).send(nftBids);
+    return res.status(200).send(tokenIdBids);
   }
 );
 
@@ -242,15 +242,15 @@ router.post(
   }
 );
 
-// Endpoint to return bids for a single nftId
+// Endpoint to return bids for a single tokenId
 router.get(
-  "/bids/:nftId",
+  "/bids/:tokenId",
   limiter,
   async (req: express.Request, res: express.Response) => {
     if (!validateBidsGetSchema(req.params)) {
       return res.status(400).send(validateBidsGetSchema.errors);
     }
-    const bids = await database.getBidsByNftIds([req.params.nftId]);
+    const bids = await database.getBidsByTokenIds([req.params.tokenId]);
     return res.status(200).send(bids);
   }
 );
