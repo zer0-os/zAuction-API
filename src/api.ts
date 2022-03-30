@@ -190,7 +190,7 @@ router.post(
       const bidParams: BidParams = {
         nftId: calculateNftId(dto.contractAddress, dto.tokenId),
         account: dto.account,
-        auctionId: dto.auctionId,
+        bidNonce: dto.bidNonce,
         bidAmount: dto.bidAmount,
         contractAddress: dto.contractAddress,
         tokenId: dto.tokenId,
@@ -223,17 +223,19 @@ router.post(
       // Add new bid document to database
       await database.insertBid(newBid);
 
-      const message: TypedMessage<BidPlacedV1Data> = {
-        event: MessageType.BidPlaced,
-        version: "1.0",
-        timestamp: new Date().getTime(),
-        logIndex: undefined,
-        blockNumber: undefined,
-        data: newBid,
-      };
+      // TODO update zns-message-schemas to use bidNonce over auctionId
 
-      // Add new bid to our event queue
-      await queue.sendMessage(message);
+      // const message: TypedMessage<BidPlacedV1Data> = {
+      //   event: MessageType.BidPlaced,
+      //   version: "1.0",
+      //   timestamp: new Date().getTime(),
+      //   logIndex: undefined,
+      //   blockNumber: undefined,
+      //   data: newBid,
+      // };
+
+      // // Add new bid to our event queue
+      // await queue.sendMessage(message);
 
       return res.status(200).send({});
     } catch (error) {
@@ -314,7 +316,7 @@ router.post(
         blockNumber: undefined,
         data: {
           account: signer,
-          auctionId: bidData.auctionId,
+          auctionId: bidData.bidNonce,
         },
       };
 
