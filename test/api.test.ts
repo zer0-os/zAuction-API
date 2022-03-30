@@ -60,7 +60,7 @@ describe("Test API Endpoints", async () => {
         .send(payload)
         .expect((res) => {
           assert.isDefined(res.body.payload);
-          assert.isDefined(res.body.auctionId);
+          assert.isDefined(res.body.bidNonce);
           assert.isDefined(res.body.nftId);
         })
         .expect(200, done);

@@ -85,5 +85,5 @@ export interface BidCancelDto extends BidCancelEncode {
 
 export interface BidCancellation {
   account: string;
-  auctionId: string;
+  bidNonce: string;
 }
