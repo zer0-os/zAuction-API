@@ -64,13 +64,13 @@ export const validateBidPostSchema = ajv.compile(bidPostSchema);
 const bidsListPostSchema: JSONSchemaType<BidsListDto> = {
   type: "object",
   properties: {
-    nftIds: {
+    tokenIds: {
       type: "array",
       minItems: 1,
       items: { type: "string" },
     },
   },
-  required: ["nftIds"],
+  required: ["tokenIds"],
   additionalProperties: false,
 };
 
@@ -89,9 +89,9 @@ export const validateBidsAccountsGetSchema = ajv.compile(bidsAccountsGetSchema);
 const bidsGetSchema: JSONSchemaType<BidsDto> = {
   type: "object",
   properties: {
-    nftId: { type: "string" },
+    tokenId: { type: "string" },
   },
-  required: ["nftId"],
+  required: ["tokenId"],
 };
 
 export const validateBidsGetSchema = ajv.compile(bidsGetSchema);

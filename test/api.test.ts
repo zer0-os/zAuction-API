@@ -82,7 +82,7 @@ describe("Test API Endpoints", async () => {
   describe("POST /bids/list", () => {
     it("Validates the BidsListPost schema correctly", (done) => {
       const payload: BidsListDto = {
-        nftIds: ["0x123"],
+        tokenIds: ["0x123"],
       };
 
       request(App)
