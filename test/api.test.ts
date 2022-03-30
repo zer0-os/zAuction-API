@@ -147,7 +147,7 @@ describe("Test API Endpoints", async () => {
     it("Validates BidPostDto schema correctly", () => {
       const payload: BidPostDto = {
         account: "0x",
-        auctionId: "0",
+        bidNonce: "0",
         bidAmount: "0",
         tokenId: "0x1",
         contractAddress: "0x1",
