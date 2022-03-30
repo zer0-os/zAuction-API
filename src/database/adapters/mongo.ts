@@ -42,7 +42,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
   const getBidsByTokenIds = async (tokenIds: string[]): Promise<Bid[]> => {
     const tokenIdList = [...tokenIds];
     const versionlessResult: UncertainBid[] = await mongo.find(database, usedCollection, {
-      nftId: {
+      tokenId: {
         $in: tokenIdList,
       },
     });
