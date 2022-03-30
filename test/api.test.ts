@@ -183,11 +183,11 @@ describe("Test API Endpoints", async () => {
   describe("GET /bids/:nftId", () => {
     it("Validates the BidsGet schema correctly", (done) => {
       const payload: BidsDto = {
-        nftId: "0x123",
+        tokenId: "0x123",
       };
 
       request(App)
-        .get(`/api/bids/${payload.nftId}`)
+        .get(`/api/bids/${payload.tokenId}`)
         .set("Content-Type", "application/json")
         .expect((res) => {
           assert.isDefined(res.body);
