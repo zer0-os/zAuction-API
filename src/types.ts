@@ -34,7 +34,7 @@ export interface BidParams {
 }
 
 export interface BidsList {
-  [tokenId: string]: Bid[] | undefined;
+  [tokenId: string]: UncertainBid[] | undefined;
 }
 
 export interface BidsListDto {
@@ -52,8 +52,14 @@ export interface BidsDto {
 export interface Bid extends BidParams {
   date: number;
   signedMessage: string;
+  version: string
 }
 
+export interface UncertainBid extends BidParams {
+  date: number;
+  signedMessage: string;
+  version?: string
+}
 export interface Auction {
   tokenId: string;
   contractAddress: string;
@@ -73,6 +79,11 @@ export interface VerifyBidResponse {
 export interface BidCancelEncode {
   bidMessageSignature: string;
 }
-export interface BidCancelDto extends BidCancelEncode{
+export interface BidCancelDto extends BidCancelEncode {
   cancelMessageSignature: string;
+}
+
+export interface BidCancellation {
+  account: string;
+  auctionId: string;
 }

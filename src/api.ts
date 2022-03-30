@@ -2,7 +2,15 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import * as env from "env-var";
 
+import {
+  MessageType,
+  TypedMessage,
+  BidPlacedV1Data,
+  BidCancelledV1Data,
+} from "@zero-tech/zns-message-schemas";
+
 import { adapters, BidDatabaseService } from "./database";
+import { queueAdapters, MessageQueueService } from "./messagequeue";
 
 // Ajv validation methods
 import {
@@ -12,7 +20,7 @@ import {
   validateBidsAccountsGetSchema,
   validateBidsGetSchema,
   validateBidCancelSchema,
-  validateBidCancelEncodeSchema
+  validateBidCancelEncodeSchema,
 } from "./schemas";
 
 import { encodeBid } from "./util/contracts";
@@ -26,9 +34,12 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
+  UncertainBid,
   VerifyBidResponse,
 } from "./types";
+
 import { ethers } from "ethers";
+import { retry } from "./util/retry";
 
 const router = express.Router();
 
@@ -40,8 +51,21 @@ const limiter = rateLimit({
 
 const db = env.get("MONGO_DB").required().asString();
 const collection = env.get("MONGO_COLLECTION").required().asString();
-const archiveCollection = env.get("MONGO_ARCHIVE_COLLECTION").required().asString();
+const archiveCollection = env
+  .get("MONGO_ARCHIVE_COLLECTION")
+  .required()
+  .asString();
 const database: BidDatabaseService = adapters.mongo.create(db, collection);
+
+const connectionString = env
+  .get("EVENT_HUB_CONNECTION_STRING")
+  .required()
+  .asString();
+const name = env.get("EVENT_HUB_NAME").required().asString();
+const queue: MessageQueueService = queueAdapters.eventhub.create(
+  connectionString,
+  name
+);
 
 // Returns encoded data to be signed, a generated auctionId,
 // and a generated nftId determined by the NFT contract address and tokenId
@@ -63,6 +87,8 @@ router.post(
       const nftId = calculateNftId(dto.contractAddress, dto.tokenId);
       const auctionId = Math.floor(Math.random() * 42949672960);
 
+      // We use `auctionId` to be clearer about what the variable actually represents
+      // but any existing database records will still show `auctionId`
       const payload = await encodeBid(
         auctionId,
         dto.bidAmount,
@@ -90,7 +116,11 @@ router.post(
 router.post(
   "/bids/list",
   limiter,
-  async (req: express.Request, res: express.Response) => {
+  async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
     if (!validateBidsListPostSchema(req.body)) {
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
@@ -103,7 +133,7 @@ router.post(
     }
 
     try {
-      const bids = await database.getBidsByTokenIds(dto.tokenIds);
+      const bids: Bid[] = await database.getBidsByTokenIds(dto.tokenIds);
 
       // For each bid, map to appropriate tokenId array
       for (const bid of bids) {
@@ -111,7 +141,7 @@ router.post(
         tokenIdBids[tokenId]?.push(bid);
       }
     } catch {
-      throw Error("Could not get bids for given nftIds");
+      next(new Error("Could not get bids for given nftIds"));
     }
 
     return res.status(200).send(tokenIdBids);
@@ -122,7 +152,11 @@ router.post(
 router.get(
   "/bids/accounts/:account",
   limiter,
-  async (req: express.Request, res: express.Response) => {
+  async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
     if (!validateBidsAccountsGetSchema(req.params)) {
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
@@ -132,7 +166,7 @@ router.get(
       const accountBids: Bid[] = await database.getBidsByAccount(accountId);
       return res.status(200).send(accountBids);
     } catch {
-      throw Error(`Could not get bids for account ${accountId}`);
+      next(new Error(`Could not get bids for account ${accountId}`));
     }
   }
 );
@@ -183,12 +217,25 @@ router.post(
         ...bidParams,
         signedMessage: dto.signedMessage,
         date: dateNow.getTime(),
+        version: "2.0"
       };
 
       // Add new bid document to database
       await database.insertBid(newBid);
 
-      return res.status(200).send("OK");
+      const message: TypedMessage<BidPlacedV1Data> = {
+        event: MessageType.BidPlaced,
+        version: "1.0",
+        timestamp: new Date().getTime(),
+        logIndex: undefined,
+        blockNumber: undefined,
+        data: newBid,
+      };
+
+      // Add new bid to our event queue
+      await queue.sendMessage(message);
+
+      return res.status(200).send({});
     } catch (error) {
       next(error);
     }
@@ -209,31 +256,35 @@ router.get(
 );
 
 // Create the cancel message hash to be signed by the user
-router.get(
+router.post(
   "/bid/cancel/encode",
   limiter,
   async (req: express.Request, res: express.Response) => {
-    if(!validateBidCancelEncodeSchema(req.body)) {
+    if (!validateBidCancelEncodeSchema(req.body)) {
       return res.status(400).send(validateBidCancelEncodeSchema.errors);
     }
     const cancelMessage = "cancel - " + req.body.bidMessageSignature;
     const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
 
-    return res.status(200).send(hashedCancelMessage);
+    return res.status(200).send({ hashedCancelMessage });
   }
-)
+);
 
 // Endpoint to cancel an existing bid
 // Expecting signedBidMessage and signedCancelMessage in the body
 router.post(
   "/bid/cancel",
   limiter,
-  async (req: express.Request, res: express.Response) => {
+  async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
     if (!validateBidCancelSchema(req.body)) {
       return res.status(400).send(validateBidCancelSchema.errors);
     }
     try {
-      const bidData: Bid | null = await database.getBidBySignedMessage(
+      const bidData: UncertainBid | null = await database.getBidBySignedMessage(
         req.body.bidMessageSignature
       );
 
@@ -255,10 +306,27 @@ router.post(
       // Once confirmed, move to archive collection
       await database.cancelBid(bidData, archiveCollection);
 
-      return res.status(200);
-    } catch {
-      throw new Error(
-        `Could not delete bid with signature: ${req.body.bidMessageSignature}`
+      const message: TypedMessage<BidCancelledV1Data> = {
+        event: MessageType.BidCancelled,
+        version: "1.0",
+        timestamp: new Date().getTime(),
+        logIndex: undefined,
+        blockNumber: undefined,
+        data: {
+          account: signer,
+          auctionId: bidData.auctionId,
+        },
+      };
+
+      await queue.sendMessage(message);
+
+      return res.status(200).send({});
+    } catch (e) {
+      console.error(e.message, e.stack);
+      next(
+        new Error(
+          `Could not delete bid with signature: ${req.body.bidMessageSignature}`
+        )
       );
     }
   }
@@ -266,16 +334,27 @@ router.post(
 router.get(
   "/ping",
   limiter,
-  async (req: express.Request, res: express.Response) => {
+  async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
     const infuraUrl = process.env["INFURA_URL"];
     if (!infuraUrl) {
-      throw Error("No Infura URL could be found")
+      next(new Error("No Infura URL could be found"));
     }
-    const sampleProvider = new ethers.providers.JsonRpcProvider(infuraUrl);
-    const blockNumber = await sampleProvider.getBlockNumber();
+
+    const pokeProvider = async () => {
+      const sampleProvider = new ethers.providers.JsonRpcProvider(infuraUrl);
+      return sampleProvider.getBlockNumber();
+    };
+
+    const blockNumber = await retry(pokeProvider);
 
     if (!blockNumber) {
-      throw Error("Looks like something went wrong with the Infura connection.");
+      next(
+        new Error("Looks like something went wrong with the Infura connection.")
+      );
     }
     return res.status(200).send("OK");
   }
