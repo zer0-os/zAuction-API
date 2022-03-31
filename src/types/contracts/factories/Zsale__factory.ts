@@ -89,7 +89,7 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "auctionid",
+        name: "bidNonce",
         type: "uint256",
       },
       {

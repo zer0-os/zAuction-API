@@ -217,5 +217,5 @@ describe("Test API Endpoints", async () => {
         .set("Content-Type", "application/json")
         .expect(200, done);
     });
-  })
+  });
 });
