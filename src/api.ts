@@ -217,7 +217,7 @@ router.post(
         ...bidParams,
         signedMessage: dto.signedMessage,
         date: dateNow.getTime(),
-        version: "2.0"
+        version: "2.0",
       };
 
       // Add new bid document to database
@@ -241,7 +241,6 @@ router.post(
           tokenId: newBid.tokenId,
           date: newBid.date,
           signedMessage: newBid.signedMessage,
-
         },
       };
 
@@ -277,9 +276,9 @@ router.post(
       return res.status(400).send(validateBidCancelEncodeSchema.errors);
     }
     const cancelMessage = "cancel - " + req.body.bidMessageSignature;
-    const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
+    //const hashedCancelMessage = ethers.utils.(cancelMessage);
 
-    return res.status(200).send({ hashedCancelMessage });
+    return res.status(200).send({ cancelMessage });
   }
 );
 
