@@ -276,9 +276,9 @@ router.post(
       return res.status(400).send(validateBidCancelEncodeSchema.errors);
     }
     const cancelMessage = "cancel - " + req.body.bidMessageSignature;
-    //const hashedCancelMessage = ethers.utils.(cancelMessage);
+    const hashedCancelMessage = ethers.utils.keccak256(cancelMessage);
 
-    return res.status(200).send({ cancelMessage });
+    return res.status(200).send({ hashedCancelMessage });
   }
 );
 
