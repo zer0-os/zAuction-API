@@ -304,14 +304,14 @@ router.post(
 
       // Reconstruct the unsigned cancel message hash
       const cancelMessage = "cancel - " + bidData.signedMessage;
-      const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
+      //const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
 
       const signer = ethers.utils.verifyMessage(
-        hashedCancelMessage,
+        cancelMessage,
         req.body.cancelMessageSignature
       );
 
-      if (signer !== bidData.account) {
+      if (signer.toLowerCase() !== bidData.account.toLowerCase()) {
         return res.status(400).send("Incorrect signer address recovered");
       }
 
