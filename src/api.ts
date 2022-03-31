@@ -307,7 +307,7 @@ router.post(
       //const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
 
       const signer = ethers.utils.verifyMessage(
-        cancelMessage,
+        ethers.utils.id(cancelMessage),
         req.body.cancelMessageSignature
       );
 
