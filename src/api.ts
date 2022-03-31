@@ -276,6 +276,14 @@ router.post(
     if (!validateBidCancelEncodeSchema(req.body)) {
       return res.status(400).send(validateBidCancelEncodeSchema.errors);
     }
+    console.log(req.body.bidMessageSignature);
+
+    const bidData: UncertainBid | null = await database.getBidBySignedMessage(
+      req.body.bidMessageSignature
+    );
+
+    console.log(bidData);
+
     const cancelMessage = "cancel - " + req.body.bidMessageSignature;
     const hashedCancelMessage = ethers.utils.id(cancelMessage);
 
