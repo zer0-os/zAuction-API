@@ -41,14 +41,14 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result.acknowledged;
   };
 
-  const getBidsByNftIds = async (nftIds: string[]): Promise<Bid[]> => {
-    const nftIdList = [...nftIds];
+  const getBidsByTokenIds = async (tokenIds: string[]): Promise<Bid[]> => {
+    const tokenIdList = [...tokenIds];
     const versionlessResult: UncertainBid[] = await mongo.find(
       database,
       usedCollection,
       {
-        nftId: {
-          $in: nftIdList,
+        tokenId: {
+          $in: tokenIdList,
         },
       }
     );
@@ -115,7 +115,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
   const databaseService = {
     insertBid,
     insertBids,
-    getBidsByNftIds,
+    getBidsByTokenIds,
     getBidsByAccount,
     getBidBySignedMessage,
     cancelBid,

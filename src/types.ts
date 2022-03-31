@@ -38,7 +38,7 @@ export interface BidsList {
 }
 
 export interface BidsListDto {
-  nftIds: string[];
+  tokenIds: string[];
 }
 
 export interface BidsAccountsDto {
@@ -46,7 +46,7 @@ export interface BidsAccountsDto {
 }
 
 export interface BidsDto {
-  nftId: string;
+  tokenId: string;
 }
 
 export interface Bid extends BidParams {

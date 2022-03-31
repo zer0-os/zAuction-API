@@ -112,7 +112,7 @@ router.post(
   }
 );
 
-// Endpoint to return auctions based on an array of given nftIds
+// Endpoint to return auctions based on an array of given tokenIds
 router.post(
   "/bids/list",
   limiter,
@@ -125,26 +125,26 @@ router.post(
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
     const dto: BidsListDto = req.body as BidsListDto;
-    const nftBids: BidsList = {};
+    const tokenIdBids: BidsList = {};
 
     // Create an empty array for each given nftId
-    for (const nftId of dto.nftIds) {
-      nftBids[nftId] = [];
+    for (const tokenId of dto.tokenIds) {
+      tokenIdBids[tokenId] = [];
     }
 
     try {
-      const bids: Bid[] = await database.getBidsByNftIds(dto.nftIds);
+      const bids: Bid[] = await database.getBidsByTokenIds(dto.tokenIds);
 
-      // For each bid, push to appropriate nftId array
+      // For each bid, map to appropriate tokenId array
       for (const bid of bids) {
-        const nftId = bid.nftId;
-        nftBids[nftId]?.push(bid);
+        const tokenId = bid.tokenId;
+        tokenIdBids[tokenId]?.push(bid);
       }
     } catch {
       next(new Error("Could not get bids for given nftIds"));
     }
 
-    return res.status(200).send(nftBids);
+    return res.status(200).send(tokenIdBids);
   }
 );
 
@@ -164,6 +164,7 @@ router.get(
 
     try {
       const accountBids: Bid[] = await database.getBidsByAccount(accountId);
+      console.log(accountBids);
       return res.status(200).send(accountBids);
     } catch {
       next(new Error(`Could not get bids for account ${accountId}`));
@@ -245,15 +246,15 @@ router.post(
   }
 );
 
-// Endpoint to return bids for a single nftId
+// Endpoint to return bids for a single tokenId
 router.get(
-  "/bids/:nftId",
+  "/bids/:tokenId",
   limiter,
   async (req: express.Request, res: express.Response) => {
     if (!validateBidsGetSchema(req.params)) {
       return res.status(400).send(validateBidsGetSchema.errors);
     }
-    const bids = await database.getBidsByNftIds([req.params.nftId]);
+    const bids = await database.getBidsByTokenIds([req.params.tokenId]);
     return res.status(200).send(bids);
   }
 );
@@ -266,8 +267,16 @@ router.post(
     if (!validateBidCancelEncodeSchema(req.body)) {
       return res.status(400).send(validateBidCancelEncodeSchema.errors);
     }
+    console.log(req.body.bidMessageSignature);
+
+    const bidData: Bid | null = await database.getBidBySignedMessage(
+      req.body.bidMessageSignature
+    );
+
+    console.log(bidData);
+
     const cancelMessage = "cancel - " + req.body.bidMessageSignature;
-    const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
+    const hashedCancelMessage = ethers.utils.id(cancelMessage);
 
     return res.status(200).send({ hashedCancelMessage });
   }
@@ -293,16 +302,28 @@ router.post(
 
       if (!bidData) return res.status(400).send("Bid not found");
 
+      console.log(bidData);
+      console.log(bidData.signedMessage, req.body.bidMessageSignature);
+
       // Reconstruct the unsigned cancel message hash
       const cancelMessage = "cancel - " + bidData.signedMessage;
-      const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
+      //const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
 
       const signer = ethers.utils.verifyMessage(
-        hashedCancelMessage,
+        ethers.utils.id(cancelMessage),
         req.body.cancelMessageSignature
       );
 
-      if (signer !== bidData.account) {
+      console.log(signer);
+
+      console.log(
+        ethers.utils.verifyMessage(
+          cancelMessage,
+          req.body.cancelMessageSignature
+        )
+      );
+
+      if (signer.toLowerCase() !== bidData.account.toLowerCase()) {
         return res.status(400).send("Incorrect signer address recovered");
       }
 
@@ -324,7 +345,7 @@ router.post(
       await queue.sendMessage(message);
 
       return res.status(200).send({});
-    } catch (e) {
+    } catch (e: any) {
       console.error(e.message, e.stack);
       next(
         new Error(
