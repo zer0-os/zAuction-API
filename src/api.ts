@@ -164,6 +164,7 @@ router.get(
 
     try {
       const accountBids: Bid[] = await database.getBidsByAccount(accountId);
+      console.log(accountBids);
       return res.status(200).send(accountBids);
     } catch {
       next(new Error(`Could not get bids for account ${accountId}`));
