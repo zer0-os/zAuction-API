@@ -302,6 +302,9 @@ router.post(
 
       if (!bidData) return res.status(400).send("Bid not found");
 
+      console.log(bidData);
+      console.log(bidData.signedMessage, req.body.bidMessageSignature);
+
       // Reconstruct the unsigned cancel message hash
       const cancelMessage = "cancel - " + bidData.signedMessage;
       //const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
@@ -309,6 +312,15 @@ router.post(
       const signer = ethers.utils.verifyMessage(
         ethers.utils.id(cancelMessage),
         req.body.cancelMessageSignature
+      );
+
+      console.log(signer);
+
+      console.log(
+        ethers.utils.verifyMessage(
+          cancelMessage,
+          req.body.cancelMessageSignature
+        )
       );
 
       if (signer.toLowerCase() !== bidData.account.toLowerCase()) {
