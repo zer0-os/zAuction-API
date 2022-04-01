@@ -9,7 +9,8 @@
     "build": "tsc",
     "test": "mocha -r ts-node/register --config=test/.mocharc.json 'test/**/*.ts' --exit",
     "typechain": "typechain --target=ethers-v5 --out-dir=src/types/contracts contracts/*.json",
-    "style": "prettier --write ."
+    "style": "prettier --write .",
+    "migrateBids": "node ./build/scripts/migrateHistoricBids.js"
   },
   "keywords": [],
   "author": "zer0",
