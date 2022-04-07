@@ -3,6 +3,7 @@ import {
   TypedMessage,
   BidPlacedV1Data,
   BidCancelledV1Data,
+  Message,
 } from "@zero-tech/zns-message-schemas";
 
 export * from "./adapters";
@@ -13,7 +14,7 @@ export interface MessageQueueService {
   ) => Promise<void>;
 
   sendMessagesBatch: (
-    messages: TypedMessage<BidPlacedV1Data>[] | TypedMessage<BidCancelledV1Data>[],
+    messages: Message[],
     batchOptions: CreateBatchOptions
   ) => Promise<void>;
 }

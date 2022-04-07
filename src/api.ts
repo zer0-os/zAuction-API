@@ -233,7 +233,7 @@ router.post(
         data: {
           ...newBid,
           auctionId: newBid.bidNonce, // compatibility with DSS
-          version: newBid.version
+          version: newBid.version,
         },
       };
 
@@ -340,7 +340,7 @@ router.post(
         data: {
           account: signer,
           auctionId: bidData.bidNonce,
-          version: bidData.version
+          version: bidData.version,
         },
       };
 

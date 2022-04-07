@@ -1,4 +1,8 @@
-import { CreateBatchOptions, EventData, EventHubProducerClient } from "@azure/event-hubs";
+import {
+  CreateBatchOptions,
+  EventData,
+  EventHubProducerClient,
+} from "@azure/event-hubs";
 import { Message } from "@zero-tech/zns-message-schemas";
 import { MessageQueueService } from "..";
 
@@ -23,42 +27,57 @@ export const create = (
     await producer.close();
   };
 
-  const sendMessagesBatch = async(messages: Message[], batchOptions: CreateBatchOptions) => {
+  const sendMessagesBatch = async (
+    messages: Message[],
+    batchOptions: CreateBatchOptions
+  ) => {
+    const producer: EventHubProducerClient = new EventHubProducerClient(
+      connectionString,
+      name
+    );
+    let batchesSent = 0;
     try {
-      const producer: EventHubProducerClient = new EventHubProducerClient(
-        connectionString,
-        name
-      );
-
       let batch = await producer.createBatch(batchOptions);
-      let batchesSent = 0
-
-      for (let i = 0; i < messages.length; i++ )
-      {
+      const promise = messages.map(async (message) => {
         const messageEvent: EventData = {
-          body: messages[i],
+          body: message,
         };
-        if (!batch.tryAdd(messageEvent) || i === messages.length-1) {
+        const batchAdded = await batch.tryAdd(messageEvent);
+        if (!batchAdded) {
           console.log(
-            `Sending ${batch.count} messages as a single batch. Current Batch Number ${batchesSent + 1}.`
+            `Sending ${
+              batch.count
+            } messages as a single batch. Current Batch Number ${
+              batchesSent + 1
+            }.`
           );
+          //Send current batch
           await producer.sendBatch(batch);
           batchesSent++;
 
           // create a new batch to house the next set of messages
-          batch =  await producer.createBatch(batchOptions);
+          batch = await producer.createBatch(batchOptions);
         }
+      });
+      await Promise.resolve(promise);
+      //Send remaining items in current batch
+      if (batch.count > 0) {
+        await producer.sendBatch(batch);
+        batchesSent++;
       }
-      await producer.close();
-      console.log(`Batch Messaging Complete, ${batchesSent} batches sent.`);
     } catch (err) {
-      console.error("Error when creating & sending a batch of messages: ", err);
+      throw new Error(
+        `Error when creating & sending a batch of messages: ${err}"`
+      );
     }
+
+    await producer.close();
+    console.log(`Batch Messaging Complete, ${batchesSent} batches sent.`);
   };
-  
+
   const messageQueueService: MessageQueueService = {
     sendMessage,
-    sendMessagesBatch
+    sendMessagesBatch,
   };
   return messageQueueService;
 };
