@@ -22,7 +22,7 @@ const uri = env.get("MONGO_CLUSTER_URI").required().asString();
 const dbName = env.get("MONGO_DB").required().asString();
 const collectionName = env.get("MONGO_COLLECTION").required().asString();
 const fullUri = `mongodb+srv://${user}:${pass}@${uri}/`;
-const file = false;
+const fileOption = process.argv[2] ?? false;
 const options: MongoClientOptions = {
   connectTimeoutMS: 5000,
   w: "majority",
@@ -44,8 +44,7 @@ const main = async () => {
   const bidsCancelledMessages = bidsCancelled.map((x) =>
     mapBidtoBidCancelledMessage(x)
   );
-
-  if (file)
+  if (fileOption == "--file")
   {
     fs.writeFileSync(
       outputFilename,
@@ -72,7 +71,6 @@ const main = async () => {
       await queue.sendMessagesBatch(bidsPlacedMessages, {});
       await queue.sendMessagesBatch(bidsCancelledMessages, {});
   }
-
 };
 main();
 
@@ -118,9 +116,3 @@ function mapBidtoBidCancelledMessage(
   };
   return message;
 }
-
-
-//TODO
-//Create test event hub, take script from  sendEvents.ts
-//Send events to test event table 
-//Update zns message schemas version?

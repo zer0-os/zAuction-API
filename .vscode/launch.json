@@ -34,6 +34,7 @@
       "name": "Migrate Historical zAuction Bids",
       "type": "node",
       "request": "launch",
+      "args": ["--file"],
       "runtimeExecutable": "node",
       "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
       "sourceMaps": true,
