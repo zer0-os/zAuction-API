@@ -4,6 +4,9 @@ import * as dotenv from "dotenv";
 import * as mongodb from "mongodb";
 import { Bid } from "../src/types";
 import { MongoClientOptions } from "mongodb";
+import { queueAdapters, MessageQueueService } from "../src/messagequeue";
+import { CreateBatchOptions } from "@azure/event-hubs";
+
 import {
   MessageType,
   TypedMessage,
@@ -19,6 +22,7 @@ const uri = env.get("MONGO_CLUSTER_URI").required().asString();
 const dbName = env.get("MONGO_DB").required().asString();
 const collectionName = env.get("MONGO_COLLECTION").required().asString();
 const fullUri = `mongodb+srv://${user}:${pass}@${uri}/`;
+const file = false;
 const options: MongoClientOptions = {
   connectTimeoutMS: 5000,
   w: "majority",
@@ -41,18 +45,34 @@ const main = async () => {
     mapBidtoBidCancelledMessage(x)
   );
 
-  fs.writeFileSync(
-    outputFilename,
-    JSON.stringify({
-      bidsPlaced: bidsPlacedMessages,
-      bidsCancelled: bidsCancelledMessages,
-    })
-  );
-  console.log(
-    `${
-      bidsPlacedMessages.length + bidsCancelledMessages.length
-    } messages written to output file`
-  );
+  if (file)
+  {
+    fs.writeFileSync(
+      outputFilename,
+      JSON.stringify({
+        bidsPlaced: bidsPlacedMessages,
+        bidsCancelled: bidsCancelledMessages,
+      })
+    );
+    console.log(
+      `${
+        bidsPlacedMessages.length + bidsCancelledMessages.length
+      } messages written to output file`
+    );
+  } else {
+    const connectionString = env
+      .get("EVENT_HUB_MIGRATION_CONNECTION_STRING")
+      .required()
+      .asString();
+    const name = env.get("EVENT_HUB_MIGRATION_NAME").required().asString();
+    const queue: MessageQueueService = queueAdapters.eventhub.create(
+      connectionString,
+      name);
+
+      await queue.sendMessagesBatch(bidsPlacedMessages, {});
+      await queue.sendMessagesBatch(bidsCancelledMessages, {});
+  }
+
 };
 main();
 
@@ -63,9 +83,19 @@ function mapBidtoBidPlacedMessage(bid: Bid): TypedMessage<BidPlacedV1Data> {
     timestamp: bid.date, //Use date of bid
     logIndex: undefined,
     blockNumber: undefined,
-    data: {
-      ...bid,
+    data: { //explicitly set fields, strip _id
       auctionId: bid.bidNonce,
+      version: bid.version ?? "1.0", //set version 1.0 by default
+      nftId: bid.nftId,
+      account: bid.account, 
+      bidAmount:bid.bidAmount ,
+      minimumBid: bid.minimumBid,
+      contractAddress: bid.contractAddress,
+      startBlock: bid.startBlock,
+      expireBlock: bid.expireBlock,
+      tokenId: bid.tokenId,
+      date: bid.date,
+      signedMessage: bid.signedMessage
     },
   };
   return message;
@@ -81,9 +111,16 @@ function mapBidtoBidCancelledMessage(
     logIndex: undefined,
     blockNumber: undefined,
     data: {
-      account: bid.account, //Account instead of signer?
+      account: bid.account, //Account instead of signer
       auctionId: bid.bidNonce,
+      version: bid.version ?? "1.0" //set version 1.0 by default
     },
   };
   return message;
 }
+
+
+//TODO
+//Create test event hub, take script from  sendEvents.ts
+//Send events to test event table 
+//Update zns message schemas version?
