@@ -38,17 +38,20 @@ const main = async () => {
   client.close();
 
   const bidsPlacedMessages = bidsPlaced.map((x) => mapBidtoBidPlacedMessage(x));
+  const bidsPlacedArchivedMessages = bidsCancelled.map((x) => mapBidtoBidPlacedMessage(x));
   const bidsCancelledMessages = bidsCancelled.map((x) =>
     mapBidtoBidCancelledMessage(x)
   );
   if (argv.output == "file") {
     await writeMessagesToOutputFile([
       bidsPlacedMessages,
+      bidsPlacedArchivedMessages,
       bidsCancelledMessages,
     ]);
   } else {
-    await sendEventsToEventHub(bidsPlacedMessages);
-    await sendEventsToEventHub(bidsCancelledMessages);
+    await sendEventsToEventHub(bidsPlacedMessages);         //Sending active bids
+    await sendEventsToEventHub(bidsPlacedArchivedMessages); //Sending bids that were archived
+    await sendEventsToEventHub(bidsCancelledMessages);      //Sending bids that were archived, as cancellation messages
   }
 };
 main();
@@ -94,7 +97,7 @@ function mapBidtoBidPlacedMessage(bid: Bid): TypedMessage<BidPlacedV1Data> {
     blockNumber: undefined,
     data: {
       //explicitly set fields, strip _id
-      auctionId: bid.bidNonce,
+      bidNonce: bid.bidNonce,
       version: bid.version ?? "1.0", //set version 1.0 by default
       nftId: bid.nftId,
       account: bid.account,
@@ -122,7 +125,7 @@ function mapBidtoBidCancelledMessage(
     blockNumber: undefined,
     data: {
       account: bid.account, //account instead of signer
-      auctionId: bid.bidNonce,
+      bidNonce: bid.bidNonce,
       version: bid.version ?? "1.0", //set version 1.0 by default
     },
   };
