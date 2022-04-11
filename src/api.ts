@@ -232,7 +232,8 @@ router.post(
         blockNumber: undefined,
         data: {
           ...newBid,
-          auctionId: newBid.bidNonce, // compatibility with DSS
+          bidNonce: newBid.bidNonce, 
+          version: newBid.version,
         },
       };
 
@@ -338,7 +339,8 @@ router.post(
         blockNumber: undefined,
         data: {
           account: signer,
-          auctionId: bidData.bidNonce,
+          bidNonce: bidData.bidNonce,
+          version: bidData.version,
         },
       };
 

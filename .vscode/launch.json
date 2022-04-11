@@ -25,10 +25,24 @@
         "test/.mocharc.json",
         "--slow",
         "5000",
-        "test/**/*.test.ts",
+        "test/**/*.test.ts"
       ],
       "cwd": "${workspaceRoot}",
       "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "name": "Migrate Historical zAuction Bids",
+      "type": "node",
+      "request": "launch",
+      "args": ["--output=file"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
+      "sourceMaps": true,
+      "program": "${workspaceFolder}\\build\\scripts\\migrateHistoricBids.js",
+      "cwd": "${workspaceRoot}",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "envFile": "${workspaceFolder}/.env"
     }
   ]
 }
