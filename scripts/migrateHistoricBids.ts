@@ -68,13 +68,13 @@ async function getAllFromCollection<T>(
   return result;
 }
 
-async function writeMessagesToOutputFile<T>(messages: TypedMessage<T>[][]) {
+async function writeMessagesToOutputFile<T>(messages: TypedMessage<any>[][]) {
   var flat = messages.flat();
   fs.writeFileSync(outputFilename, JSON.stringify(flat));
   console.log(`${flat.length} messages written to output file`);
 }
 
-async function sendEventsToEventHub<T>(messages: TypedMessage<T>[]) {
+async function sendEventsToEventHub<T>(messages: TypedMessage<any>[]) {
   const connectionString = env
   .get("EVENT_HUB_MIGRATION_CONNECTION_STRING")
   .required()
@@ -127,6 +127,7 @@ function mapBidtoBidCancelledMessage(
       account: bid.account, //account instead of signer
       bidNonce: bid.bidNonce,
       version: bid.version ?? "1.0", //set version 1.0 by default
+      cancelDate: bid.cancelDate ?? 0 
     },
   };
   return message;

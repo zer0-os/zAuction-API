@@ -93,6 +93,9 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     bid: Bid,
     archiveCollection: string
   ): Promise<boolean> => {
+    //Default cancellation date if not present
+    if (!bid.cancelDate) bid.cancelDate = new Date().getTime();
+    
     // Place bid into archive collection, then delete
     const insertResult: InsertOneResult = await mongo.insertOne(
       bid,

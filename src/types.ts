@@ -49,7 +49,11 @@ export interface BidsDto {
   tokenId: string;
 }
 
-export interface Bid extends BidParams {
+export interface Cancellable {
+  cancelDate?: number;
+}
+
+export interface Bid extends BidParams, Cancellable {
   date: number;
   signedMessage: string;
   version: string;
