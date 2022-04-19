@@ -232,7 +232,7 @@ router.post(
         blockNumber: undefined,
         data: {
           ...newBid,
-          bidNonce: newBid.bidNonce, 
+          bidNonce: newBid.bidNonce,
           version: newBid.version,
         },
       };
@@ -341,7 +341,7 @@ router.post(
           account: signer,
           bidNonce: bidData.bidNonce,
           version: bidData.version,
-          cancelDate: bidData.cancelDate ?? new Date().getTime()
+          cancelDate: bidData.cancelDate ?? new Date().getTime(),
         },
       };
 
