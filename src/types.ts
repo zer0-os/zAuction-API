@@ -49,10 +49,11 @@ export interface BidsDto {
   tokenId: string;
 }
 
-
 export interface CancelledBid extends Bid {
   cancelDate: number;
 }
+
+export type CancelledBidNullable = Bid & Partial<CancelledBid>
 
 export interface Bid extends BidParams {
   date: number;

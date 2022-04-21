@@ -296,7 +296,7 @@ router.post(
       return res.status(400).send(validateBidCancelSchema.errors);
     }
     try {
-      let bidData: Bid | null = await database.getBidBySignedMessage(
+      const bidData: Bid | null = await database.getBidBySignedMessage(
         req.body.bidMessageSignature
       );
 
