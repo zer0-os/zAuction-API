@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as env from "env-var";
 import * as dotenv from "dotenv";
 import * as mongodb from "mongodb";
-import { Bid } from "../src/types";
+import { Bid, CanceledBid } from "../src/types";
 import { MongoClientOptions } from "mongodb";
 import { queueAdapters, MessageQueueService } from "../src/messagequeue";
 import {
@@ -40,7 +40,7 @@ const main = async () => {
   const bidsPlacedMessages = bidsPlaced.map((x) => mapBidtoBidPlacedMessage(x));
   const bidsPlacedArchivedMessages = bidsCancelled.map((x) => mapBidtoBidPlacedMessage(x));
   const bidsCancelledMessages = bidsCancelled.map((x) =>
-    mapBidtoBidCancelledMessage(x)
+    mapBidtoBidCancelledMessage(x as CanceledBid)
   );
   if (argv.output == "file") {
     await writeMessagesToOutputFile([
@@ -68,13 +68,13 @@ async function getAllFromCollection<T>(
   return result;
 }
 
-async function writeMessagesToOutputFile<T>(messages: TypedMessage<any>[][]) {
+async function writeMessagesToOutputFile<T>(messages: TypedMessage<BidPlacedV1Data | BidCancelledV1Data>[][]) {
   var flat = messages.flat();
   fs.writeFileSync(outputFilename, JSON.stringify(flat));
   console.log(`${flat.length} messages written to output file`);
 }
 
-async function sendEventsToEventHub<T>(messages: TypedMessage<any>[]) {
+async function sendEventsToEventHub<T>(messages: TypedMessage<BidPlacedV1Data | BidCancelledV1Data>[]) {
   const connectionString = env
   .get("EVENT_HUB_MIGRATION_CONNECTION_STRING")
   .required()
@@ -115,7 +115,7 @@ function mapBidtoBidPlacedMessage(bid: Bid): TypedMessage<BidPlacedV1Data> {
 }
 
 function mapBidtoBidCancelledMessage(
-  bid: Bid
+  bid: CanceledBid
 ): TypedMessage<BidCancelledV1Data> {
   const message: TypedMessage<BidCancelledV1Data> = {
     event: MessageType.BidCancelled,

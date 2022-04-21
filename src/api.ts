@@ -34,6 +34,7 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
+  CanceledBid,
   VerifyBidResponse,
 } from "./types";
 
@@ -227,13 +228,11 @@ router.post(
       const message: TypedMessage<BidPlacedV1Data> = {
         event: MessageType.BidPlaced,
         version: "1.0",
-        timestamp: new Date().getTime(),
+        timestamp: dateNow.getTime(),
         logIndex: undefined,
         blockNumber: undefined,
         data: {
           ...newBid,
-          bidNonce: newBid.bidNonce,
-          version: newBid.version,
         },
       };
 
@@ -297,16 +296,16 @@ router.post(
       return res.status(400).send(validateBidCancelSchema.errors);
     }
     try {
-      const bidData: Bid | null = await database.getBidBySignedMessage(
+      let bidData = await database.getBidBySignedMessage(
         req.body.bidMessageSignature
-      );
+      ) as CanceledBid;
 
       if (!bidData) return res.status(400).send("Bid not found");
 
       console.log(bidData);
       console.log(bidData.signedMessage, req.body.bidMessageSignature);
 
-      // Reconstruct the unsigned cancel message hash
+      // Reconstruct the unsigned cancel message hash, using same format as cancel/encode
       const cancelMessage = "cancel - " + bidData.signedMessage;
       //const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
 
@@ -329,19 +328,21 @@ router.post(
       }
 
       // Once confirmed, move to archive collection
+      let timeStamp = new Date().getTime();
+      bidData.cancelDate = timeStamp;
       await database.cancelBid(bidData, archiveCollection);
 
       const message: TypedMessage<BidCancelledV1Data> = {
         event: MessageType.BidCancelled,
         version: "1.0",
-        timestamp: new Date().getTime(),
+        timestamp: timeStamp,
         logIndex: undefined,
         blockNumber: undefined,
         data: {
           account: signer,
           bidNonce: bidData.bidNonce,
           version: bidData.version,
-          cancelDate: bidData.cancelDate ?? new Date().getTime(),
+          cancelDate: timeStamp,
         },
       };
 
