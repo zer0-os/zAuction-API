@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as env from "env-var";
 import * as dotenv from "dotenv";
 import * as mongodb from "mongodb";
-import { Bid, CanceledBid } from "../src/types";
+import { Bid, CancelledBid } from "../src/types";
 import { MongoClientOptions } from "mongodb";
 import { queueAdapters, MessageQueueService } from "../src/messagequeue";
 import {
@@ -31,7 +31,7 @@ const main = async () => {
   await client.connect();
   const database = client.db(dbName);
   const bidsPlaced = await getAllFromCollection<Bid>(collectionName, database);
-  const bidsCancelled = await getAllFromCollection<CanceledBid>(
+  const bidsCancelled = await getAllFromCollection<CancelledBid>(
     collectionName + "-archive",
     database
   );
@@ -40,7 +40,7 @@ const main = async () => {
   const bidsPlacedMessages = bidsPlaced.map((x) => mapBidtoBidPlacedMessage(x));
   const bidsPlacedArchivedMessages = bidsCancelled.map((x) => mapBidtoBidPlacedMessage(x));
   const bidsCancelledMessages = bidsCancelled.map((x) =>
-  mapCanceledBidtoBidCancelledMessage(x)
+  mapCancelledBidtoBidCancelledMessage(x)
   );
   if (argv.output == "file") {
     await writeMessagesToOutputFile([
@@ -114,8 +114,8 @@ function mapBidtoBidPlacedMessage(bid: Bid): TypedMessage<BidPlacedV1Data> {
   return message;
 }
 
-function mapCanceledBidtoBidCancelledMessage(
-  bid: CanceledBid
+function mapCancelledBidtoBidCancelledMessage(
+  bid: CancelledBid
 ): TypedMessage<BidCancelledV1Data> {
   const message: TypedMessage<BidCancelledV1Data> = {
     event: MessageType.BidCancelled,

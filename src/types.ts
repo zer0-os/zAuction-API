@@ -50,7 +50,7 @@ export interface BidsDto {
 }
 
 
-export interface CanceledBid extends Bid {
+export interface CancelledBid extends Bid {
   cancelDate: number;
 }
 

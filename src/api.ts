@@ -34,7 +34,7 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
-  CanceledBid,
+  CancelledBid,
   VerifyBidResponse,
 } from "./types";
 
@@ -329,11 +329,11 @@ router.post(
 
       // Once confirmed, move to archive collection
       let timeStamp = new Date().getTime();
-      const canceledBid: CanceledBid = {
+      const cancelledBid: CancelledBid = {
         ...bidData,
         cancelDate: timeStamp,
       }
-      await database.cancelBid(canceledBid, archiveCollection);
+      await database.cancelBid(cancelledBid, archiveCollection);
 
       const message: TypedMessage<BidCancelledV1Data> = {
         event: MessageType.BidCancelled,
@@ -343,8 +343,8 @@ router.post(
         blockNumber: undefined,
         data: {
           account: signer,
-          bidNonce: canceledBid.bidNonce,
-          version: canceledBid.version,
+          bidNonce: cancelledBid.bidNonce,
+          version: cancelledBid.version,
           cancelDate: timeStamp,
         },
       };
