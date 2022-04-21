@@ -1,7 +1,7 @@
 import { InsertOneResult, Document, InsertManyResult } from "mongodb";
 
 import { BidDatabaseService } from "..";
-import { Bid } from "../../types";
+import { Bid, CanceledBid } from "../../types";
 import * as mongo from "../backends/mongo";
 import { UncertainBid } from "../types";
 
@@ -90,7 +90,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
   };
 
   const cancelBid = async (
-    bid: Bid,
+    bid: CanceledBid,
     archiveCollection: string
   ): Promise<boolean> => {
 

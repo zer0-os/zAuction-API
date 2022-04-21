@@ -31,7 +31,7 @@ const main = async () => {
   await client.connect();
   const database = client.db(dbName);
   const bidsPlaced = await getAllFromCollection<Bid>(collectionName, database);
-  const bidsCancelled = await getAllFromCollection<Bid>(
+  const bidsCancelled = await getAllFromCollection<CanceledBid>(
     collectionName + "-archive",
     database
   );
@@ -40,7 +40,7 @@ const main = async () => {
   const bidsPlacedMessages = bidsPlaced.map((x) => mapBidtoBidPlacedMessage(x));
   const bidsPlacedArchivedMessages = bidsCancelled.map((x) => mapBidtoBidPlacedMessage(x));
   const bidsCancelledMessages = bidsCancelled.map((x) =>
-    mapBidtoBidCancelledMessage(x as CanceledBid)
+  mapCanceledBidtoBidCancelledMessage(x)
   );
   if (argv.output == "file") {
     await writeMessagesToOutputFile([
@@ -69,7 +69,7 @@ async function getAllFromCollection<T>(
 }
 
 async function writeMessagesToOutputFile<T>(messages: TypedMessage<BidPlacedV1Data | BidCancelledV1Data>[][]) {
-  var flat = messages.flat();
+  const flat = messages.flat();
   fs.writeFileSync(outputFilename, JSON.stringify(flat));
   console.log(`${flat.length} messages written to output file`);
 }
@@ -114,7 +114,7 @@ function mapBidtoBidPlacedMessage(bid: Bid): TypedMessage<BidPlacedV1Data> {
   return message;
 }
 
-function mapBidtoBidCancelledMessage(
+function mapCanceledBidtoBidCancelledMessage(
   bid: CanceledBid
 ): TypedMessage<BidCancelledV1Data> {
   const message: TypedMessage<BidCancelledV1Data> = {

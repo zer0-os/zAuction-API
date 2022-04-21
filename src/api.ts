@@ -214,11 +214,11 @@ router.post(
           .send({ message: verification.message });
       }
 
-      const dateNow = new Date();
+      const dateNow = new Date().getTime();
       const newBid: Bid = {
         ...bidParams,
         signedMessage: dto.signedMessage,
-        date: dateNow.getTime(),
+        date: dateNow,
         version: "2.0",
       };
 
@@ -228,7 +228,7 @@ router.post(
       const message: TypedMessage<BidPlacedV1Data> = {
         event: MessageType.BidPlaced,
         version: "1.0",
-        timestamp: dateNow.getTime(),
+        timestamp: dateNow,
         logIndex: undefined,
         blockNumber: undefined,
         data: {
@@ -296,9 +296,9 @@ router.post(
       return res.status(400).send(validateBidCancelSchema.errors);
     }
     try {
-      let bidData = await database.getBidBySignedMessage(
+      let bidData: Bid | null = await database.getBidBySignedMessage(
         req.body.bidMessageSignature
-      ) as CanceledBid;
+      );
 
       if (!bidData) return res.status(400).send("Bid not found");
 
@@ -329,8 +329,11 @@ router.post(
 
       // Once confirmed, move to archive collection
       let timeStamp = new Date().getTime();
-      bidData.cancelDate = timeStamp;
-      await database.cancelBid(bidData, archiveCollection);
+      const canceledBid: CanceledBid = {
+        ...bidData,
+        cancelDate: timeStamp,
+      }
+      await database.cancelBid(canceledBid, archiveCollection);
 
       const message: TypedMessage<BidCancelledV1Data> = {
         event: MessageType.BidCancelled,
@@ -340,8 +343,8 @@ router.post(
         blockNumber: undefined,
         data: {
           account: signer,
-          bidNonce: bidData.bidNonce,
-          version: bidData.version,
+          bidNonce: canceledBid.bidNonce,
+          version: canceledBid.version,
           cancelDate: timeStamp,
         },
       };
@@ -359,6 +362,7 @@ router.post(
     }
   }
 );
+
 router.get(
   "/ping",
   limiter,
