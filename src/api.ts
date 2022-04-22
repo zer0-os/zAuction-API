@@ -34,6 +34,7 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
+  CancelledBid,
   VerifyBidResponse,
 } from "./types";
 
@@ -213,11 +214,11 @@ router.post(
           .send({ message: verification.message });
       }
 
-      const dateNow = new Date();
+      const dateNow = new Date().getTime();
       const newBid: Bid = {
         ...bidParams,
         signedMessage: dto.signedMessage,
-        date: dateNow.getTime(),
+        date: dateNow,
         version: "2.0",
       };
 
@@ -227,13 +228,11 @@ router.post(
       const message: TypedMessage<BidPlacedV1Data> = {
         event: MessageType.BidPlaced,
         version: "1.0",
-        timestamp: new Date().getTime(),
+        timestamp: dateNow,
         logIndex: undefined,
         blockNumber: undefined,
         data: {
           ...newBid,
-          bidNonce: newBid.bidNonce, 
-          version: newBid.version,
         },
       };
 
@@ -306,7 +305,7 @@ router.post(
       console.log(bidData);
       console.log(bidData.signedMessage, req.body.bidMessageSignature);
 
-      // Reconstruct the unsigned cancel message hash
+      // Reconstruct the unsigned cancel message hash, using same format as cancel/encode
       const cancelMessage = "cancel - " + bidData.signedMessage;
       //const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
 
@@ -329,18 +328,24 @@ router.post(
       }
 
       // Once confirmed, move to archive collection
-      await database.cancelBid(bidData, archiveCollection);
+      let timeStamp = new Date().getTime();
+      const cancelledBid: CancelledBid = {
+        ...bidData,
+        cancelDate: timeStamp,
+      }
+      await database.cancelBid(cancelledBid, archiveCollection);
 
       const message: TypedMessage<BidCancelledV1Data> = {
         event: MessageType.BidCancelled,
         version: "1.0",
-        timestamp: new Date().getTime(),
+        timestamp: timeStamp,
         logIndex: undefined,
         blockNumber: undefined,
         data: {
           account: signer,
-          bidNonce: bidData.bidNonce,
-          version: bidData.version,
+          bidNonce: cancelledBid.bidNonce,
+          version: cancelledBid.version,
+          cancelDate: timeStamp,
         },
       };
 
@@ -357,6 +362,7 @@ router.post(
     }
   }
 );
+
 router.get(
   "/ping",
   limiter,

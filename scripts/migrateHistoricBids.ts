@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as env from "env-var";
 import * as dotenv from "dotenv";
 import * as mongodb from "mongodb";
-import { Bid } from "../src/types";
+import { Bid, CancelledBid, CancelledBidNullable } from "../src/types";
 import { MongoClientOptions } from "mongodb";
 import { queueAdapters, MessageQueueService } from "../src/messagequeue";
 import {
@@ -31,7 +31,7 @@ const main = async () => {
   await client.connect();
   const database = client.db(dbName);
   const bidsPlaced = await getAllFromCollection<Bid>(collectionName, database);
-  const bidsCancelled = await getAllFromCollection<Bid>(
+  const bidsCancelled = await getAllFromCollection<CancelledBidNullable>(
     collectionName + "-archive",
     database
   );
@@ -40,7 +40,7 @@ const main = async () => {
   const bidsPlacedMessages = bidsPlaced.map((x) => mapBidtoBidPlacedMessage(x));
   const bidsPlacedArchivedMessages = bidsCancelled.map((x) => mapBidtoBidPlacedMessage(x));
   const bidsCancelledMessages = bidsCancelled.map((x) =>
-    mapBidtoBidCancelledMessage(x)
+  mapCancelledBidtoBidCancelledMessage(x)
   );
   if (argv.output == "file") {
     await writeMessagesToOutputFile([
@@ -68,13 +68,13 @@ async function getAllFromCollection<T>(
   return result;
 }
 
-async function writeMessagesToOutputFile<T>(messages: TypedMessage<T>[][]) {
-  var flat = messages.flat();
+async function writeMessagesToOutputFile<T>(messages: TypedMessage<BidPlacedV1Data | BidCancelledV1Data>[][]) {
+  const flat = messages.flat();
   fs.writeFileSync(outputFilename, JSON.stringify(flat));
   console.log(`${flat.length} messages written to output file`);
 }
 
-async function sendEventsToEventHub<T>(messages: TypedMessage<T>[]) {
+async function sendEventsToEventHub<T>(messages: TypedMessage<BidPlacedV1Data | BidCancelledV1Data>[]) {
   const connectionString = env
   .get("EVENT_HUB_MIGRATION_CONNECTION_STRING")
   .required()
@@ -114,8 +114,8 @@ function mapBidtoBidPlacedMessage(bid: Bid): TypedMessage<BidPlacedV1Data> {
   return message;
 }
 
-function mapBidtoBidCancelledMessage(
-  bid: Bid
+function mapCancelledBidtoBidCancelledMessage(
+  bid: CancelledBidNullable
 ): TypedMessage<BidCancelledV1Data> {
   const message: TypedMessage<BidCancelledV1Data> = {
     event: MessageType.BidCancelled,
@@ -127,6 +127,7 @@ function mapBidtoBidCancelledMessage(
       account: bid.account, //account instead of signer
       bidNonce: bid.bidNonce,
       version: bid.version ?? "1.0", //set version 1.0 by default
+      cancelDate: bid.cancelDate ?? 0
     },
   };
   return message;

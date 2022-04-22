@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    "lib": ["ES2018", "DOM"],
+    "lib": ["ES2019", "DOM"],
     "outDir": "build",
     "module": "CommonJS",
     "moduleResolution": "node",
     "strict": true,
-    "target": "ES2018",
+    "target": "ES2019",
     "sourceMap": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true

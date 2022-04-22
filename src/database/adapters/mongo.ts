@@ -1,7 +1,7 @@
 import { InsertOneResult, Document, InsertManyResult } from "mongodb";
 
 import { BidDatabaseService } from "..";
-import { Bid } from "../../types";
+import { Bid, CancelledBid } from "../../types";
 import * as mongo from "../backends/mongo";
 import { UncertainBid } from "../types";
 
@@ -90,9 +90,10 @@ export const create = (db: string, collection: string): BidDatabaseService => {
   };
 
   const cancelBid = async (
-    bid: Bid,
+    bid: CancelledBid,
     archiveCollection: string
   ): Promise<boolean> => {
+
     // Place bid into archive collection, then delete
     const insertResult: InsertOneResult = await mongo.insertOne(
       bid,

@@ -1,4 +1,4 @@
-import { Bid } from "../types";
+import { Bid, CancelledBid } from "../types";
 export * from "./adapters";
 
 export interface BidDatabaseService {
@@ -7,5 +7,5 @@ export interface BidDatabaseService {
   getBidsByTokenIds: (nftIds: string[]) => Promise<Bid[]>;
   getBidsByAccount: (account: string) => Promise<Bid[]>;
   getBidBySignedMessage: (signedMessage: string) => Promise<Bid | null>;
-  cancelBid: (bid: Bid, archiveCollection: string) => Promise<boolean>;
+  cancelBid: (bid: CancelledBid, archiveCollection: string) => Promise<boolean>;
 }
