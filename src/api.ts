@@ -29,6 +29,7 @@ import { calculateNftId, verifyEncodedBid } from "./util/auctions";
 
 import {
   Bid,
+  BidFilterStatus,
   BidParams,
   BidPayloadPostDto,
   BidPostDto,
@@ -83,7 +84,6 @@ router.post(
         return res.status(400).send(validateBidPayloadSchema.errors);
       }
       const dto: BidPayloadPostDto = req.body as BidPayloadPostDto;
-
       // Generate bidNonce, nftId
       const nftId = calculateNftId(dto.contractAddress, dto.tokenId);
       const bidNonce = Math.floor(Math.random() * 42949672960);
@@ -149,7 +149,7 @@ router.post(
   }
 );
 
-// Endpoint to return all bids by an account
+// Endpoint to return all bids by an accounts
 router.get(
   "/bids/accounts/:account",
   limiter,
@@ -162,9 +162,10 @@ router.get(
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
     const accountId = req.params.account;
-
+    const filterParam = BidFilterStatus[req.query.filter?.toString().toLowerCase()  as keyof typeof BidFilterStatus] ?? BidFilterStatus.active;
+    console.log(filterParam);
     try {
-      const accountBids: Bid[] = await database.getBidsByAccount(accountId);
+      const accountBids: Bid[] = await database.getBidsByAccount(accountId, filterParam);
       console.log(accountBids);
       return res.status(200).send(accountBids);
     } catch {

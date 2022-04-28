@@ -53,7 +53,7 @@ export interface CancelledBid extends Bid {
   cancelDate: number;
 }
 
-export type CancelledBidNullable = Bid & Partial<CancelledBid>
+export type CancelableBid = Bid & Partial<CancelledBid>
 
 export interface Bid extends BidParams {
   date: number;
@@ -87,4 +87,10 @@ export interface BidCancelDto extends BidCancelEncode {
 export interface BidCancellation {
   account: string;
   bidNonce: string;
+}
+
+export enum BidFilterStatus {
+  all = 0,
+  active = 1,
+  cancelled = 2,
 }

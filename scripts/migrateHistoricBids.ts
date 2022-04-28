@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as env from "env-var";
 import * as dotenv from "dotenv";
 import * as mongodb from "mongodb";
-import { Bid, CancelledBid, CancelledBidNullable } from "../src/types";
+import { Bid, CancelledBid, CancelableBid } from "../src/types";
 import { MongoClientOptions } from "mongodb";
 import { queueAdapters, MessageQueueService } from "../src/messagequeue";
 import {
@@ -31,7 +31,7 @@ const main = async () => {
   await client.connect();
   const database = client.db(dbName);
   const bidsPlaced = await getAllFromCollection<Bid>(collectionName, database);
-  const bidsCancelled = await getAllFromCollection<CancelledBidNullable>(
+  const bidsCancelled = await getAllFromCollection<CancelableBid>(
     collectionName + "-archive",
     database
   );
@@ -115,7 +115,7 @@ function mapBidtoBidPlacedMessage(bid: Bid): TypedMessage<BidPlacedV1Data> {
 }
 
 function mapCancelledBidtoBidCancelledMessage(
-  bid: CancelledBidNullable
+  bid: CancelableBid
 ): TypedMessage<BidCancelledV1Data> {
   const message: TypedMessage<BidCancelledV1Data> = {
     event: MessageType.BidCancelled,
@@ -127,7 +127,7 @@ function mapCancelledBidtoBidCancelledMessage(
       account: bid.account, //account instead of signer
       bidNonce: bid.bidNonce,
       version: bid.version ?? "1.0", //set version 1.0 by default
-      cancelDate: bid.cancelDate ?? 0
+      cancelDate: bid.cancelDate ?? 1
     },
   };
   return message;
