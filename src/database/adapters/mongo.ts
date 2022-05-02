@@ -46,7 +46,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result.acknowledged;
   };
 
-  const getBidsByTokenIds = async (tokenIds: string[], bidStatus: BidFilterStatus): Promise<Bid[]> => {
+  const getBidsByTokenIds = async (tokenIds: string[], bidStatus: BidFilterStatus): Promise<CancelableBid[]> => {
     const tokenIdList = [...tokenIds];
     let queryWrapper : Filter<Document> = {
       tokenId: {
