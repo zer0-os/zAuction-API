@@ -5,3 +5,4 @@ export function getBidFilterStatus(input : string | undefined): BidFilterStatus 
     return BidFilterStatus[input.toLowerCase() as 
         keyof typeof BidFilterStatus] ?? BidFilterStatus.active;
   }
+  
