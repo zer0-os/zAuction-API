@@ -1,7 +1,7 @@
 import {Document, Filter } from "mongodb";
 import { BidFilterStatus } from "../../types";
 
-export function addFilterByBidStatus(query: Filter<Document>, bidStatus: BidFilterStatus){
+export function addFilterByBidStatus(query: Filter<Document>, bidStatus: BidFilterStatus): Filter<Document>{
   switch(bidStatus) { 
     case BidFilterStatus.cancelled: { 
       query.$or= [
@@ -22,4 +22,5 @@ export function addFilterByBidStatus(query: Filter<Document>, bidStatus: BidFilt
       break;
     } 
  } 
+ return query;
 }

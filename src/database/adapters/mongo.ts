@@ -46,16 +46,18 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result.acknowledged;
   };
 
-  const getBidsByTokenIds = async (tokenIds: string[]): Promise<Bid[]> => {
+  const getBidsByTokenIds = async (tokenIds: string[], bidStatus: BidFilterStatus): Promise<Bid[]> => {
     const tokenIdList = [...tokenIds];
+    let queryWrapper : Filter<Document> = {
+      tokenId: {
+        $in: tokenIdList,
+      },
+    }
+    queryWrapper = addFilterByBidStatus(queryWrapper, bidStatus);    
     const versionlessResult: UncertainBid[] = await mongo.find(
       database,
       usedCollection,
-      {
-        tokenId: {
-          $in: tokenIdList,
-        },
-      }
+      queryWrapper
     );
 
     const result: Bid[] = mapBids(versionlessResult);
@@ -66,7 +68,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     let queryWrapper : Filter<Document> = {
       account: `${account}`,
     }
-    addFilterByBidStatus(queryWrapper, bidStatus);    
+    queryWrapper = addFilterByBidStatus(queryWrapper, bidStatus);    
     const maybeResult: UncertainBid[] = await mongo.find(
       database,
       usedCollection,
@@ -97,7 +99,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
   };
 
   const cancelBid = async (
-    bid: CancelledBid,
+    bid: CancelableBid,
     archiveCollection: string
   ): Promise<boolean> => {
 

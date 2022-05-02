@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as env from "env-var";
 import * as dotenv from "dotenv";
 import * as mongodb from "mongodb";
-import { Bid, CancelledBid, CancelableBid } from "../src/types";
+import { Bid, CancelableBid } from "../src/types";
 import { MongoClientOptions } from "mongodb";
 import { queueAdapters, MessageQueueService } from "../src/messagequeue";
 import {
