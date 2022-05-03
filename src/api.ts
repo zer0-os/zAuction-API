@@ -34,13 +34,14 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
+  CancelableBid,
   CancelledBid,
   VerifyBidResponse,
 } from "./types";
 
 import { ethers } from "ethers";
 import { retry } from "./util/retry";
-import e from "express";
+import { getBidFilterStatus } from "./util/requests";
 
 const router = express.Router();
 
@@ -83,7 +84,6 @@ router.post(
         return res.status(400).send(validateBidPayloadSchema.errors);
       }
       const dto: BidPayloadPostDto = req.body as BidPayloadPostDto;
-
       // Generate bidNonce, nftId
       const nftId = calculateNftId(dto.contractAddress, dto.tokenId);
       const bidNonce = Math.floor(Math.random() * 42949672960);
@@ -113,7 +113,7 @@ router.post(
   }
 );
 
-// Endpoint to return auctions based on an array of given tokenIds
+// Endpoint to return auctions based on an array of given tokenIds, filterable by bid cancellation status
 router.post(
   "/bids/list",
   limiter,
@@ -125,6 +125,7 @@ router.post(
     if (!validateBidsListPostSchema(req.body)) {
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
+    const filterParam = getBidFilterStatus(req.query.filter?.toString());
     const dto: BidsListDto = req.body as BidsListDto;
     const tokenIdBids: BidsList = {};
 
@@ -134,7 +135,7 @@ router.post(
     }
 
     try {
-      const bids: Bid[] = await database.getBidsByTokenIds(dto.tokenIds);
+      const bids: Bid[] = await database.getBidsByTokenIds(dto.tokenIds, filterParam);
 
       // For each bid, map to appropriate tokenId array
       for (const bid of bids) {
@@ -149,7 +150,7 @@ router.post(
   }
 );
 
-// Endpoint to return all bids by an account
+// Endpoint to return all bids by an account, filterable by bid cancellation status
 router.get(
   "/bids/accounts/:account",
   limiter,
@@ -162,9 +163,9 @@ router.get(
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
     const accountId = req.params.account;
-
+    const filterParam = getBidFilterStatus(req.query.filter?.toString());
     try {
-      const accountBids: Bid[] = await database.getBidsByAccount(accountId);
+      const accountBids: Bid[] = await database.getBidsByAccount(accountId, filterParam);
       console.log(accountBids);
       return res.status(200).send(accountBids);
     } catch {
@@ -254,7 +255,8 @@ router.get(
     if (!validateBidsGetSchema(req.params)) {
       return res.status(400).send(validateBidsGetSchema.errors);
     }
-    const bids = await database.getBidsByTokenIds([req.params.tokenId]);
+    const filterParam = getBidFilterStatus(req.query.filter?.toString());
+    const bids = await database.getBidsByTokenIds([req.params.tokenId], filterParam);
     return res.status(200).send(bids);
   }
 );
@@ -329,7 +331,7 @@ router.post(
 
       // Once confirmed, move to archive collection
       let timeStamp = new Date().getTime();
-      const cancelledBid: CancelledBid = {
+      const cancelledBid: CancelableBid = {
         ...bidData,
         cancelDate: timeStamp,
       }
