@@ -16,8 +16,6 @@ export function addFilterByBidStatus(query: Filter<Document>, bidStatus: BidFilt
       ];
       break; 
     } 
-    case BidFilterStatus.all: { 
-   } 
     default: { 
       break;
     } 

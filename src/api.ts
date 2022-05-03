@@ -164,7 +164,6 @@ router.get(
     }
     const accountId = req.params.account;
     const filterParam = getBidFilterStatus(req.query.filter?.toString());
-    console.log(filterParam);
     try {
       const accountBids: Bid[] = await database.getBidsByAccount(accountId, filterParam);
       console.log(accountBids);
