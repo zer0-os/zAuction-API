@@ -6,6 +6,6 @@ export interface BidDatabaseService {
   insertBids: (data: Bid[]) => Promise<boolean>;
   getBidsByTokenIds: (nftIds: string[], bidStatus: BidFilterStatus) => Promise<Bid[]>;
   getBidsByAccount: (account: string, bidStatus: BidFilterStatus) => Promise<Bid[]>;
-  getBidBySignedMessage: (signedMessage: string) => Promise<Bid | null>;
-  cancelBid: (bid: CancelableBid, archiveCollection: string) => Promise<boolean>;
+  getBidBySignedMessage: (signedMessage: string) => Promise<CancelableBid | null>;
+  cancelBid: (bid: CancelableBid, collection: string) => Promise<boolean>;
 }

@@ -1,4 +1,4 @@
-import { InsertOneResult, Document, InsertManyResult, Filter } from "mongodb";
+import { InsertOneResult, Document, InsertManyResult, Filter, UpdateResult } from "mongodb";
 import { BidDatabaseService } from "..";
 import { Bid, BidFilterStatus, CancelledBid, CancelableBid } from "../../types";
 import * as mongo from "../backends/mongo";
@@ -100,26 +100,18 @@ export const create = (db: string, collection: string): BidDatabaseService => {
 
   const cancelBid = async (
     bid: CancelableBid,
-    archiveCollection: string
+    collection: string
   ): Promise<boolean> => {
-
-    // Place bid into archive collection, then delete
-    const insertResult: InsertOneResult = await mongo.insertOne(
-      bid,
-      database,
-      archiveCollection
-    );
-
-    if (!insertResult.acknowledged) {
-      throw Error(
-        `Failed to cancel bid with signed message: ${bid.signedMessage}`
-      );
-    }
-
-    const result: boolean = await mongo.deleteOne(database, usedCollection, {
+    const result: UpdateResult = await mongo.updateOne({$set: {cancelDate: bid.cancelDate as number}}, database, collection, {
       signedMessage: `${bid.signedMessage}`,
     });
-    return result;
+    
+    if (!result.acknowledged || result.modifiedCount !== 1) {
+      throw Error(
+        `Unable to cancel bid with signed message: ${bid.signedMessage}`
+      );
+    }
+    return result.acknowledged;
   };
 
   const databaseService = {

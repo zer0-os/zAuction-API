@@ -298,11 +298,12 @@ router.post(
       return res.status(400).send(validateBidCancelSchema.errors);
     }
     try {
-      const bidData: Bid | null = await database.getBidBySignedMessage(
+      const bidData: CancelableBid | null = await database.getBidBySignedMessage(
         req.body.bidMessageSignature
       );
 
       if (!bidData) return res.status(400).send("Bid not found");
+      if (bidData.cancelDate && bidData.cancelDate > 0) return res.status(404).send("Bid is no longer active");
 
       console.log(bidData);
       console.log(bidData.signedMessage, req.body.bidMessageSignature);
@@ -335,7 +336,7 @@ router.post(
         ...bidData,
         cancelDate: timeStamp,
       }
-      await database.cancelBid(cancelledBid, archiveCollection);
+      await database.cancelBid(cancelledBid, collection);
 
       const message: TypedMessage<BidCancelledV1Data> = {
         event: MessageType.BidCancelled,
