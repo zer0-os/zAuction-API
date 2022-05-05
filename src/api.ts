@@ -53,10 +53,6 @@ const limiter = rateLimit({
 
 const db = env.get("MONGO_DB").required().asString();
 const collection = env.get("MONGO_COLLECTION").required().asString();
-const archiveCollection = env
-  .get("MONGO_ARCHIVE_COLLECTION")
-  .required()
-  .asString();
 const database: BidDatabaseService = adapters.mongo.create(db, collection);
 
 const connectionString = env
@@ -330,7 +326,7 @@ router.post(
         return res.status(400).send("Incorrect signer address recovered");
       }
 
-      // Once confirmed, move to archive collection
+      // Once confirmed, update bid with cancelDate
       let timeStamp = new Date().getTime();
       const cancelledBid: CancelableBid = {
         ...bidData,
