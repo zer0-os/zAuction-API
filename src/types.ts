@@ -62,6 +62,10 @@ export interface Bid extends BidParams {
   version: string;
 }
 
+export interface HistoricBid extends Bid {
+  nftId: string;
+}
+
 export interface Auction {
   tokenId: string;
   contractAddress: string;

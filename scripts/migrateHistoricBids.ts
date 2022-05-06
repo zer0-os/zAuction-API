@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as env from "env-var";
 import * as dotenv from "dotenv";
 import * as mongodb from "mongodb";
-import { Bid, CancelableBid } from "../src/types";
+import { Bid, CancelableBid, HistoricBid } from "../src/types";
 import { MongoClientOptions } from "mongodb";
 import { queueAdapters, MessageQueueService } from "../src/messagequeue";
 import {
@@ -88,7 +88,7 @@ async function sendEventsToEventHub<T>(messages: TypedMessage<BidPlacedV1Data | 
   await queue.sendMessagesBatch(messages, {});
 }
 
-function mapBidtoBidPlacedMessage(bid: Bid): TypedMessage<BidPlacedV1Data> {
+function mapBidtoBidPlacedMessage(bid: HistoricBid): TypedMessage<BidPlacedV1Data> {
   const message: TypedMessage<BidPlacedV1Data> = {
     event: MessageType.BidPlaced,
     version: "1.0",
