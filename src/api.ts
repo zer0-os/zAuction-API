@@ -5,8 +5,8 @@ import * as env from "env-var";
 import {
   MessageType,
   TypedMessage,
-  BidPlacedV1Data,
   BidCancelledV1Data,
+  BidPlacedV2Data,
 } from "@zero-tech/zns-message-schemas";
 
 import { adapters, BidDatabaseService } from "./database";
@@ -25,7 +25,7 @@ import {
 
 import { encodeBid } from "./util/contracts";
 
-import { calculateNftId, verifyEncodedBid } from "./util/auctions";
+import { verifyEncodedBid } from "./util/auctions";
 
 import {
   Bid,
@@ -35,7 +35,6 @@ import {
   BidsList,
   BidsListDto,
   CancelableBid,
-  CancelledBid,
   VerifyBidResponse,
 } from "./types";
 
@@ -84,26 +83,25 @@ router.post(
         return res.status(400).send(validateBidPayloadSchema.errors);
       }
       const dto: BidPayloadPostDto = req.body as BidPayloadPostDto;
-      // Generate bidNonce, nftId
-      const nftId = calculateNftId(dto.contractAddress, dto.tokenId);
+
+      // Generate bidNonce
       const bidNonce = Math.floor(Math.random() * 42949672960);
 
       // We use `bidNonce` to be clearer about what the variable actually represents
-      // but any existing database records will still show `bidNonce`
+      // but any older database records may still show `auctionId`
       const payload = await encodeBid(
         bidNonce,
         dto.bidAmount,
-        dto.contractAddress,
         dto.tokenId,
         dto.minimumBid,
         dto.startBlock,
-        dto.expireBlock
+        dto.expireBlock,
+        dto.bidToken
       );
 
       const responseData = {
         payload,
         bidNonce,
-        nftId,
       };
 
       return res.status(200).send(responseData);
@@ -166,7 +164,6 @@ router.get(
     const filterParam = getBidFilterStatus(req.query.filter?.toString());
     try {
       const accountBids: Bid[] = await database.getBidsByAccount(accountId, filterParam);
-      console.log(accountBids);
       return res.status(200).send(accountBids);
     } catch {
       next(new Error(`Could not get bids for account ${accountId}`));
@@ -191,7 +188,6 @@ router.post(
 
     try {
       const bidParams: BidParams = {
-        nftId: calculateNftId(dto.contractAddress, dto.tokenId),
         account: dto.account,
         bidNonce: dto.bidNonce,
         bidAmount: dto.bidAmount,
@@ -200,6 +196,7 @@ router.post(
         minimumBid: dto.minimumBid,
         startBlock: dto.startBlock,
         expireBlock: dto.expireBlock,
+        bidToken: dto.bidToken
       };
 
       // Perform necessary checks to ensure account is able to make the bid
@@ -226,9 +223,9 @@ router.post(
       // Add new bid document to database
       await database.insertBid(newBid);
 
-      const message: TypedMessage<BidPlacedV1Data> = {
+      const message: TypedMessage<BidPlacedV2Data> = {
         event: MessageType.BidPlaced,
-        version: "1.0",
+        version: "2.0",
         timestamp: dateNow,
         logIndex: undefined,
         blockNumber: undefined,
@@ -269,13 +266,10 @@ router.post(
     if (!validateBidCancelEncodeSchema(req.body)) {
       return res.status(400).send(validateBidCancelEncodeSchema.errors);
     }
-    console.log(req.body.bidMessageSignature);
 
     const bidData: Bid | null = await database.getBidBySignedMessage(
       req.body.bidMessageSignature
     );
-
-    console.log(bidData);
 
     const cancelMessage = "cancel - " + req.body.bidMessageSignature;
     const hashedCancelMessage = ethers.utils.id(cancelMessage);
@@ -304,25 +298,12 @@ router.post(
 
       if (!bidData) return res.status(400).send("Bid not found");
 
-      console.log(bidData);
-      console.log(bidData.signedMessage, req.body.bidMessageSignature);
-
       // Reconstruct the unsigned cancel message hash, using same format as cancel/encode
       const cancelMessage = "cancel - " + bidData.signedMessage;
-      //const hashedCancelMessage = ethers.utils.hashMessage(cancelMessage);
 
       const signer = ethers.utils.verifyMessage(
         ethers.utils.id(cancelMessage),
         req.body.cancelMessageSignature
-      );
-
-      console.log(signer);
-
-      console.log(
-        ethers.utils.verifyMessage(
-          cancelMessage,
-          req.body.cancelMessageSignature
-        )
       );
 
       if (signer.toLowerCase() !== bidData.account.toLowerCase()) {

@@ -12,7 +12,6 @@ require("dotenv").config();
 import { FleekAuth } from "./types";
 import { Bid, Auction } from "../types";
 import { adapters, BidDatabaseService } from "../database/";
-import { calculateNftId } from "../util";
 
 const db = env.get("MONGO_DB").required().asString();
 const collection = env.get("MONGO_COLLECTION").required().asString();
@@ -97,8 +96,6 @@ async function migrateExistingBids(auth: FleekAuth) {
     // and `contractAddress` props, they are already in Bid
     for (const bid of file.bids) {
       const newBid = {
-        // Uncomment for any legacy bids that don't include nftId
-        // nftId: calculateNftId(bid.contractAddress, bid.tokenId),
         ...bid,
       };
       bids.push(newBid);

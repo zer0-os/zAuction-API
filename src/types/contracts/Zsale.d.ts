@@ -120,7 +120,7 @@ export class Zsale extends BaseContract {
      */
     purchase(
       signature: BytesLike,
-      bidNonce: BigNumberish,
+      auctionid: BigNumberish,
       seller: string,
       price: BigNumberish,
       nftaddress: string,
@@ -153,7 +153,7 @@ export class Zsale extends BaseContract {
    */
   purchase(
     signature: BytesLike,
-    bidNonce: BigNumberish,
+    auctionid: BigNumberish,
     seller: string,
     price: BigNumberish,
     nftaddress: string,
@@ -186,7 +186,7 @@ export class Zsale extends BaseContract {
      */
     purchase(
       signature: BytesLike,
-      bidNonce: BigNumberish,
+      auctionid: BigNumberish,
       seller: string,
       price: BigNumberish,
       nftaddress: string,
@@ -241,7 +241,7 @@ export class Zsale extends BaseContract {
      */
     purchase(
       signature: BytesLike,
-      bidNonce: BigNumberish,
+      auctionid: BigNumberish,
       seller: string,
       price: BigNumberish,
       nftaddress: string,
@@ -278,7 +278,7 @@ export class Zsale extends BaseContract {
      */
     purchase(
       signature: BytesLike,
-      bidNonce: BigNumberish,
+      auctionid: BigNumberish,
       seller: string,
       price: BigNumberish,
       nftaddress: string,

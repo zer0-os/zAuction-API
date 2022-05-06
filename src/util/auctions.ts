@@ -9,17 +9,6 @@ import {
   getZAuctionContract,
 } from "./contracts";
 
-export function calculateNftId(
-  contractAddress: string,
-  tokenId: string
-): string {
-  const idString = contractAddress + tokenId;
-  const idStringBytes = ethers.utils.toUtf8Bytes(idString);
-  const nftId = ethers.utils.keccak256(idStringBytes);
-
-  return nftId;
-}
-
 async function calculateSigningAccount(
   bidData: BidParams,
   signedMessage: string,
@@ -29,11 +18,11 @@ async function calculateSigningAccount(
   const bidMessage = await encodeBid(
     bidData.bidNonce,
     bidData.bidAmount,
-    bidData.contractAddress,
     bidData.tokenId,
     bidData.minimumBid,
     bidData.startBlock,
-    bidData.expireBlock
+    bidData.expireBlock,
+    bidData.bidToken
   );
 
   const unsignedMessage = await zAuctionContract.toEthSignedMessageHash(
@@ -52,13 +41,15 @@ export async function verifyEncodedBid(
   params: BidParams,
   signedMessage: string
 ): Promise<VerifyBidResponse> {
-  // Instantiate contracts
-  const erc20Contract = await getTokenContract();
+  // Get the correct ERC20 token for that domain
+  const erc20Contract = await getTokenContract(params.tokenId); // will be default as we haven't set wild token network yet
   const zAuctionContract: Zauction = await getZAuctionContract();
 
   // Calculate user balance, block number, and the signing account
   const userBalance = await erc20Contract.balanceOf(params.account);
   const bidAmount = ethers.BigNumber.from(params.bidAmount);
+  const t = await userBalance.toString()
+  console.log(t);
 
   const ethersProvider = getEthersProvider();
   const blockNum = ethers.BigNumber.from(await ethersProvider.getBlockNumber());

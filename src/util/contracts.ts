@@ -34,7 +34,7 @@ export async function getZAuctionContract(): Promise<Zauction> {
 }
 
 let tokenAddressCache: string | undefined;
-export async function getTokenContract(): Promise<ERC20> {
+export async function getTokenContract(tokenId: string): Promise<ERC20> {
   if (tokenAddressCache) {
     const signer = getVoidSigner();
     const contract = ERC20__factory.connect(tokenAddressCache, signer);
@@ -42,30 +42,31 @@ export async function getTokenContract(): Promise<ERC20> {
   }
 
   const zAuction = await getZAuctionContract();
-  tokenAddressCache = await zAuction.token();
+  tokenAddressCache = await zAuction.getPaymentTokenForDomain(tokenId);
 
-  return getTokenContract();
+  return getTokenContract(tokenId);
 }
 
 export const encodeBid = async (
   bidNonce: string | number,
   bidAmount: string,
-  contractAddress: string,
   tokenId: string,
   minimumBid: string,
   startBlock: string,
-  expireBlock: string
+  expireBlock: string,
+  bidToken: string
 ): Promise<string> => {
   const zAuction = await getZAuctionContract();
 
+  // Will call internally to `hub.getRegistrarForDomain()` and hash with the contract address
   const payload = await zAuction.createBid(
     bidNonce,
     bidAmount,
-    contractAddress,
     tokenId,
     minimumBid,
     startBlock,
-    expireBlock
+    expireBlock,
+    bidToken
   );
 
   return payload;
