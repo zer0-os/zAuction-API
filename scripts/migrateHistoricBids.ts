@@ -2,8 +2,8 @@ import * as fs from "fs";
 import * as env from "env-var";
 import * as dotenv from "dotenv";
 import * as mongodb from "mongodb";
-import { Bid, CancelableBid } from "../src/types";
-import { MongoClientOptions } from "mongodb";
+import { Bid } from "../src/types";
+import { MongoClientOptions, Filter, Document } from "mongodb";
 import { queueAdapters, MessageQueueService } from "../src/messagequeue";
 import {
   MessageType,
@@ -25,43 +25,62 @@ const options: MongoClientOptions = {
   connectTimeoutMS: 5000,
   w: "majority",
 };
+const cancelledQuery = { cancelDate: { $gte: 1 } };
 
 const main = async () => {
   const client = new mongodb.MongoClient(fullUri, options);
   await client.connect();
   const database = client.db(dbName);
-  const bidsPlaced = await getAllFromCollection<Bid>(collectionName, database);
-  const bidsCancelled = await getAllFromCollection<CancelableBid>(
+  const bidsPlaced = await getFromCollection<Bid>(
+    collectionName, 
+    database, 
+    {}
+    );
+  const bidsCancelled = await getFromCollection<Bid>(
+    collectionName, 
+    database, 
+    cancelledQuery
+    );
+  //Temporarily using archived collection until it is deprecated.
+  const bidsCancelledArchived = await getFromCollection<Bid>(
     collectionName + "-archive",
-    database
-  );
+    database, 
+    {}
+    );
   client.close();
 
   const bidsPlacedMessages = bidsPlaced.map((x) => mapBidtoBidPlacedMessage(x));
-  const bidsPlacedArchivedMessages = bidsCancelled.map((x) => mapBidtoBidPlacedMessage(x));
+  const bidsPlacedArchivedMessages = bidsCancelledArchived.map((x) => mapBidtoBidPlacedMessage(x)); //Remove when archive collections are deprecated
   const bidsCancelledMessages = bidsCancelled.map((x) =>
-  mapCancelledBidtoBidCancelledMessage(x)
-  );
+    mapBidtoBidCancelledMessage(x)
+    );
+  const bidsCancelledArchivedMessages = bidsCancelledArchived.map((x) =>                          //Remove when archive collections are deprecated
+    mapBidtoBidCancelledMessage(x)
+    );
+
   if (argv.output == "file") {
     await writeMessagesToOutputFile([
       bidsPlacedMessages,
       bidsPlacedArchivedMessages,
       bidsCancelledMessages,
+      bidsCancelledArchivedMessages
     ]);
   } else {
-    await sendEventsToEventHub(bidsPlacedMessages);         //Sending active bids
-    await sendEventsToEventHub(bidsPlacedArchivedMessages); //Sending bids that were archived
-    await sendEventsToEventHub(bidsCancelledMessages);      //Sending bids that were archived, as cancellation messages
+    await sendEventsToEventHub(bidsPlacedMessages);                 //Sending active bids
+    await sendEventsToEventHub(bidsPlacedArchivedMessages);         //Sending bids that were archived
+    await sendEventsToEventHub(bidsCancelledMessages);              //Sending bids that were cancelled, as cancellation messages
+    await sendEventsToEventHub(bidsCancelledArchivedMessages);      //Sending bids that were archived, as cancellation messages
   }
 };
 main();
 
-async function getAllFromCollection<T>(
+async function getFromCollection<T>(
   collectionName: string,
-  databaseClient: mongodb.Db
+  databaseClient: mongodb.Db,
+  filter: Filter<Document>
 ): Promise<T[]> {
   const collection = databaseClient.collection(collectionName);
-  var result = await collection.find<T>({}).toArray();
+  var result = await collection.find<T>(filter).toArray();
   console.log(
     `${result.length} items retrieved from DB collection ${collectionName}`
   );
@@ -114,8 +133,8 @@ function mapBidtoBidPlacedMessage(bid: Bid): TypedMessage<BidPlacedV1Data> {
   return message;
 }
 
-function mapCancelledBidtoBidCancelledMessage(
-  bid: CancelableBid
+function mapBidtoBidCancelledMessage(
+  bid: Bid
 ): TypedMessage<BidCancelledV1Data> {
   const message: TypedMessage<BidCancelledV1Data> = {
     event: MessageType.BidCancelled,
