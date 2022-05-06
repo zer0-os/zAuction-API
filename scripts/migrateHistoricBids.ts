@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as env from "env-var";
 import * as dotenv from "dotenv";
 import * as mongodb from "mongodb";
-import { Bid, CancelableBid, HistoricBid } from "../src/types";
+import { Bid, CancelableBid, HistoricalCancelableBid, HistoricBid } from "../src/types";
 import { MongoClientOptions } from "mongodb";
 import { queueAdapters, MessageQueueService } from "../src/messagequeue";
 import {
@@ -30,8 +30,8 @@ const main = async () => {
   const client = new mongodb.MongoClient(fullUri, options);
   await client.connect();
   const database = client.db(dbName);
-  const bidsPlaced = await getAllFromCollection<Bid>(collectionName, database);
-  const bidsCancelled = await getAllFromCollection<CancelableBid>(
+  const bidsPlaced = await getAllFromCollection<HistoricBid>(collectionName, database);
+  const bidsCancelled = await getAllFromCollection<HistoricalCancelableBid>(
     collectionName + "-archive",
     database
   );

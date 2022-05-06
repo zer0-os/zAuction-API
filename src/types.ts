@@ -66,6 +66,8 @@ export interface HistoricBid extends Bid {
   nftId: string;
 }
 
+export interface HistoricalCancelableBid extends HistoricBid, CancelableBid {}
+
 export interface Auction {
   tokenId: string;
   contractAddress: string;
