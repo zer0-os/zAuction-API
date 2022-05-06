@@ -34,7 +34,6 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
-  CancelableBid,
   CancelledBid,
   VerifyBidResponse,
 } from "./types";
@@ -294,12 +293,12 @@ router.post(
       return res.status(400).send(validateBidCancelSchema.errors);
     }
     try {
-      const bidData: CancelableBid | null = await database.getBidBySignedMessage(
+      const bidData: Bid | null = await database.getBidBySignedMessage(
         req.body.bidMessageSignature
       );
 
       if (!bidData) return res.status(400).send("Bid not found");
-      if (bidData.cancelDate && bidData.cancelDate > 0) return res.status(404).send("Bid is no longer active");
+      if (bidData.cancelDate && bidData.cancelDate > 0) return res.status(409).send("Bid is no longer active");
 
       console.log(bidData);
       console.log(bidData.signedMessage, req.body.bidMessageSignature);
@@ -328,7 +327,7 @@ router.post(
 
       // Once confirmed, update bid with cancelDate
       let timeStamp = new Date().getTime();
-      const cancelledBid: CancelableBid = {
+      const cancelledBid: Bid = {
         ...bidData,
         cancelDate: timeStamp,
       }
