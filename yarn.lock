@@ -1095,7 +1095,7 @@
 
 "@zero-tech/zns-message-schemas@1.4.1":
   version "1.4.1"
-  resolved "https://registry.yarnpkg.com/@zero-tech/zns-message-schemas/-/zns-message-schemas-1.4.1.tgz#d0fb468cf778918fe57eb307a4ad192694549f3c"
+  resolved "https://registry.npmjs.org/@zero-tech/zns-message-schemas/-/zns-message-schemas-1.4.1.tgz"
   integrity sha512-8J+IQf5sykWIbNsTjm7LmiAOgEqb8tXCEaJXAIfv1qu8yHl74/Qa6mZFasqsuzKBGVEixf69B0EFAykUmnxktw==
 
 abbrev@1:

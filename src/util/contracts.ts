@@ -28,16 +28,16 @@ export async function getZAuctionContract(): Promise<Zauction> {
   // Contract setup
   const zAuctionAddress = env.get("ZAUCTION_ADDRESS").required().asString();
   if (!zAuctionAddress) throw ReferenceError;
-  const signer = getVoidSigner();
-  const contract = Zauction__factory.connect(zAuctionAddress, signer);
+  const provider = ethers.providers.getDefaultProvider();
+  const contract = Zauction__factory.connect(zAuctionAddress, provider);
   return contract;
 }
 
 let tokenAddressCache: string | undefined;
 export async function getTokenContract(tokenId: string): Promise<ERC20> {
   if (tokenAddressCache) {
-    const signer = getVoidSigner();
-    const contract = ERC20__factory.connect(tokenAddressCache, signer);
+    const provider = ethers.providers.getDefaultProvider();
+    const contract = ERC20__factory.connect(tokenAddressCache, provider);
     return contract;
   }
 
@@ -45,6 +45,12 @@ export async function getTokenContract(tokenId: string): Promise<ERC20> {
   tokenAddressCache = await zAuction.getPaymentTokenForDomain(tokenId);
 
   return getTokenContract(tokenId);
+}
+
+export const getPaymentTokenForDomain = async (tokenId: string) => {
+  const contract = await getZAuctionContract();
+  const paymentToken = await contract.getPaymentTokenForDomain(tokenId);
+  return paymentToken;
 }
 
 export const encodeBid = async (

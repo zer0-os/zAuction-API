@@ -23,7 +23,7 @@ import {
   validateBidCancelEncodeSchema,
 } from "./schemas";
 
-import { encodeBid, getZAuctionContract } from "./util/contracts";
+import { encodeBid, getPaymentTokenForDomain, getZAuctionContract } from "./util/contracts";
 
 import { verifyEncodedBid } from "./util/auctions";
 
@@ -82,9 +82,7 @@ router.post(
       // Generate bidNonce
       const bidNonce = Math.floor(Math.random() * 42949672960);
 
-      const contract = await getZAuctionContract();
-
-      const paymentToken = await contract.getPaymentTokenForDomain(dto.tokenId);
+      const paymentToken = await getPaymentTokenForDomain(dto.tokenId);
 
       if (dto.bidToken !== paymentToken) {
         next(new Error("Wrong payment token given for bid."))

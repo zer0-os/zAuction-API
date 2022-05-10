@@ -16,6 +16,7 @@ import * as contracts from "../src/util/contracts";
 
 describe("Test API Endpoints", async () => {
   sinon.stub(contracts, "encodeBid").returns(Promise.resolve(""));
+  sinon.stub(contracts, "getPaymentTokenForDomain").returns(Promise.resolve("0x2"))
 
   const stubbedDatabaseService = {
     insertBid: () => {},
