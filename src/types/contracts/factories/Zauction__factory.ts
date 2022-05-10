@@ -525,8 +525,57 @@ const _abi = [
         type: "uint256",
       },
       {
+        internalType: "address",
+        name: "nftAddress",
+        type: "address",
+      },
+      {
         internalType: "uint256",
-        name: "domainTokenId",
+        name: "tokenId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "minbid",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "startBlock",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "expireBlock",
+        type: "uint256",
+      },
+    ],
+    name: "createBid",
+    outputs: [
+      {
+        internalType: "bytes32",
+        name: "data",
+        type: "bytes32",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "bidNonce",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "bid",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "tokenId",
         type: "uint256",
       },
       {
@@ -550,7 +599,7 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "createBid",
+    name: "createBidV2",
     outputs: [
       {
         internalType: "bytes32",
@@ -871,6 +920,19 @@ const _abi = [
       },
     ],
     stateMutability: "pure",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "token",
+    outputs: [
+      {
+        internalType: "contract IERC20",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {

@@ -29,7 +29,8 @@ interface ZauctionInterface extends ethers.utils.Interface {
     "calculateTopLevelDomainFee(uint256,uint256)": FunctionFragment;
     "cancelBid(address,uint256)": FunctionFragment;
     "consumed(address,uint256)": FunctionFragment;
-    "createBid(uint256,uint256,uint256,uint256,uint256,uint256,address)": FunctionFragment;
+    "createBid(uint256,uint256,address,uint256,uint256,uint256,uint256)": FunctionFragment;
+    "createBidV2(uint256,uint256,uint256,uint256,uint256,uint256,address)": FunctionFragment;
     "defaultPaymentToken()": FunctionFragment;
     "getPaymentTokenForDomain(uint256)": FunctionFragment;
     "getProxyAdmin()": FunctionFragment;
@@ -49,6 +50,7 @@ interface ZauctionInterface extends ethers.utils.Interface {
     "setWildToken(address)": FunctionFragment;
     "setZNSHub(address)": FunctionFragment;
     "toEthSignedMessageHash(bytes32)": FunctionFragment;
+    "token()": FunctionFragment;
     "topLevelDomainFee(uint256)": FunctionFragment;
     "topLevelDomainIdCache(uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
@@ -109,6 +111,18 @@ interface ZauctionInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "createBid",
+    values: [
+      BigNumberish,
+      BigNumberish,
+      string,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "createBidV2",
     values: [
       BigNumberish,
       BigNumberish,
@@ -183,6 +197,7 @@ interface ZauctionInterface extends ethers.utils.Interface {
     functionFragment: "toEthSignedMessageHash",
     values: [BytesLike]
   ): string;
+  encodeFunctionData(functionFragment: "token", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "topLevelDomainFee",
     values: [BigNumberish]
@@ -219,6 +234,10 @@ interface ZauctionInterface extends ethers.utils.Interface {
   decodeFunctionResult(functionFragment: "cancelBid", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "consumed", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "createBid", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "createBidV2",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "defaultPaymentToken",
     data: BytesLike
@@ -274,6 +293,7 @@ interface ZauctionInterface extends ethers.utils.Interface {
     functionFragment: "toEthSignedMessageHash",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "token", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "topLevelDomainFee",
     data: BytesLike
@@ -421,7 +441,18 @@ export class Zauction extends BaseContract {
     createBid(
       bidNonce: BigNumberish,
       bid: BigNumberish,
-      domainTokenId: BigNumberish,
+      nftAddress: string,
+      tokenId: BigNumberish,
+      minbid: BigNumberish,
+      startBlock: BigNumberish,
+      expireBlock: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[string] & { data: string }>;
+
+    createBidV2(
+      bidNonce: BigNumberish,
+      bid: BigNumberish,
+      tokenId: BigNumberish,
       minbid: BigNumberish,
       startBlock: BigNumberish,
       expireBlock: BigNumberish,
@@ -519,6 +550,8 @@ export class Zauction extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    token(overrides?: CallOverrides): Promise<[string]>;
+
     topLevelDomainFee(
       arg0: BigNumberish,
       overrides?: CallOverrides
@@ -607,7 +640,18 @@ export class Zauction extends BaseContract {
   createBid(
     bidNonce: BigNumberish,
     bid: BigNumberish,
-    domainTokenId: BigNumberish,
+    nftAddress: string,
+    tokenId: BigNumberish,
+    minbid: BigNumberish,
+    startBlock: BigNumberish,
+    expireBlock: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<string>;
+
+  createBidV2(
+    bidNonce: BigNumberish,
+    bid: BigNumberish,
+    tokenId: BigNumberish,
     minbid: BigNumberish,
     startBlock: BigNumberish,
     expireBlock: BigNumberish,
@@ -705,6 +749,8 @@ export class Zauction extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
+  token(overrides?: CallOverrides): Promise<string>;
+
   topLevelDomainFee(
     arg0: BigNumberish,
     overrides?: CallOverrides
@@ -793,7 +839,18 @@ export class Zauction extends BaseContract {
     createBid(
       bidNonce: BigNumberish,
       bid: BigNumberish,
-      domainTokenId: BigNumberish,
+      nftAddress: string,
+      tokenId: BigNumberish,
+      minbid: BigNumberish,
+      startBlock: BigNumberish,
+      expireBlock: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
+    createBidV2(
+      bidNonce: BigNumberish,
+      bid: BigNumberish,
+      tokenId: BigNumberish,
       minbid: BigNumberish,
       startBlock: BigNumberish,
       expireBlock: BigNumberish,
@@ -882,6 +939,8 @@ export class Zauction extends BaseContract {
       hash: BytesLike,
       overrides?: CallOverrides
     ): Promise<string>;
+
+    token(overrides?: CallOverrides): Promise<string>;
 
     topLevelDomainFee(
       arg0: BigNumberish,
@@ -1101,7 +1160,18 @@ export class Zauction extends BaseContract {
     createBid(
       bidNonce: BigNumberish,
       bid: BigNumberish,
-      domainTokenId: BigNumberish,
+      nftAddress: string,
+      tokenId: BigNumberish,
+      minbid: BigNumberish,
+      startBlock: BigNumberish,
+      expireBlock: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    createBidV2(
+      bidNonce: BigNumberish,
+      bid: BigNumberish,
+      tokenId: BigNumberish,
       minbid: BigNumberish,
       startBlock: BigNumberish,
       expireBlock: BigNumberish,
@@ -1193,6 +1263,8 @@ export class Zauction extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    token(overrides?: CallOverrides): Promise<BigNumber>;
+
     topLevelDomainFee(
       arg0: BigNumberish,
       overrides?: CallOverrides
@@ -1282,7 +1354,18 @@ export class Zauction extends BaseContract {
     createBid(
       bidNonce: BigNumberish,
       bid: BigNumberish,
-      domainTokenId: BigNumberish,
+      nftAddress: string,
+      tokenId: BigNumberish,
+      minbid: BigNumberish,
+      startBlock: BigNumberish,
+      expireBlock: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    createBidV2(
+      bidNonce: BigNumberish,
+      bid: BigNumberish,
+      tokenId: BigNumberish,
       minbid: BigNumberish,
       startBlock: BigNumberish,
       expireBlock: BigNumberish,
@@ -1375,6 +1458,8 @@ export class Zauction extends BaseContract {
       hash: BytesLike,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     topLevelDomainFee(
       arg0: BigNumberish,

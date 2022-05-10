@@ -64,7 +64,7 @@ export const encodeBid = async (
 ): Promise<string> => {
   const zAuction = await getZAuctionContract();
 
-  const payload = await zAuction.createBid(
+  const payload = await zAuction.createBidV2(
     bidNonce,
     bidAmount,
     tokenId,
