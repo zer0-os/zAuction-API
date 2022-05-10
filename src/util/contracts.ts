@@ -28,7 +28,7 @@ export async function getZAuctionContract(): Promise<Zauction> {
   // Contract setup
   const zAuctionAddress = env.get("ZAUCTION_ADDRESS").required().asString();
   if (!zAuctionAddress) throw ReferenceError;
-  const provider = ethers.providers.getDefaultProvider();
+  const provider = getEthersProvider();
   const contract = Zauction__factory.connect(zAuctionAddress, provider);
   return contract;
 }
@@ -36,7 +36,7 @@ export async function getZAuctionContract(): Promise<Zauction> {
 let tokenAddressCache: string | undefined;
 export async function getTokenContract(tokenId: string): Promise<ERC20> {
   if (tokenAddressCache) {
-    const provider = ethers.providers.getDefaultProvider();
+    const provider = getEthersProvider()
     const contract = ERC20__factory.connect(tokenAddressCache, provider);
     return contract;
   }
