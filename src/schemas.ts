@@ -17,18 +17,18 @@ const bidPayloadPostSchema: JSONSchemaType<BidPayloadPostDto> = {
   properties: {
     bidAmount: { type: "string" },
     tokenId: { type: "string" },
-    contractAddress: { type: "string" },
     minimumBid: { type: "string" },
     startBlock: { type: "string" },
     expireBlock: { type: "string" },
+    bidToken: { type: "string" },
   },
   required: [
     "bidAmount",
-    "contractAddress",
     "tokenId",
     "minimumBid",
     "startBlock",
     "expireBlock",
+    "bidToken",
   ],
   additionalProperties: false,
 };
@@ -46,6 +46,8 @@ const bidPostSchema: JSONSchemaType<BidPostDto> = {
     startBlock: { type: "string" },
     expireBlock: { type: "string" },
     signedMessage: { type: "string" },
+    bidToken: { type: "string" },
+
   },
   required: [
     "account",
@@ -57,6 +59,7 @@ const bidPostSchema: JSONSchemaType<BidPostDto> = {
     "startBlock",
     "expireBlock",
     "signedMessage",
+    "bidToken"
   ],
 };
 export const validateBidPostSchema = ajv.compile(bidPostSchema);

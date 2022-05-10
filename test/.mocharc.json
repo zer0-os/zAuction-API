@@ -6,6 +6,6 @@
   "slow": 1500,
   "timeout": 20000,
   "recursive": true,
-  "file": ["test/util.test.ts"],
+  "file": ["test/api.test.ts"],
   "ui": "bdd"
 }

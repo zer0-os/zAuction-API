@@ -11,12 +11,12 @@ import {
   BidPostDto,
   BidsDto,
 } from "../src/types";
-import * as util from "../src/util";
 import * as auctions from "../src/util/auctions";
 import * as contracts from "../src/util/contracts";
 
 describe("Test API Endpoints", async () => {
   sinon.stub(contracts, "encodeBid").returns(Promise.resolve(""));
+  sinon.stub(contracts, "getPaymentTokenForDomain").returns(Promise.resolve("0x2"))
 
   const stubbedDatabaseService = {
     insertBid: () => {},
@@ -41,17 +41,15 @@ describe("Test API Endpoints", async () => {
     .stub(auctions, "verifyEncodedBid")
     .returns(Promise.resolve(stubbedVerifyBidResponse));
 
-  sinon.stub(auctions, "calculateNftId").returns("0x1");
-
   describe("POST /bid", () => {
     it("Validates the BidPayload schema correctly", (done) => {
       const payload: BidPayloadPostDto = {
         bidAmount: "0",
-        contractAddress: "0x1",
         tokenId: "0x1",
         minimumBid: "0",
         startBlock: "0",
         expireBlock: "1",
+        bidToken: "0x2"
       };
 
       request(App)
@@ -61,14 +59,13 @@ describe("Test API Endpoints", async () => {
         .expect((res) => {
           assert.isDefined(res.body.payload);
           assert.isDefined(res.body.bidNonce);
-          assert.isDefined(res.body.nftId);
         })
         .expect(200, done);
     });
     it("Fails on incorrect BidPayload schema", (done) => {
+      // Intentional missing parameters
       const payload = {
         foo: "bar",
-        // Intentional missing parameters
       };
 
       request(App)
@@ -155,6 +152,7 @@ describe("Test API Endpoints", async () => {
         startBlock: "0",
         expireBlock: "1",
         signedMessage: "0x",
+        bidToken: "0x2"
       };
 
       request(App)

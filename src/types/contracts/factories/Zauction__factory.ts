@@ -71,6 +71,67 @@ const _abi = [
         name: "bidder",
         type: "address",
       },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "seller",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "nftAddress",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "expireBlock",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "paymentToken",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "topLevelDomainId",
+        type: "uint256",
+      },
+    ],
+    name: "BidAcceptedV2",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "bidNonce",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "bidder",
+        type: "address",
+      },
     ],
     name: "BidCancelled",
     type: "event",
@@ -92,6 +153,31 @@ const _abi = [
       },
     ],
     name: "BuyNowPriceSet",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "paymentToken",
+        type: "address",
+      },
+    ],
+    name: "BuyNowPriceSetV2",
     type: "event",
   },
   {
@@ -137,6 +223,55 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
+        name: "buyer",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "seller",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "nftAddress",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "paymentToken",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "topLevelDomainId",
+        type: "uint256",
+      },
+    ],
+    name: "DomainSoldV2",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
         name: "previousOwner",
         type: "address",
       },
@@ -174,7 +309,7 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "tokenId",
+        name: "domainTokenId",
         type: "uint256",
       },
       {
@@ -201,17 +336,88 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "bytes",
+        name: "signature",
+        type: "bytes",
+      },
+      {
+        internalType: "uint256",
+        name: "bidNonce",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "bidder",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "bid",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "domainTokenId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "minbid",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "startBlock",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "expireBlock",
+        type: "uint256",
+      },
+      {
+        internalType: "contract IERC20",
+        name: "bidToken",
+        type: "address",
+      },
+    ],
+    name: "acceptBidV2",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "uint256",
         name: "amount",
         type: "uint256",
       },
       {
         internalType: "uint256",
-        name: "tokenId",
+        name: "domainTokenId",
         type: "uint256",
       },
     ],
     name: "buyNow",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "domainTokenId",
+        type: "uint256",
+      },
+    ],
+    name: "buyNowV2",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -356,6 +562,119 @@ const _abi = [
     type: "function",
   },
   {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "bidNonce",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "bid",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "minbid",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "startBlock",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "expireBlock",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "bidToken",
+        type: "address",
+      },
+    ],
+    name: "createBidV2",
+    outputs: [
+      {
+        internalType: "bytes32",
+        name: "data",
+        type: "bytes32",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "defaultPaymentToken",
+    outputs: [
+      {
+        internalType: "contract IERC20",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "domainTokenId",
+        type: "uint256",
+      },
+    ],
+    name: "getPaymentTokenForDomain",
+    outputs: [
+      {
+        internalType: "contract IERC20",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getProxyAdmin",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "domainTokenId",
+        type: "uint256",
+      },
+    ],
+    name: "getTopLevelId",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "hub",
     outputs: [
@@ -387,11 +706,17 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "legacyRegistrar",
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    name: "networkPaymentToken",
     outputs: [
       {
-        internalType: "contract IRegistrar",
+        internalType: "contract IERC20",
         name: "",
         type: "address",
       },
@@ -432,6 +757,11 @@ const _abi = [
         name: "holder",
         type: "address",
       },
+      {
+        internalType: "contract IERC20",
+        name: "paymentToken",
+        type: "address",
+      },
     ],
     stateMutability: "view",
     type: "function",
@@ -462,6 +792,19 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "registrar",
+    outputs: [
+      {
+        internalType: "contract IRegistrar",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "renounceOwnership",
     outputs: [],
     stateMutability: "nonpayable",
@@ -476,11 +819,42 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "tokenId",
+        name: "domainTokenId",
         type: "uint256",
       },
     ],
     name: "setBuyPrice",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "contract IERC20",
+        name: "newDefaultToken",
+        type: "address",
+      },
+    ],
+    name: "setDefaultPaymentToken",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "domainNetworkId",
+        type: "uint256",
+      },
+      {
+        internalType: "contract IERC20",
+        name: "domainNetworkToken",
+        type: "address",
+      },
+    ],
+    name: "setNetworkToken",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -499,6 +873,19 @@ const _abi = [
       },
     ],
     name: "setTopLevelDomainFee",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "contract IERC20",
+        name: "token",
+        type: "address",
+      },
+    ],
+    name: "setWildToken",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -589,25 +976,6 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
-    ],
-    name: "topLevelDomainIdOf",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
         internalType: "address",
         name: "newOwner",
         type: "address",
@@ -616,6 +984,37 @@ const _abi = [
     name: "transferOwnership",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_defaultToken",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "_wildToken",
+        type: "address",
+      },
+    ],
+    name: "upgradeFromV2",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "wildToken",
+    outputs: [
+      {
+        internalType: "contract IERC20",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
 ];
