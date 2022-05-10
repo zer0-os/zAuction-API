@@ -50,13 +50,11 @@ export interface BidsDto {
   tokenId: string;
 }
 
-export interface CancelledBid extends Bid {
+export interface CancelledBid {
   cancelDate: number;
 }
 
-export type CancelableBid = Bid & Partial<CancelledBid>
-
-export interface Bid extends BidParams {
+export interface Bid extends BidParams, Partial<CancelledBid> {
   date: number;
   signedMessage: string;
   version: string;

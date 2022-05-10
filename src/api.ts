@@ -34,7 +34,7 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
-  CancelableBid,
+  CancelledBid,
   VerifyBidResponse,
 } from "./types";
 
@@ -52,10 +52,6 @@ const limiter = rateLimit({
 
 const db = env.get("MONGO_DB").required().asString();
 const collection = env.get("MONGO_COLLECTION").required().asString();
-const archiveCollection = env
-  .get("MONGO_ARCHIVE_COLLECTION")
-  .required()
-  .asString();
 const database: BidDatabaseService = adapters.mongo.create(db, collection);
 
 const connectionString = env
@@ -297,6 +293,7 @@ router.post(
       );
 
       if (!bidData) return res.status(400).send("Bid not found");
+      if (bidData.cancelDate && bidData.cancelDate > 0) return res.status(409).send("Bid is no longer active");
 
       // Reconstruct the unsigned cancel message hash, using same format as cancel/encode
       const cancelMessage = "cancel - " + bidData.signedMessage;
@@ -310,13 +307,13 @@ router.post(
         return res.status(400).send("Incorrect signer address recovered");
       }
 
-      // Once confirmed, move to archive collection
+      // Once confirmed, update bid with cancelDate
       let timeStamp = new Date().getTime();
-      const cancelledBid: CancelableBid = {
+      const cancelledBid: Bid = {
         ...bidData,
         cancelDate: timeStamp,
       }
-      await database.cancelBid(cancelledBid, archiveCollection);
+      await database.cancelBid(cancelledBid, collection);
 
       const message: TypedMessage<BidCancelledV1Data> = {
         event: MessageType.BidCancelled,

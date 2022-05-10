@@ -8,6 +8,7 @@ import {
   Document,
   InsertManyResult,
   DeleteResult,
+  UpdateResult,
 } from "mongodb";
 
 const user = env.get("MONGO_USERNAME").required().asString();
@@ -86,6 +87,36 @@ export const deleteOne = async (
 
     const result: DeleteResult = await usedCollection.deleteOne(query);
     return result.acknowledged;
+  } catch (error) {
+    throw error;
+  } finally {
+    await client.close();
+  }
+};
+
+// Will update a document with the given set of data, using the given query filter
+export const updateOne = async <T>(
+  data: T,
+  databaseName: string,
+  collection: string,
+  query: Filter<Document>
+): Promise<UpdateResult> => {
+  const client = new MongoClient(fullUri, options);
+
+  try {
+    await client.connect();
+    const database = client.db(databaseName);
+    const usedCollection = database.collection(collection);
+
+    const result: UpdateResult = await usedCollection.updateOne(
+      query,
+      data
+    );
+    console.log(
+      `${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`,
+    );
+    
+    return result;
   } catch (error) {
     throw error;
   } finally {

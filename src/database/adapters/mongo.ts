@@ -1,12 +1,12 @@
-import { InsertOneResult, Document, InsertManyResult, Filter } from "mongodb";
+import { InsertOneResult, Document, InsertManyResult, Filter, UpdateResult } from "mongodb";
 import { BidDatabaseService } from "..";
-import { Bid, BidFilterStatus, CancelledBid, CancelableBid } from "../../types";
+import { Bid, BidFilterStatus } from "../../types";
 import * as mongo from "../backends/mongo";
 import { addFilterByBidStatus } from "../helpers/dynamicQueryBuilder";
 import { UncertainBid } from "../types";
 
-const uncertainBidToBid = (bid: UncertainBid): CancelableBid => {
-  const properBid: CancelableBid = {
+const uncertainBidToBid = (bid: UncertainBid): Bid => {
+  const properBid: Bid = {
     ...bid,
     version: bid.version ?? "1.0",
     bidNonce: bid.bidNonce ?? bid.auctionId,
@@ -20,7 +20,7 @@ const uncertainBidToBid = (bid: UncertainBid): CancelableBid => {
   return properBid;
 };
 
-const mapBids = (bids: UncertainBid[]): CancelableBid[] => bids.map(uncertainBidToBid);
+const mapBids = (bids: UncertainBid[]): Bid[] => bids.map(uncertainBidToBid);
 
 export const create = (db: string, collection: string): BidDatabaseService => {
   const database = db;
@@ -46,7 +46,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result.acknowledged;
   };
 
-  const getBidsByTokenIds = async (tokenIds: string[], bidStatus: BidFilterStatus): Promise<CancelableBid[]> => {
+  const getBidsByTokenIds = async (tokenIds: string[], bidStatus: BidFilterStatus): Promise<Bid[]> => {
     const tokenIdList = [...tokenIds];
     let queryWrapper : Filter<Document> = {
       tokenId: {
@@ -64,7 +64,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result;
   };
 
-  const getBidsByAccount = async (account: string, bidStatus: BidFilterStatus): Promise<CancelableBid[]> => {
+  const getBidsByAccount = async (account: string, bidStatus: BidFilterStatus): Promise<Bid[]> => {
     let queryWrapper : Filter<Document> = {
       account: `${account}`,
     }
@@ -75,7 +75,7 @@ export const create = (db: string, collection: string): BidDatabaseService => {
       queryWrapper
     );
 
-    const result: CancelableBid[] = mapBids(maybeResult);
+    const result: Bid[] = mapBids(maybeResult);
     return result;
   };
 
@@ -99,27 +99,19 @@ export const create = (db: string, collection: string): BidDatabaseService => {
   };
 
   const cancelBid = async (
-    bid: CancelableBid,
-    archiveCollection: string
+    bid: Bid,
+    collection: string
   ): Promise<boolean> => {
-
-    // Place bid into archive collection, then delete
-    const insertResult: InsertOneResult = await mongo.insertOne(
-      bid,
-      database,
-      archiveCollection
-    );
-
-    if (!insertResult.acknowledged) {
-      throw Error(
-        `Failed to cancel bid with signed message: ${bid.signedMessage}`
-      );
-    }
-
-    const result: boolean = await mongo.deleteOne(database, usedCollection, {
+    const result: UpdateResult = await mongo.updateOne({$set: {cancelDate: bid.cancelDate as number}}, database, collection, {
       signedMessage: `${bid.signedMessage}`,
     });
-    return result;
+    
+    if (!result.acknowledged || result.modifiedCount !== 1) {
+      throw Error(
+        `Unable to cancel bid with signed message: ${bid.signedMessage}`
+      );
+    }
+    return result.acknowledged;
   };
 
   const databaseService = {
