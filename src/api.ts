@@ -84,7 +84,7 @@ router.post(
 
       const paymentToken = await getPaymentTokenForDomain(dto.tokenId);
 
-      if (dto.bidToken !== paymentToken) {
+      if (dto.bidToken && dto.bidToken !== paymentToken) {
         next(new Error("Wrong payment token given for bid."))
       }
 
@@ -97,7 +97,7 @@ router.post(
         dto.minimumBid,
         dto.startBlock,
         dto.expireBlock,
-        dto.bidToken
+        paymentToken
       );
 
       const responseData = {
@@ -190,7 +190,7 @@ router.post(
     const contract = await getZAuctionContract();
     const paymentToken = await contract.getPaymentTokenForDomain(dto.tokenId);
 
-    if (dto.bidToken !== paymentToken) {
+    if (dto.bidToken && dto.bidToken !== paymentToken) {
       next(new Error("Wrong payment token given for bid."))
     }
 
@@ -204,7 +204,7 @@ router.post(
         minimumBid: dto.minimumBid,
         startBlock: dto.startBlock,
         expireBlock: dto.expireBlock,
-        bidToken: dto.bidToken
+        bidToken: paymentToken
       };
 
       // Perform necessary checks to ensure account is able to make the bid
