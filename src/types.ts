@@ -3,10 +3,11 @@ export type Maybe<T> = T | undefined;
 export interface BidPayloadPostDto {
   bidAmount: string;
   tokenId: string;
+  contractAddress?: string;
   minimumBid: string;
   startBlock: string;
   expireBlock: string;
-  bidToken: string;
+  bidToken?: string;
 }
 
 export interface BidPostDto {
@@ -19,7 +20,7 @@ export interface BidPostDto {
   minimumBid: string;
   startBlock: string;
   expireBlock: string;
-  bidToken: string;
+  bidToken?: string;
 }
 
 export interface BidParams {
