@@ -53,6 +53,7 @@ interface ZauctionInterface extends ethers.utils.Interface {
     "topLevelDomainIdCache(uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "upgradeFromV2(address,address)": FunctionFragment;
+    "wildToken()": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -198,6 +199,7 @@ interface ZauctionInterface extends ethers.utils.Interface {
     functionFragment: "upgradeFromV2",
     values: [string, string]
   ): string;
+  encodeFunctionData(functionFragment: "wildToken", values?: undefined): string;
 
   decodeFunctionResult(functionFragment: "acceptBid", data: BytesLike): Result;
   decodeFunctionResult(
@@ -288,6 +290,7 @@ interface ZauctionInterface extends ethers.utils.Interface {
     functionFragment: "upgradeFromV2",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "wildToken", data: BytesLike): Result;
 
   events: {
     "BidAccepted(uint256,address,address,uint256,address,uint256,uint256)": EventFragment;
@@ -536,6 +539,8 @@ export class Zauction extends BaseContract {
       _wildToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    wildToken(overrides?: CallOverrides): Promise<[string]>;
   };
 
   acceptBid(
@@ -721,6 +726,8 @@ export class Zauction extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  wildToken(overrides?: CallOverrides): Promise<string>;
+
   callStatic: {
     acceptBid(
       signature: BytesLike,
@@ -896,6 +903,8 @@ export class Zauction extends BaseContract {
       _wildToken: string,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    wildToken(overrides?: CallOverrides): Promise<string>;
   };
 
   filters: {
@@ -1204,6 +1213,8 @@ export class Zauction extends BaseContract {
       _wildToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    wildToken(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -1385,5 +1396,7 @@ export class Zauction extends BaseContract {
       _wildToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
+
+    wildToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

@@ -58,7 +58,6 @@ export const encodeBid = async (
 ): Promise<string> => {
   const zAuction = await getZAuctionContract();
 
-  // Will call internally to `hub.getRegistrarForDomain()` and hash with the contract address
   const payload = await zAuction.createBid(
     bidNonce,
     bidAmount,

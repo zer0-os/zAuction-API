@@ -48,8 +48,6 @@ export async function verifyEncodedBid(
   // Calculate user balance, block number, and the signing account
   const userBalance = await erc20Contract.balanceOf(params.account);
   const bidAmount = ethers.BigNumber.from(params.bidAmount);
-  const t = await userBalance.toString()
-  console.log(t);
 
   const ethersProvider = getEthersProvider();
   const blockNum = ethers.BigNumber.from(await ethersProvider.getBlockNumber());

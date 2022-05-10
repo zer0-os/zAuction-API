@@ -23,7 +23,7 @@ import {
   validateBidCancelEncodeSchema,
 } from "./schemas";
 
-import { encodeBid } from "./util/contracts";
+import { encodeBid, getZAuctionContract } from "./util/contracts";
 
 import { verifyEncodedBid } from "./util/auctions";
 
@@ -34,7 +34,6 @@ import {
   BidPostDto,
   BidsList,
   BidsListDto,
-  CancelledBid,
   VerifyBidResponse,
 } from "./types";
 
@@ -82,6 +81,14 @@ router.post(
 
       // Generate bidNonce
       const bidNonce = Math.floor(Math.random() * 42949672960);
+
+      const contract = await getZAuctionContract();
+
+      const paymentToken = await contract.getPaymentTokenForDomain(dto.tokenId);
+
+      if (dto.bidToken !== paymentToken) {
+        next(new Error("Wrong payment token given for bid."))
+      }
 
       // We use `bidNonce` to be clearer about what the variable actually represents
       // but any older database records may still show `auctionId`
@@ -181,6 +188,13 @@ router.post(
     }
 
     const dto: BidPostDto = req.body as BidPostDto;
+
+    const contract = await getZAuctionContract();
+    const paymentToken = await contract.getPaymentTokenForDomain(dto.tokenId);
+
+    if (dto.bidToken !== paymentToken) {
+      next(new Error("Wrong payment token given for bid."))
+    }
 
     try {
       const bidParams: BidParams = {
