@@ -15,7 +15,8 @@ import * as auctions from "../src/util/auctions";
 import * as contracts from "../src/util/contracts";
 
 describe("Test API Endpoints", async () => {
-  sinon.stub(contracts, "encodeBid").returns(Promise.resolve(""));
+  sinon.stub(contracts, "encodeBid").returns(Promise.resolve("encoded-bid"));
+  sinon.stub(contracts, "encodeBidV2").returns(Promise.resolve("encoded-bidv2"));
   sinon.stub(contracts, "getPaymentTokenForDomain").returns(Promise.resolve("0x2"))
 
   const stubbedDatabaseService = {
@@ -42,7 +43,7 @@ describe("Test API Endpoints", async () => {
     .returns(Promise.resolve(stubbedVerifyBidResponse));
 
   describe("POST /bid", () => {
-    it("Validates the BidPayload schema correctly", (done) => {
+    it("Validates the BidPayload schema correctly for a v2.1 bid", () => {
       const payload: BidPayloadPostDto = {
         bidAmount: "0",
         tokenId: "0x1",
@@ -60,8 +61,28 @@ describe("Test API Endpoints", async () => {
           assert.isDefined(res.body.payload);
           assert.isDefined(res.body.bidNonce);
         })
-        .expect(200, done);
+        .expect(200);
     });
+    it("Validates the BidPayload schema correctly for a v2.0 bid", async () => {
+      const payload: BidPayloadPostDto = {
+        bidAmount: "0",
+        tokenId: "0x1",
+        minimumBid: "0",
+        startBlock: "0",
+        expireBlock: "1",
+        contractAddress: "0x2"
+      };
+
+      request(App)
+        .post("/api/bid")
+        .set("Content-Type", "application/json")
+        .send(payload)
+        .expect((res) => {
+          assert.isDefined(res.body.payload);
+          assert.isDefined(res.body.bidNonce);
+        })
+        .expect(200);
+    }),
     it("Fails on incorrect BidPayload schema", (done) => {
       // Intentional missing parameters
       const payload = {
