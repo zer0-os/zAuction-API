@@ -23,7 +23,12 @@ import {
   validateBidCancelEncodeSchema,
 } from "./schemas";
 
-import { encodeBid, getPaymentTokenForDomain, getZAuctionContract } from "./util/contracts";
+import {
+  encodeBid,
+  encodeBidV2,
+  getPaymentTokenForDomain,
+  getZAuctionContract,
+} from "./util/contracts";
 
 import { verifyEncodedBid } from "./util/auctions";
 
@@ -40,6 +45,7 @@ import {
 import { ethers } from "ethers";
 import { retry } from "./util/retry";
 import { getBidFilterStatus } from "./util/requests";
+import e from "express";
 
 const router = express.Router();
 
@@ -85,20 +91,40 @@ router.post(
       const paymentToken = await getPaymentTokenForDomain(dto.tokenId);
 
       if (dto.bidToken && dto.bidToken !== paymentToken) {
-        next(new Error("Wrong payment token given for bid."))
+        next(new Error("Wrong payment token given for bid."));
       }
 
-      // We use `bidNonce` to be clearer about what the variable actually represents
-      // but any older database records may still show `auctionId`
-      const payload = await encodeBid(
-        bidNonce,
-        dto.bidAmount,
-        dto.tokenId,
-        dto.minimumBid,
-        dto.startBlock,
-        dto.expireBlock,
-        paymentToken
-      );
+      let payload;
+
+      if (dto.bidToken) {
+        // If bidToken is present we need to encode as a v2.1 bid
+        payload = await encodeBidV2(
+          bidNonce,
+          dto.bidAmount,
+          dto.tokenId,
+          dto.minimumBid,
+          dto.startBlock,
+          dto.expireBlock,
+          paymentToken
+        );
+      } else if (dto.contractAddress) {
+        // If no bidToken is present, this must be a v2 bid
+        payload = await encodeBid(
+          bidNonce,
+          dto.bidAmount,
+          dto.contractAddress,
+          dto.tokenId,
+          dto.minimumBid,
+          dto.startBlock,
+          dto.expireBlock
+        );
+      } else {
+        next(
+          new Error(
+            `Received a v2 bid but no contract address ('contractAddress') was present.`
+          )
+        );
+      }
 
       const responseData = {
         payload,
@@ -134,7 +160,10 @@ router.post(
     }
 
     try {
-      const bids: Bid[] = await database.getBidsByTokenIds(dto.tokenIds, filterParam);
+      const bids: Bid[] = await database.getBidsByTokenIds(
+        dto.tokenIds,
+        filterParam
+      );
 
       // For each bid, map to appropriate tokenId array
       for (const bid of bids) {
@@ -164,7 +193,10 @@ router.get(
     const accountId = req.params.account;
     const filterParam = getBidFilterStatus(req.query.filter?.toString());
     try {
-      const accountBids: Bid[] = await database.getBidsByAccount(accountId, filterParam);
+      const accountBids: Bid[] = await database.getBidsByAccount(
+        accountId,
+        filterParam
+      );
       return res.status(200).send(accountBids);
     } catch {
       next(new Error(`Could not get bids for account ${accountId}`));
@@ -191,7 +223,7 @@ router.post(
     const paymentToken = await contract.getPaymentTokenForDomain(dto.tokenId);
 
     if (dto.bidToken && dto.bidToken !== paymentToken) {
-      next(new Error("Wrong payment token given for bid."))
+      next(new Error("Wrong payment token given for bid."));
     }
 
     try {
@@ -204,7 +236,7 @@ router.post(
         minimumBid: dto.minimumBid,
         startBlock: dto.startBlock,
         expireBlock: dto.expireBlock,
-        bidToken: paymentToken
+        bidToken: paymentToken,
       };
 
       // Perform necessary checks to ensure account is able to make the bid
@@ -261,7 +293,10 @@ router.get(
       return res.status(400).send(validateBidsGetSchema.errors);
     }
     const filterParam = getBidFilterStatus(req.query.filter?.toString());
-    const bids = await database.getBidsByTokenIds([req.params.tokenId], filterParam);
+    const bids = await database.getBidsByTokenIds(
+      [req.params.tokenId],
+      filterParam
+    );
     return res.status(200).send(bids);
   }
 );
@@ -305,7 +340,8 @@ router.post(
       );
 
       if (!bidData) return res.status(400).send("Bid not found");
-      if (bidData.cancelDate && bidData.cancelDate > 0) return res.status(409).send("Bid is no longer active");
+      if (bidData.cancelDate && bidData.cancelDate > 0)
+        return res.status(409).send("Bid is no longer active");
 
       // Reconstruct the unsigned cancel message hash, using same format as cancel/encode
       const cancelMessage = "cancel - " + bidData.signedMessage;
@@ -324,7 +360,7 @@ router.post(
       const cancelledBid: Bid = {
         ...bidData,
         cancelDate: timeStamp,
-      }
+      };
       await database.cancelBid(cancelledBid, collection);
 
       const message: TypedMessage<BidCancelledV1Data> = {
