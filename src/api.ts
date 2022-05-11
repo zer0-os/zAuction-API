@@ -91,7 +91,7 @@ router.post(
       const paymentToken = await getPaymentTokenForDomain(dto.tokenId);
 
       if (dto.bidToken && dto.bidToken !== paymentToken) {
-        next(new Error("Wrong payment token given for bid."));
+        return next(new Error("Wrong payment token given for bid."));
       }
 
       let payload;
@@ -119,7 +119,7 @@ router.post(
           dto.expireBlock
         );
       } else {
-        next(
+        return next(
           new Error(
             `Received a v2 bid but no contract address ('contractAddress') was present.`
           )
@@ -171,7 +171,7 @@ router.post(
         tokenIdBids[tokenId]?.push(bid);
       }
     } catch {
-      next(new Error("Could not get bids for given nftIds"));
+      return next(new Error("Could not get bids for given nftIds"));
     }
 
     return res.status(200).send(tokenIdBids);
@@ -223,7 +223,7 @@ router.post(
     const paymentToken = await contract.getPaymentTokenForDomain(dto.tokenId);
 
     if (dto.bidToken && dto.bidToken !== paymentToken) {
-      next(new Error("Wrong payment token given for bid."));
+      return next(new Error("Wrong payment token given for bid."));
     }
 
     try {
