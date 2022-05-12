@@ -264,33 +264,61 @@ router.post(
       // Add new bid document to database
       await database.insertBid(newBid);
 
+      let message: BidPlacedV1Data | BidPlacedV2Data;
       // To support backwards compatibility we allow bids to be either v2 or v2.1
-      // and that means allowing contractAddress or bidToken to be nullable
-      const message: TypedMessage<BidPlacedV2Data> = {
-        event: MessageType.BidPlaced,
-        version: "2.0",
-        timestamp: dateNow,
-        logIndex: undefined,
-        blockNumber: undefined,
-        data: {
-          account: newBid.account,
-          bidNonce: newBid.bidNonce,
-          bidAmount: newBid.bidAmount,
-          minimumBid: newBid.minimumBid,
-          contractAddress: newBid.contractAddress ?? "",
-          startBlock: newBid.startBlock,
-          expireBlock: newBid.expireBlock,
-          tokenId: newBid.tokenId,
-          date: newBid.date,
-          signedMessage: newBid.signedMessage,
-          version: newBid.version,
-          bidToken: newBid.bidToken ?? "",
-        },
-      };
-
-      // Add new bid to our event queue
-      await queue.sendMessage(message);
-
+      // and that means allowing contractAddress or bidToken to be nullable, and so 
+      // they must be checked to emit the right messages
+      if (bidParams.bidToken) {
+        // v2.1 Bid => v2 message
+        const message: TypedMessage<BidPlacedV2Data> = {
+          event: MessageType.BidPlaced,
+          version: "2.0",
+          timestamp: dateNow,
+          logIndex: undefined,
+          blockNumber: undefined,
+          data: {
+            account: newBid.account,
+            bidNonce: newBid.bidNonce,
+            bidAmount: newBid.bidAmount,
+            minimumBid: newBid.minimumBid,
+            contractAddress: newBid.contractAddress ?? "",
+            startBlock: newBid.startBlock,
+            expireBlock: newBid.expireBlock,
+            tokenId: newBid.tokenId,
+            date: newBid.date,
+            signedMessage: newBid.signedMessage,
+            version: newBid.version,
+            bidToken: newBid.bidToken!
+          }
+        }
+        // Add new bid to our event queue
+        await queue.sendMessage(message);
+      } else {
+        // v2.0 Bid => v1 message
+        const message: TypedMessage<BidPlacedV1Data> = {
+          event: MessageType.BidPlaced,
+          version: "2.0",
+          timestamp: dateNow,
+          logIndex: undefined,
+          blockNumber: undefined,
+          data: {
+            nftId: "",
+            account: newBid.account,
+            bidNonce: newBid.bidNonce,
+            bidAmount: newBid.bidAmount,
+            minimumBid: newBid.minimumBid,
+            contractAddress: newBid.contractAddress!,
+            startBlock: newBid.startBlock,
+            expireBlock: newBid.expireBlock,
+            tokenId: newBid.tokenId,
+            date: newBid.date,
+            signedMessage: newBid.signedMessage,
+            version: newBid.version,
+          }
+        }
+        // Add new bid to our event queue
+        await queue.sendMessage(message);
+      }
       return res.status(200).send({});
     } catch (error) {
       next(error);

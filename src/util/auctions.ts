@@ -28,7 +28,7 @@ async function calculateSigningAccount(
       bidData.expireBlock,
       bidData.bidToken
     );
-  } else {
+  } else if (bidData.contractAddress) {
     // Otherwise a bid is v2.0
     // We know with certainty that a contract address is present.
     // it would have failed in encoding without a contract address as a v2.0 bid
@@ -39,8 +39,12 @@ async function calculateSigningAccount(
       bidData.minimumBid,
       bidData.startBlock,
       bidData.expireBlock,
-      bidData.contractAddress!
+      bidData.contractAddress
     );
+  } else {
+    throw new Error(
+      `Received a v2 bid but no contract address ('contractAddress') was present.`
+    )
   }
 
   const unsignedMessage = await zAuctionContract.toEthSignedMessageHash(
@@ -72,11 +76,20 @@ export async function verifyEncodedBid(
   const start = ethers.BigNumber.from(params.startBlock);
   const expire = ethers.BigNumber.from(params.expireBlock);
 
-  const recoveredAccount = await calculateSigningAccount(
-    params,
-    signedMessage,
-    zAuctionContract
-  );
+  let recoveredAccount
+  try {
+    recoveredAccount = await calculateSigningAccount(
+      params,
+      signedMessage,
+      zAuctionContract
+    );
+  } catch (e) {
+    return {
+      pass: false,
+      status: 400,
+      message: e,
+    } as VerifyBidResponse;
+  }
 
   // Perform necessary checks to verify a bid
   const conditions = [
