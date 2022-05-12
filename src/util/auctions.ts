@@ -4,6 +4,7 @@ import { Zauction } from "../types/contracts";
 import { VerifyBidResponse, BidParams } from "../types";
 import {
   encodeBid,
+  encodeBidV2,
   getEthersProvider,
   getTokenContract,
   getZAuctionContract,
@@ -15,15 +16,32 @@ async function calculateSigningAccount(
   zAuctionContract: Zauction
 ): Promise<string> {
   // Check signature recovers correct account
-  const bidMessage = await encodeBid(
-    bidData.bidNonce,
-    bidData.bidAmount,
-    bidData.tokenId,
-    bidData.minimumBid,
-    bidData.startBlock,
-    bidData.expireBlock,
-    bidData.bidToken
-  );
+  let bidMessage;
+  // bidToken means bid is v2.1
+  if (bidData.bidToken) {
+    bidMessage = await encodeBidV2(
+      bidData.bidNonce,
+      bidData.bidAmount,
+      bidData.tokenId,
+      bidData.minimumBid,
+      bidData.startBlock,
+      bidData.expireBlock,
+      bidData.bidToken
+    );
+  } else {
+    // Otherwise a bid is v2.0
+    // We know with certainty that a contract address is present.
+    // it would have failed in encoding without a contract address as a v2.0 bid
+    bidMessage = await encodeBid(
+      bidData.bidNonce,
+      bidData.bidAmount,
+      bidData.tokenId,
+      bidData.minimumBid,
+      bidData.startBlock,
+      bidData.expireBlock,
+      bidData.contractAddress!
+    );
+  }
 
   const unsignedMessage = await zAuctionContract.toEthSignedMessageHash(
     bidMessage

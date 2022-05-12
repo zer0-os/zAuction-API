@@ -14,7 +14,7 @@ export interface BidPostDto {
   account: string;
   bidNonce: string;
   tokenId: string;
-  contractAddress: string;
+  contractAddress?: string;
   bidAmount: string;
   signedMessage: string;
   minimumBid: string;
@@ -28,11 +28,11 @@ export interface BidParams {
   bidNonce: string;
   bidAmount: string;
   minimumBid: string;
-  contractAddress: string;
+  contractAddress?: string;
   startBlock: string;
   expireBlock: string;
   tokenId: string;
-  bidToken: string;
+  bidToken?: string;
 }
 
 export interface BidsList {
@@ -63,6 +63,7 @@ export interface Bid extends BidParams, Partial<CancelledBid> {
 
 export interface HistoricBid extends Bid {
   nftId: string;
+  contractAddress: string; // not nullable like on Bid
 }
 
 export interface Auction {

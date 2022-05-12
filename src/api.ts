@@ -7,6 +7,7 @@ import {
   TypedMessage,
   BidCancelledV1Data,
   BidPlacedV2Data,
+  BidPlacedV1Data,
 } from "@zero-tech/zns-message-schemas";
 
 import { adapters, BidDatabaseService } from "./database";
@@ -112,11 +113,11 @@ router.post(
         payload = await encodeBid(
           bidNonce,
           dto.bidAmount,
-          dto.contractAddress,
           dto.tokenId,
           dto.minimumBid,
           dto.startBlock,
-          dto.expireBlock
+          dto.expireBlock,
+          dto.contractAddress
         );
       } else {
         return next(
@@ -231,12 +232,12 @@ router.post(
         account: dto.account,
         bidNonce: dto.bidNonce,
         bidAmount: dto.bidAmount,
-        contractAddress: dto.contractAddress,
+        contractAddress: dto.contractAddress ?? "",
         tokenId: dto.tokenId,
         minimumBid: dto.minimumBid,
         startBlock: dto.startBlock,
         expireBlock: dto.expireBlock,
-        bidToken: paymentToken,
+        bidToken: dto.bidToken ?? "",
       };
 
       // Perform necessary checks to ensure account is able to make the bid
@@ -263,6 +264,8 @@ router.post(
       // Add new bid document to database
       await database.insertBid(newBid);
 
+      // To support backwards compatibility we allow bids to be either v2 or v2.1
+      // and that means allowing contractAddress or bidToken to be nullable
       const message: TypedMessage<BidPlacedV2Data> = {
         event: MessageType.BidPlaced,
         version: "2.0",
@@ -270,7 +273,18 @@ router.post(
         logIndex: undefined,
         blockNumber: undefined,
         data: {
-          ...newBid,
+          account: newBid.account,
+          bidNonce: newBid.bidNonce,
+          bidAmount: newBid.bidAmount,
+          minimumBid: newBid.minimumBid,
+          contractAddress: newBid.contractAddress ?? "",
+          startBlock: newBid.startBlock,
+          expireBlock: newBid.expireBlock,
+          tokenId: newBid.tokenId,
+          date: newBid.date,
+          signedMessage: newBid.signedMessage,
+          version: newBid.version,
+          bidToken: newBid.bidToken ?? "",
         },
       };
 
