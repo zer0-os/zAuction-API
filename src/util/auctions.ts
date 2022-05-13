@@ -4,6 +4,7 @@ import { Zauction } from "../types/contracts";
 import { VerifyBidResponse, BidParams } from "../types";
 import {
   encodeBid,
+  encodeBidV2,
   getEthersProvider,
   getTokenContract,
   getZAuctionContract,
@@ -15,15 +16,36 @@ async function calculateSigningAccount(
   zAuctionContract: Zauction
 ): Promise<string> {
   // Check signature recovers correct account
-  const bidMessage = await encodeBid(
-    bidData.bidNonce,
-    bidData.bidAmount,
-    bidData.tokenId,
-    bidData.minimumBid,
-    bidData.startBlock,
-    bidData.expireBlock,
-    bidData.bidToken
-  );
+  let bidMessage;
+  // bidToken means bid is v2.1
+  if (bidData.bidToken) {
+    bidMessage = await encodeBidV2(
+      bidData.bidNonce,
+      bidData.bidAmount,
+      bidData.tokenId,
+      bidData.minimumBid,
+      bidData.startBlock,
+      bidData.expireBlock,
+      bidData.bidToken
+    );
+  } else if (bidData.contractAddress) {
+    // Otherwise a bid is v2.0
+    // We know with certainty that a contract address is present.
+    // it would have failed in encoding without a contract address as a v2.0 bid
+    bidMessage = await encodeBid(
+      bidData.bidNonce,
+      bidData.bidAmount,
+      bidData.tokenId,
+      bidData.minimumBid,
+      bidData.startBlock,
+      bidData.expireBlock,
+      bidData.contractAddress
+    );
+  } else {
+    throw new Error(
+      `Received a v2 bid but no contract address ('contractAddress') was present.`
+    )
+  }
 
   const unsignedMessage = await zAuctionContract.toEthSignedMessageHash(
     bidMessage
@@ -54,11 +76,20 @@ export async function verifyEncodedBid(
   const start = ethers.BigNumber.from(params.startBlock);
   const expire = ethers.BigNumber.from(params.expireBlock);
 
-  const recoveredAccount = await calculateSigningAccount(
-    params,
-    signedMessage,
-    zAuctionContract
-  );
+  let recoveredAccount
+  try {
+    recoveredAccount = await calculateSigningAccount(
+      params,
+      signedMessage,
+      zAuctionContract
+    );
+  } catch (e) {
+    return {
+      pass: false,
+      status: 400,
+      message: e,
+    } as VerifyBidResponse;
+  }
 
   // Perform necessary checks to verify a bid
   const conditions = [

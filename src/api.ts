@@ -7,6 +7,7 @@ import {
   TypedMessage,
   BidCancelledV1Data,
   BidPlacedV2Data,
+  BidPlacedV1Data,
 } from "@zero-tech/zns-message-schemas";
 
 import { adapters, BidDatabaseService } from "./database";
@@ -23,7 +24,12 @@ import {
   validateBidCancelEncodeSchema,
 } from "./schemas";
 
-import { encodeBid, getPaymentTokenForDomain, getZAuctionContract } from "./util/contracts";
+import {
+  encodeBid,
+  encodeBidV2,
+  getPaymentTokenForDomain,
+  getZAuctionContract,
+} from "./util/contracts";
 
 import { verifyEncodedBid } from "./util/auctions";
 
@@ -40,6 +46,7 @@ import {
 import { ethers } from "ethers";
 import { retry } from "./util/retry";
 import { getBidFilterStatus } from "./util/requests";
+import e from "express";
 
 const router = express.Router();
 
@@ -85,20 +92,40 @@ router.post(
       const paymentToken = await getPaymentTokenForDomain(dto.tokenId);
 
       if (dto.bidToken && dto.bidToken !== paymentToken) {
-        next(new Error("Wrong payment token given for bid."))
+        return next(new Error("Wrong payment token given for bid."));
       }
 
-      // We use `bidNonce` to be clearer about what the variable actually represents
-      // but any older database records may still show `auctionId`
-      const payload = await encodeBid(
-        bidNonce,
-        dto.bidAmount,
-        dto.tokenId,
-        dto.minimumBid,
-        dto.startBlock,
-        dto.expireBlock,
-        paymentToken
-      );
+      let payload;
+
+      if (dto.bidToken) {
+        // If bidToken is present we need to encode as a v2.1 bid
+        payload = await encodeBidV2(
+          bidNonce,
+          dto.bidAmount,
+          dto.tokenId,
+          dto.minimumBid,
+          dto.startBlock,
+          dto.expireBlock,
+          paymentToken
+        );
+      } else if (dto.contractAddress) {
+        // If no bidToken is present, this must be a v2 bid
+        payload = await encodeBid(
+          bidNonce,
+          dto.bidAmount,
+          dto.tokenId,
+          dto.minimumBid,
+          dto.startBlock,
+          dto.expireBlock,
+          dto.contractAddress
+        );
+      } else {
+        return next(
+          new Error(
+            `Received a v2 bid but no contract address ('contractAddress') was present.`
+          )
+        );
+      }
 
       const responseData = {
         payload,
@@ -134,7 +161,10 @@ router.post(
     }
 
     try {
-      const bids: Bid[] = await database.getBidsByTokenIds(dto.tokenIds, filterParam);
+      const bids: Bid[] = await database.getBidsByTokenIds(
+        dto.tokenIds,
+        filterParam
+      );
 
       // For each bid, map to appropriate tokenId array
       for (const bid of bids) {
@@ -142,7 +172,7 @@ router.post(
         tokenIdBids[tokenId]?.push(bid);
       }
     } catch {
-      next(new Error("Could not get bids for given nftIds"));
+      return next(new Error("Could not get bids for given nftIds"));
     }
 
     return res.status(200).send(tokenIdBids);
@@ -164,7 +194,10 @@ router.get(
     const accountId = req.params.account;
     const filterParam = getBidFilterStatus(req.query.filter?.toString());
     try {
-      const accountBids: Bid[] = await database.getBidsByAccount(accountId, filterParam);
+      const accountBids: Bid[] = await database.getBidsByAccount(
+        accountId,
+        filterParam
+      );
       return res.status(200).send(accountBids);
     } catch {
       next(new Error(`Could not get bids for account ${accountId}`));
@@ -191,7 +224,7 @@ router.post(
     const paymentToken = await contract.getPaymentTokenForDomain(dto.tokenId);
 
     if (dto.bidToken && dto.bidToken !== paymentToken) {
-      next(new Error("Wrong payment token given for bid."))
+      return next(new Error("Wrong payment token given for bid."));
     }
 
     try {
@@ -199,12 +232,12 @@ router.post(
         account: dto.account,
         bidNonce: dto.bidNonce,
         bidAmount: dto.bidAmount,
-        contractAddress: dto.contractAddress,
+        contractAddress: dto.contractAddress ?? "",
         tokenId: dto.tokenId,
         minimumBid: dto.minimumBid,
         startBlock: dto.startBlock,
         expireBlock: dto.expireBlock,
-        bidToken: paymentToken
+        bidToken: dto.bidToken ?? "",
       };
 
       // Perform necessary checks to ensure account is able to make the bid
@@ -231,20 +264,61 @@ router.post(
       // Add new bid document to database
       await database.insertBid(newBid);
 
-      const message: TypedMessage<BidPlacedV2Data> = {
-        event: MessageType.BidPlaced,
-        version: "2.0",
-        timestamp: dateNow,
-        logIndex: undefined,
-        blockNumber: undefined,
-        data: {
-          ...newBid,
-        },
-      };
-
-      // Add new bid to our event queue
-      await queue.sendMessage(message);
-
+      let message: BidPlacedV1Data | BidPlacedV2Data;
+      // To support backwards compatibility we allow bids to be either v2 or v2.1
+      // and that means allowing contractAddress or bidToken to be nullable, and so 
+      // they must be checked to emit the right messages
+      if (bidParams.bidToken) {
+        // v2.1 Bid => v2 message
+        const message: TypedMessage<BidPlacedV2Data> = {
+          event: MessageType.BidPlaced,
+          version: "2.0",
+          timestamp: dateNow,
+          logIndex: undefined,
+          blockNumber: undefined,
+          data: {
+            account: newBid.account,
+            bidNonce: newBid.bidNonce,
+            bidAmount: newBid.bidAmount,
+            minimumBid: newBid.minimumBid,
+            contractAddress: newBid.contractAddress ?? "",
+            startBlock: newBid.startBlock,
+            expireBlock: newBid.expireBlock,
+            tokenId: newBid.tokenId,
+            date: newBid.date,
+            signedMessage: newBid.signedMessage,
+            version: newBid.version,
+            bidToken: newBid.bidToken!
+          }
+        }
+        // Add new bid to our event queue
+        await queue.sendMessage(message);
+      } else {
+        // v2.0 Bid => v1 message
+        const message: TypedMessage<BidPlacedV1Data> = {
+          event: MessageType.BidPlaced,
+          version: "2.0",
+          timestamp: dateNow,
+          logIndex: undefined,
+          blockNumber: undefined,
+          data: {
+            nftId: "",
+            account: newBid.account,
+            bidNonce: newBid.bidNonce,
+            bidAmount: newBid.bidAmount,
+            minimumBid: newBid.minimumBid,
+            contractAddress: newBid.contractAddress!,
+            startBlock: newBid.startBlock,
+            expireBlock: newBid.expireBlock,
+            tokenId: newBid.tokenId,
+            date: newBid.date,
+            signedMessage: newBid.signedMessage,
+            version: newBid.version,
+          }
+        }
+        // Add new bid to our event queue
+        await queue.sendMessage(message);
+      }
       return res.status(200).send({});
     } catch (error) {
       next(error);
@@ -261,7 +335,10 @@ router.get(
       return res.status(400).send(validateBidsGetSchema.errors);
     }
     const filterParam = getBidFilterStatus(req.query.filter?.toString());
-    const bids = await database.getBidsByTokenIds([req.params.tokenId], filterParam);
+    const bids = await database.getBidsByTokenIds(
+      [req.params.tokenId],
+      filterParam
+    );
     return res.status(200).send(bids);
   }
 );
@@ -305,7 +382,8 @@ router.post(
       );
 
       if (!bidData) return res.status(400).send("Bid not found");
-      if (bidData.cancelDate && bidData.cancelDate > 0) return res.status(409).send("Bid is no longer active");
+      if (bidData.cancelDate && bidData.cancelDate > 0)
+        return res.status(409).send("Bid is no longer active");
 
       // Reconstruct the unsigned cancel message hash, using same format as cancel/encode
       const cancelMessage = "cancel - " + bidData.signedMessage;
@@ -324,7 +402,7 @@ router.post(
       const cancelledBid: Bid = {
         ...bidData,
         cancelDate: timeStamp,
-      }
+      };
       await database.cancelBid(cancelledBid, collection);
 
       const message: TypedMessage<BidCancelledV1Data> = {

@@ -36,7 +36,7 @@ export async function getZAuctionContract(): Promise<Zauction> {
 let tokenAddressCache: string | undefined;
 export async function getTokenContract(tokenId: string): Promise<ERC20> {
   if (tokenAddressCache) {
-    const provider = getEthersProvider()
+    const provider = getEthersProvider();
     const contract = ERC20__factory.connect(tokenAddressCache, provider);
     return contract;
   }
@@ -51,9 +51,33 @@ export const getPaymentTokenForDomain = async (tokenId: string) => {
   const contract = await getZAuctionContract();
   const paymentToken = await contract.getPaymentTokenForDomain(tokenId);
   return paymentToken;
-}
+};
 
 export const encodeBid = async (
+  bidNonce: string | number,
+  bidAmount: string,
+  tokenId: string,
+  minimumBid: string,
+  startBlock: string,
+  expireBlock: string,
+  contractAddress: string
+): Promise<string> => {
+  const zAuction = await getZAuctionContract();
+
+  const payload = await zAuction.createBid(
+    bidNonce,
+    bidAmount,
+    contractAddress,
+    tokenId,
+    minimumBid,
+    startBlock,
+    expireBlock
+  );
+
+  return payload;
+};
+
+export const encodeBidV2 = async (
   bidNonce: string | number,
   bidAmount: string,
   tokenId: string,
