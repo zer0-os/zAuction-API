@@ -1,11 +1,11 @@
-import { Bid } from "../types";
+import { Bid, BidFilterStatus } from "../types";
 export * from "./adapters";
 
 export interface BidDatabaseService {
   insertBid: (bid: Bid) => Promise<boolean>;
   insertBids: (data: Bid[]) => Promise<boolean>;
-  getBidsByNftIds: (nftIds: string[]) => Promise<Bid[]>;
-  getBidsByAccount: (account: string) => Promise<Bid[]>;
+  getBidsByTokenIds: (nftIds: string[], bidStatus: BidFilterStatus) => Promise<Bid[]>;
+  getBidsByAccount: (account: string, bidStatus: BidFilterStatus) => Promise<Bid[]>;
   getBidBySignedMessage: (signedMessage: string) => Promise<Bid | null>;
-  cancelBid: (bid: Bid, archiveCollection: string) => Promise<boolean>;
+  cancelBid: (bid: Bid, collection: string) => Promise<boolean>;
 }

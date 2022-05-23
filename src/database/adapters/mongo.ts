@@ -1,8 +1,26 @@
-import { InsertOneResult, Document, InsertManyResult } from "mongodb";
-
+import { InsertOneResult, Document, InsertManyResult, Filter, UpdateResult } from "mongodb";
 import { BidDatabaseService } from "..";
-import { Bid } from "../../types";
+import { Bid, BidFilterStatus } from "../../types";
 import * as mongo from "../backends/mongo";
+import { addFilterByBidStatus } from "../helpers/dynamicQueryBuilder";
+import { UncertainBid } from "../types";
+
+const uncertainBidToBid = (bid: UncertainBid): Bid => {
+  const properBid: Bid = {
+    ...bid,
+    version: bid.version ?? "1.0",
+    bidNonce: bid.bidNonce ?? bid.auctionId,
+  };
+
+  //Strip signed message if bid has been cancelled
+  if (properBid.cancelDate && properBid.cancelDate > 0)
+  {
+    properBid.signedMessage = "";
+  }
+  return properBid;
+};
+
+const mapBids = (bids: UncertainBid[]): Bid[] => bids.map(uncertainBidToBid);
 
 export const create = (db: string, collection: string): BidDatabaseService => {
   const database = db;
@@ -28,50 +46,78 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result.acknowledged;
   };
 
-  const getBidsByNftIds = async (nftIds: string[]): Promise<Bid[]> => {
-    const nftIdList = [...nftIds];
-    const result: Bid[] = await mongo.find(database, usedCollection, {
-      nftId: {
-        $in: nftIdList,
+  const getBidsByTokenIds = async (tokenIds: string[], bidStatus: BidFilterStatus): Promise<Bid[]> => {
+    const tokenIdList = [...tokenIds];
+    let queryWrapper : Filter<Document> = {
+      tokenId: {
+        $in: tokenIdList,
       },
-    });
+    }
+    queryWrapper = addFilterByBidStatus(queryWrapper, bidStatus);    
+    const versionlessResult: UncertainBid[] = await mongo.find(
+      database,
+      usedCollection,
+      queryWrapper
+    );
+
+    const result: Bid[] = mapBids(versionlessResult);
     return result;
   };
 
-  const getBidsByAccount = async (account: string): Promise<Bid[]> => {
-    const result: Bid[] = await mongo.find(database, usedCollection, {
+  const getBidsByAccount = async (account: string, bidStatus: BidFilterStatus): Promise<Bid[]> => {
+    let queryWrapper : Filter<Document> = {
       account: `${account}`,
-    });
+    }
+    queryWrapper = addFilterByBidStatus(queryWrapper, bidStatus);    
+    const maybeResult: UncertainBid[] = await mongo.find(
+      database,
+      usedCollection,
+      queryWrapper
+    );
+
+    const result: Bid[] = mapBids(maybeResult);
     return result;
   };
 
   const getBidBySignedMessage = async (
     signedMessage: string
   ): Promise<Bid | null> => {
-    const result: Bid | null = await mongo.findOne(database, collection, {
-      signedMessage: `${signedMessage}`,
-    });
-    return result;
-  };
+    const maybeResult: UncertainBid | null = await mongo.findOne(
+      database,
+      collection,
+      {
+        signedMessage: `${signedMessage}`,
+      }
+    );
 
-  const cancelBid = async (bid: Bid, archiveCollection: string): Promise<boolean> => {
-    // Place bid into archive collection, then delete
-    const insertResult: InsertOneResult = await mongo.insertOne(bid, database, archiveCollection);
-
-    if (!insertResult.acknowledged) {
-      throw Error(`Failed to cancel bid with signed message: ${bid.signedMessage}`);
+    if (!maybeResult) {
+      return null;
     }
 
-    const result: boolean = await mongo.deleteOne(database, usedCollection, {
+    const bid = uncertainBidToBid(maybeResult);
+    return bid;
+  };
+
+  const cancelBid = async (
+    bid: Bid,
+    collection: string
+  ): Promise<boolean> => {
+    const result: UpdateResult = await mongo.updateOne({$set: {cancelDate: bid.cancelDate as number}}, database, collection, {
       signedMessage: `${bid.signedMessage}`,
     });
-    return result;
+    
+    if (!result.acknowledged || result.modifiedCount !== 1) {
+      throw Error(
+        `Unable to cancel bid with signed message: ${bid.signedMessage}`
+      );
+    }
+    return result.acknowledged;
   };
 
   const databaseService = {
     insertBid,
     insertBids,
-    getBidsByNftIds,
+    getBidsByTokenIds,
     getBidsByAccount,
     getBidBySignedMessage,
     cancelBid,

@@ -4,21 +4,11 @@ import { Zauction } from "../types/contracts";
 import { VerifyBidResponse, BidParams } from "../types";
 import {
   encodeBid,
+  encodeBidV2,
   getEthersProvider,
   getTokenContract,
   getZAuctionContract,
 } from "./contracts";
-
-export function calculateNftId(
-  contractAddress: string,
-  tokenId: string
-): string {
-  const idString = contractAddress + tokenId;
-  const idStringBytes = ethers.utils.toUtf8Bytes(idString);
-  const nftId = ethers.utils.keccak256(idStringBytes);
-
-  return nftId;
-}
 
 async function calculateSigningAccount(
   bidData: BidParams,
@@ -26,15 +16,36 @@ async function calculateSigningAccount(
   zAuctionContract: Zauction
 ): Promise<string> {
   // Check signature recovers correct account
-  const bidMessage = await encodeBid(
-    bidData.auctionId,
-    bidData.bidAmount,
-    bidData.contractAddress,
-    bidData.tokenId,
-    bidData.minimumBid,
-    bidData.startBlock,
-    bidData.expireBlock
-  );
+  let bidMessage;
+  // bidToken means bid is v2.1
+  if (bidData.bidToken) {
+    bidMessage = await encodeBidV2(
+      bidData.bidNonce,
+      bidData.bidAmount,
+      bidData.tokenId,
+      bidData.minimumBid,
+      bidData.startBlock,
+      bidData.expireBlock,
+      bidData.bidToken
+    );
+  } else if (bidData.contractAddress) {
+    // Otherwise a bid is v2.0
+    // We know with certainty that a contract address is present.
+    // it would have failed in encoding without a contract address as a v2.0 bid
+    bidMessage = await encodeBid(
+      bidData.bidNonce,
+      bidData.bidAmount,
+      bidData.tokenId,
+      bidData.minimumBid,
+      bidData.startBlock,
+      bidData.expireBlock,
+      bidData.contractAddress
+    );
+  } else {
+    throw new Error(
+      `Received a v2 bid but no contract address ('contractAddress') was present.`
+    )
+  }
 
   const unsignedMessage = await zAuctionContract.toEthSignedMessageHash(
     bidMessage
@@ -52,8 +63,8 @@ export async function verifyEncodedBid(
   params: BidParams,
   signedMessage: string
 ): Promise<VerifyBidResponse> {
-  // Instantiate contracts
-  const erc20Contract = await getTokenContract();
+  // Get the correct ERC20 token for that domain
+  const erc20Contract = await getTokenContract(params.tokenId); // will be default as we haven't set wild token network yet
   const zAuctionContract: Zauction = await getZAuctionContract();
 
   // Calculate user balance, block number, and the signing account
@@ -65,11 +76,20 @@ export async function verifyEncodedBid(
   const start = ethers.BigNumber.from(params.startBlock);
   const expire = ethers.BigNumber.from(params.expireBlock);
 
-  const recoveredAccount = await calculateSigningAccount(
-    params,
-    signedMessage,
-    zAuctionContract
-  );
+  let recoveredAccount
+  try {
+    recoveredAccount = await calculateSigningAccount(
+      params,
+      signedMessage,
+      zAuctionContract
+    );
+  } catch (e) {
+    return {
+      pass: false,
+      status: 400,
+      message: e,
+    } as VerifyBidResponse;
+  }
 
   // Perform necessary checks to verify a bid
   const conditions = [

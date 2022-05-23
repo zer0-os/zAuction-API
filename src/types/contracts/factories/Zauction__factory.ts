@@ -8,28 +8,12 @@ import type { Zauction, ZauctionInterface } from "../Zauction";
 
 const _abi = [
   {
-    inputs: [
-      {
-        internalType: "contract IERC20",
-        name: "tokenAddress",
-        type: "address",
-      },
-      {
-        internalType: "contract IRegistrar",
-        name: "registrarAddress",
-        type: "address",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "constructor",
-  },
-  {
     anonymous: false,
     inputs: [
       {
         indexed: false,
         internalType: "uint256",
-        name: "auctionid",
+        name: "bidNonce",
         type: "uint256",
       },
       {
@@ -53,19 +37,19 @@ const _abi = [
       {
         indexed: false,
         internalType: "address",
-        name: "nftaddress",
+        name: "nftAddress",
         type: "address",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "tokenid",
+        name: "tokenId",
         type: "uint256",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "expireblock",
+        name: "expireBlock",
         type: "uint256",
       },
     ],
@@ -76,6 +60,12 @@ const _abi = [
     anonymous: false,
     inputs: [
       {
+        indexed: false,
+        internalType: "uint256",
+        name: "bidNonce",
+        type: "uint256",
+      },
+      {
         indexed: true,
         internalType: "address",
         name: "bidder",
@@ -83,19 +73,420 @@ const _abi = [
       },
       {
         indexed: true,
+        internalType: "address",
+        name: "seller",
+        type: "address",
+      },
+      {
+        indexed: false,
         internalType: "uint256",
-        name: "auctionid",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "nftAddress",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "tokenId",
         type: "uint256",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "price",
+        name: "expireBlock",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "paymentToken",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "topLevelDomainId",
         type: "uint256",
       },
     ],
-    name: "Cancelled",
+    name: "BidAcceptedV2",
     type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "bidNonce",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "bidder",
+        type: "address",
+      },
+    ],
+    name: "BidCancelled",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "BuyNowPriceSet",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "paymentToken",
+        type: "address",
+      },
+    ],
+    name: "BuyNowPriceSetV2",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "buyer",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "seller",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "nftAddress",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+    ],
+    name: "DomainSold",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "buyer",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "seller",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "nftAddress",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "paymentToken",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "topLevelDomainId",
+        type: "uint256",
+      },
+    ],
+    name: "DomainSoldV2",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "previousOwner",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "newOwner",
+        type: "address",
+      },
+    ],
+    name: "OwnershipTransferred",
+    type: "event",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes",
+        name: "signature",
+        type: "bytes",
+      },
+      {
+        internalType: "uint256",
+        name: "bidNonce",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "bidder",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "bid",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "domainTokenId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "minbid",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "startBlock",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "expireBlock",
+        type: "uint256",
+      },
+    ],
+    name: "acceptBid",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes",
+        name: "signature",
+        type: "bytes",
+      },
+      {
+        internalType: "uint256",
+        name: "bidNonce",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "bidder",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "bid",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "domainTokenId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "minbid",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "startBlock",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "expireBlock",
+        type: "uint256",
+      },
+      {
+        internalType: "contract IERC20",
+        name: "bidToken",
+        type: "address",
+      },
+    ],
+    name: "acceptBidV2",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "domainTokenId",
+        type: "uint256",
+      },
+    ],
+    name: "buyNow",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "domainTokenId",
+        type: "uint256",
+      },
+    ],
+    name: "buyNowV2",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "bid",
+        type: "uint256",
+      },
+    ],
+    name: "calculateMinterRoyalty",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "pure",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "topLevelId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "bid",
+        type: "uint256",
+      },
+    ],
+    name: "calculateTopLevelDomainFee",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "account",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "bidNonce",
+        type: "uint256",
+      },
+    ],
+    name: "cancelBid",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
   },
   {
     inputs: [
@@ -120,94 +511,12 @@ const _abi = [
     ],
     stateMutability: "view",
     type: "function",
-    constant: true,
-  },
-  {
-    inputs: [],
-    name: "registrar",
-    outputs: [
-      {
-        internalType: "contract IRegistrar",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-    constant: true,
-  },
-  {
-    inputs: [],
-    name: "token",
-    outputs: [
-      {
-        internalType: "contract IERC20",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-    constant: true,
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes",
-        name: "signature",
-        type: "bytes",
-      },
-      {
-        internalType: "uint256",
-        name: "auctionid",
-        type: "uint256",
-      },
-      {
-        internalType: "address",
-        name: "bidder",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "bid",
-        type: "uint256",
-      },
-      {
-        internalType: "address",
-        name: "nftaddress",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "tokenid",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "minbid",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "startblock",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "expireblock",
-        type: "uint256",
-      },
-    ],
-    name: "acceptBid",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
   },
   {
     inputs: [
       {
         internalType: "uint256",
-        name: "auctionid",
+        name: "bidNonce",
         type: "uint256",
       },
       {
@@ -217,12 +526,12 @@ const _abi = [
       },
       {
         internalType: "address",
-        name: "nftaddress",
+        name: "nftAddress",
         type: "address",
       },
       {
         internalType: "uint256",
-        name: "tokenid",
+        name: "tokenId",
         type: "uint256",
       },
       {
@@ -232,12 +541,12 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "startblock",
+        name: "startBlock",
         type: "uint256",
       },
       {
         internalType: "uint256",
-        name: "expireblock",
+        name: "expireBlock",
         type: "uint256",
       },
     ],
@@ -251,24 +560,210 @@ const _abi = [
     ],
     stateMutability: "view",
     type: "function",
-    constant: true,
   },
   {
     inputs: [
       {
         internalType: "uint256",
-        name: "auctionid",
+        name: "bidNonce",
         type: "uint256",
       },
+      {
+        internalType: "uint256",
+        name: "bid",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "minbid",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "startBlock",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "expireBlock",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "bidToken",
+        type: "address",
+      },
+    ],
+    name: "createBidV2",
+    outputs: [
+      {
+        internalType: "bytes32",
+        name: "data",
+        type: "bytes32",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "defaultPaymentToken",
+    outputs: [
+      {
+        internalType: "contract IERC20",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "domainTokenId",
+        type: "uint256",
+      },
+    ],
+    name: "getPaymentTokenForDomain",
+    outputs: [
+      {
+        internalType: "contract IERC20",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getProxyAdmin",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "domainTokenId",
+        type: "uint256",
+      },
+    ],
+    name: "getTopLevelId",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "hub",
+    outputs: [
+      {
+        internalType: "contract IZNSHub",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "contract IERC20",
+        name: "tokenAddress",
+        type: "address",
+      },
+      {
+        internalType: "contract IRegistrar",
+        name: "registrarAddress",
+        type: "address",
+      },
+    ],
+    name: "initialize",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    name: "networkPaymentToken",
+    outputs: [
+      {
+        internalType: "contract IERC20",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "owner",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    name: "priceInfo",
+    outputs: [
       {
         internalType: "uint256",
         name: "price",
         type: "uint256",
       },
+      {
+        internalType: "address",
+        name: "holder",
+        type: "address",
+      },
+      {
+        internalType: "contract IERC20",
+        name: "paymentToken",
+        type: "address",
+      },
     ],
-    name: "cancelBidsUnderPrice",
-    outputs: [],
-    stateMutability: "nonpayable",
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -294,7 +789,119 @@ const _abi = [
     ],
     stateMutability: "pure",
     type: "function",
-    constant: true,
+  },
+  {
+    inputs: [],
+    name: "registrar",
+    outputs: [
+      {
+        internalType: "contract IRegistrar",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "renounceOwnership",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "domainTokenId",
+        type: "uint256",
+      },
+    ],
+    name: "setBuyPrice",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "contract IERC20",
+        name: "newDefaultToken",
+        type: "address",
+      },
+    ],
+    name: "setDefaultPaymentToken",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "domainNetworkId",
+        type: "uint256",
+      },
+      {
+        internalType: "contract IERC20",
+        name: "domainNetworkToken",
+        type: "address",
+      },
+    ],
+    name: "setNetworkToken",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "setTopLevelDomainFee",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "contract IERC20",
+        name: "token",
+        type: "address",
+      },
+    ],
+    name: "setWildToken",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "contract IZNSHub",
+        name: "hubAddress",
+        type: "address",
+      },
+    ],
+    name: "setZNSHub",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
   },
   {
     inputs: [
@@ -314,7 +921,101 @@ const _abi = [
     ],
     stateMutability: "pure",
     type: "function",
-    constant: true,
+  },
+  {
+    inputs: [],
+    name: "token",
+    outputs: [
+      {
+        internalType: "contract IERC20",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    name: "topLevelDomainFee",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    name: "topLevelDomainIdCache",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "newOwner",
+        type: "address",
+      },
+    ],
+    name: "transferOwnership",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_defaultToken",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "_wildToken",
+        type: "address",
+      },
+    ],
+    name: "upgradeFromV2",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "wildToken",
+    outputs: [
+      {
+        internalType: "contract IERC20",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
   },
 ];
 

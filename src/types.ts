@@ -3,34 +3,36 @@ export type Maybe<T> = T | undefined;
 export interface BidPayloadPostDto {
   bidAmount: string;
   tokenId: string;
-  contractAddress: string;
+  contractAddress?: string;
   minimumBid: string;
   startBlock: string;
   expireBlock: string;
+  bidToken?: string;
 }
 
 export interface BidPostDto {
   account: string;
-  auctionId: string;
+  bidNonce: string;
   tokenId: string;
-  contractAddress: string;
+  contractAddress?: string;
   bidAmount: string;
   signedMessage: string;
   minimumBid: string;
   startBlock: string;
   expireBlock: string;
+  bidToken?: string;
 }
 
 export interface BidParams {
-  nftId: string;
   account: string;
-  auctionId: string;
+  bidNonce: string;
   bidAmount: string;
   minimumBid: string;
-  contractAddress: string;
+  contractAddress?: string;
   startBlock: string;
   expireBlock: string;
   tokenId: string;
+  bidToken?: string;
 }
 
 export interface BidsList {
@@ -38,7 +40,7 @@ export interface BidsList {
 }
 
 export interface BidsListDto {
-  nftIds: string[];
+  tokenIds: string[];
 }
 
 export interface BidsAccountsDto {
@@ -46,12 +48,22 @@ export interface BidsAccountsDto {
 }
 
 export interface BidsDto {
-  nftId: string;
+  tokenId: string;
 }
 
-export interface Bid extends BidParams {
+export interface CancelledBid {
+  cancelDate: number;
+}
+
+export interface Bid extends BidParams, Partial<CancelledBid> {
   date: number;
   signedMessage: string;
+  version: string;
+}
+
+export interface HistoricBid extends Bid {
+  nftId: string;
+  contractAddress: string; // not nullable like on Bid
 }
 
 export interface Auction {
@@ -73,6 +85,17 @@ export interface VerifyBidResponse {
 export interface BidCancelEncode {
   bidMessageSignature: string;
 }
-export interface BidCancelDto extends BidCancelEncode{
+export interface BidCancelDto extends BidCancelEncode {
   cancelMessageSignature: string;
+}
+
+export interface BidCancellation {
+  account: string;
+  bidNonce: string;
+}
+
+export enum BidFilterStatus {
+  all = 0,
+  active = 1,
+  cancelled = 2,
 }
