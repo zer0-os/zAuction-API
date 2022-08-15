@@ -8,6 +8,10 @@ workflows:
           pkg-manager: yarn
           yarn-run: build
           version: 14.17.5
+      - node/run:
+          pkg-manager: yarn
+          yarn-run: lint
+          version: 14.17.5
       - node/test:
           pkg-manager: yarn
           run-command: test
