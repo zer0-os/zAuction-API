@@ -46,7 +46,6 @@ import {
 import { ethers } from "ethers";
 import { retry } from "./util/retry";
 import { getBidFilterStatus } from "./util/requests";
-import e from "express";
 
 const router = express.Router();
 
@@ -264,9 +263,8 @@ router.post(
       // Add new bid document to database
       await database.insertBid(newBid);
 
-      let message: BidPlacedV1Data | BidPlacedV2Data;
       // To support backwards compatibility we allow bids to be either v2 or v2.1
-      // and that means allowing contractAddress or bidToken to be nullable, and so 
+      // and that means allowing contractAddress or bidToken to be nullable, and so
       // they must be checked to emit the right messages
       if (bidParams.bidToken) {
         // v2.1 Bid => v2 message
@@ -288,9 +286,9 @@ router.post(
             date: newBid.date,
             signedMessage: newBid.signedMessage,
             version: newBid.version,
-            bidToken: newBid.bidToken!
-          }
-        }
+            bidToken: bidParams.bidToken,
+          },
+        };
         // Add new bid to our event queue
         await queue.sendMessage(message);
       } else {
@@ -307,15 +305,15 @@ router.post(
             bidNonce: newBid.bidNonce,
             bidAmount: newBid.bidAmount,
             minimumBid: newBid.minimumBid,
-            contractAddress: newBid.contractAddress!,
+            contractAddress: newBid.contractAddress ?? "",
             startBlock: newBid.startBlock,
             expireBlock: newBid.expireBlock,
             tokenId: newBid.tokenId,
             date: newBid.date,
             signedMessage: newBid.signedMessage,
             version: newBid.version,
-          }
-        }
+          },
+        };
         // Add new bid to our event queue
         await queue.sendMessage(message);
       }
@@ -351,10 +349,6 @@ router.post(
     if (!validateBidCancelEncodeSchema(req.body)) {
       return res.status(400).send(validateBidCancelEncodeSchema.errors);
     }
-
-    const bidData: Bid | null = await database.getBidBySignedMessage(
-      req.body.bidMessageSignature
-    );
 
     const cancelMessage = "cancel - " + req.body.bidMessageSignature;
     const hashedCancelMessage = ethers.utils.id(cancelMessage);
@@ -398,7 +392,7 @@ router.post(
       }
 
       // Once confirmed, update bid with cancelDate
-      let timeStamp = new Date().getTime();
+      const timeStamp = new Date().getTime();
       const cancelledBid: Bid = {
         ...bidData,
         cancelDate: timeStamp,
@@ -422,6 +416,8 @@ router.post(
       await queue.sendMessage(message);
 
       return res.status(200).send({});
+
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     } catch (e: any) {
       console.error(e.message, e.stack);
       next(

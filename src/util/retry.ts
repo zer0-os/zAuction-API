@@ -1,6 +1,6 @@
 const maxRetries = 3;
 const retryDelay = 2000;
-
+/* eslint-disable */
 export function delay(milliseconds: number) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }

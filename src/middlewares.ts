@@ -15,8 +15,7 @@ export function notFound(
 export function errorHandler(
   err: Error,
   req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
+  res: express.Response
 ): void {
   /* eslint-enable no-unused-vars */
   const statusCode = res.statusCode !== 200 ? res.statusCode : 500;

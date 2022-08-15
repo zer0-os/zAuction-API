@@ -11,7 +11,9 @@ export * from "./adapters";
 
 export interface MessageQueueService {
   sendMessage: (
-    message: TypedMessage<BidPlacedV1Data | BidPlacedV2Data | BidCancelledV1Data>
+    message: TypedMessage<
+      BidPlacedV1Data | BidPlacedV2Data | BidCancelledV1Data
+    >
   ) => Promise<void>;
 
   sendMessagesBatch: (

@@ -34,7 +34,7 @@ const bidPostSchema: JSONSchemaType<BidPostDto> = {
     account: { type: "string" },
     bidNonce: { type: "string" },
     tokenId: { type: "string" },
-    contractAddress: { type: "string", nullable: true},
+    contractAddress: { type: "string", nullable: true },
     bidAmount: { type: "string" },
     minimumBid: { type: "string" },
     startBlock: { type: "string" },
