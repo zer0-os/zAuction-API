@@ -1,4 +1,10 @@
-import { InsertOneResult, Document, InsertManyResult, Filter, UpdateResult } from "mongodb";
+import {
+  InsertOneResult,
+  Document,
+  InsertManyResult,
+  Filter,
+  UpdateResult,
+} from "mongodb";
 import { BidDatabaseService } from "..";
 import { Bid, BidFilterStatus } from "../../types";
 import * as mongo from "../backends/mongo";
@@ -13,8 +19,7 @@ const uncertainBidToBid = (bid: UncertainBid): Bid => {
   };
 
   //Strip signed message if bid has been cancelled
-  if (properBid.cancelDate && properBid.cancelDate > 0)
-  {
+  if (properBid.cancelDate && properBid.cancelDate > 0) {
     properBid.signedMessage = "";
   }
   return properBid;
@@ -46,14 +51,17 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result.acknowledged;
   };
 
-  const getBidsByTokenIds = async (tokenIds: string[], bidStatus: BidFilterStatus): Promise<Bid[]> => {
+  const getBidsByTokenIds = async (
+    tokenIds: string[],
+    bidStatus: BidFilterStatus
+  ): Promise<Bid[]> => {
     const tokenIdList = [...tokenIds];
-    let queryWrapper : Filter<Document> = {
+    let queryWrapper: Filter<Document> = {
       tokenId: {
         $in: tokenIdList,
       },
-    }
-    queryWrapper = addFilterByBidStatus(queryWrapper, bidStatus);    
+    };
+    queryWrapper = addFilterByBidStatus(queryWrapper, bidStatus);
     const versionlessResult: UncertainBid[] = await mongo.find(
       database,
       usedCollection,
@@ -64,11 +72,14 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result;
   };
 
-  const getBidsByAccount = async (account: string, bidStatus: BidFilterStatus): Promise<Bid[]> => {
-    let queryWrapper : Filter<Document> = {
+  const getBidsByAccount = async (
+    account: string,
+    bidStatus: BidFilterStatus
+  ): Promise<Bid[]> => {
+    let queryWrapper: Filter<Document> = {
       account: `${account}`,
-    }
-    queryWrapper = addFilterByBidStatus(queryWrapper, bidStatus);    
+    };
+    queryWrapper = addFilterByBidStatus(queryWrapper, bidStatus);
     const maybeResult: UncertainBid[] = await mongo.find(
       database,
       usedCollection,
@@ -98,14 +109,16 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return bid;
   };
 
-  const cancelBid = async (
-    bid: Bid,
-    collection: string
-  ): Promise<boolean> => {
-    const result: UpdateResult = await mongo.updateOne({$set: {cancelDate: bid.cancelDate as number}}, database, collection, {
-      signedMessage: `${bid.signedMessage}`,
-    });
-    
+  const cancelBid = async (bid: Bid, collection: string): Promise<boolean> => {
+    const result: UpdateResult = await mongo.updateOne(
+      { $set: { cancelDate: bid.cancelDate as number } },
+      database,
+      collection,
+      {
+        signedMessage: `${bid.signedMessage}`,
+      }
+    );
+
     if (!result.acknowledged || result.modifiedCount !== 1) {
       throw Error(
         `Unable to cancel bid with signed message: ${bid.signedMessage}`

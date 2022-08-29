@@ -23,6 +23,8 @@ const options: MongoClientOptions = {
   w: "majority",
 };
 
+/* eslint-disable no-useless-catch */
+
 // Will create the collection if it does not already exist
 export const insertOne = async <T>(
   data: T,
@@ -77,7 +79,7 @@ export const deleteOne = async (
   databaseName: string,
   collection: string,
   query: Filter<Document>
-) => {
+): Promise<boolean> => {
   const client = new MongoClient(fullUri, options);
 
   try {
@@ -108,14 +110,11 @@ export const updateOne = async <T>(
     const database = client.db(databaseName);
     const usedCollection = database.collection(collection);
 
-    const result: UpdateResult = await usedCollection.updateOne(
-      query,
-      data
-    );
+    const result: UpdateResult = await usedCollection.updateOne(query, data);
     console.log(
-      `${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`,
+      `${result.matchedCount} document(s) matched the filter, updated ${result.modifiedCount} document(s)`
     );
-    
+
     return result;
   } catch (error) {
     throw error;

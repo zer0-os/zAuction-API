@@ -44,7 +44,7 @@ async function calculateSigningAccount(
   } else {
     throw new Error(
       `Received a v2 bid but no contract address ('contractAddress') was present.`
-    )
+    );
   }
 
   const unsignedMessage = await zAuctionContract.toEthSignedMessageHash(
@@ -76,7 +76,7 @@ export async function verifyEncodedBid(
   const start = ethers.BigNumber.from(params.startBlock);
   const expire = ethers.BigNumber.from(params.expireBlock);
 
-  let recoveredAccount
+  let recoveredAccount;
   try {
     recoveredAccount = await calculateSigningAccount(
       params,

@@ -7,6 +7,8 @@ import fleekStorage, {
   listFilesOutput,
 } from "@fleekhq/fleek-storage-js";
 
+/* eslint-disable no-useless-catch */
+/* eslint-disable-next-line @typescript-eslint/no-var-requires */
 require("dotenv").config();
 
 import { FleekAuth } from "./types";

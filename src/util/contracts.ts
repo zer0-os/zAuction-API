@@ -8,14 +8,6 @@ import {
   Zauction__factory,
 } from "../types/contracts";
 
-// Ethers/Infura
-function getVoidSigner(): ethers.VoidSigner {
-  const provider = getEthersProvider();
-  const signer = new ethers.VoidSigner(ethers.constants.AddressZero, provider);
-
-  return signer as ethers.VoidSigner;
-}
-
 export function getEthersProvider(): ethers.providers.JsonRpcProvider {
   const infuraUrl = env.get("INFURA_URL").required().asString();
   if (!infuraUrl) throw ReferenceError;
@@ -47,7 +39,9 @@ export async function getTokenContract(tokenId: string): Promise<ERC20> {
   return getTokenContract(tokenId);
 }
 
-export const getPaymentTokenForDomain = async (tokenId: string) => {
+export const getPaymentTokenForDomain = async (
+  tokenId: string
+): Promise<string> => {
   const contract = await getZAuctionContract();
   const paymentToken = await contract.getPaymentTokenForDomain(tokenId);
   return paymentToken;
