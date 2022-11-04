@@ -14,4 +14,6 @@ export interface BidDatabaseService {
   ) => Promise<Bid[]>;
   getBidBySignedMessage: (signedMessage: string) => Promise<Bid | null>;
   cancelBid: (bid: Bid, collection: string) => Promise<boolean>;
+  getAllBids: (collection: string) => Promise<Bid[]>;
+  deleteBid: (bid: Bid, collection: string) => Promise<boolean>;
 }

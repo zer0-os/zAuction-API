@@ -138,6 +138,18 @@ router.post(
   }
 );
 
+router.get(
+  "bids/list/all",
+  limiter,
+  async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    const bids = await database.getAllBids("bids");
+    return bids;
+  })
+
 // Endpoint to return auctions based on an array of given tokenIds, filterable by bid cancellation status
 router.post(
   "/bids/list",
@@ -147,6 +159,9 @@ router.post(
     res: express.Response,
     next: express.NextFunction
   ) => {
+    // get all mainnet bids
+    const bids = await database.getAllBids("bids");
+    console.log(bids)
     if (!validateBidsListPostSchema(req.body)) {
       return res.status(400).send(validateBidsListPostSchema.errors);
     }
@@ -174,6 +189,8 @@ router.post(
       return next(new Error("Could not get bids for given nftIds"));
     }
 
+    console.log(tokenIdBids);
+    console.log("HELLLOOO IS THIS THING ON")
     return res.status(200).send(tokenIdBids);
   }
 );

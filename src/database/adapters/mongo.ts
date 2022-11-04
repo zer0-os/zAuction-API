@@ -127,6 +127,21 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     return result.acknowledged;
   };
 
+  const getAllBids = async (collection: string): Promise<Bid[]> => {
+    const result = await mongo.find(database, collection);
+    return result as Bid[]; // not typesafe but for debug
+  }
+
+  const deleteBid = async (bid: Bid, collection: string): Promise<boolean> => {
+    if (bid.auctionId) {
+      const res = await mongo.deleteOne(database, collection, { auctionId: bid.auctionId });
+      return res;
+    } else {
+      const res = await mongo.deleteOne(database, collection, { bidNonce: bid.bidNonce });
+      return res;
+    }
+  }
+
   const databaseService = {
     insertBid,
     insertBids,
@@ -134,6 +149,8 @@ export const create = (db: string, collection: string): BidDatabaseService => {
     getBidsByAccount,
     getBidBySignedMessage,
     cancelBid,
+    getAllBids,
+    deleteBid
   };
 
   return databaseService;

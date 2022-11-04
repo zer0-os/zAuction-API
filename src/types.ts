@@ -26,6 +26,7 @@ export interface BidPostDto {
 export interface BidParams {
   account: string;
   bidNonce: string;
+  auctionId?: string,
   bidAmount: string;
   minimumBid: string;
   contractAddress?: string;
