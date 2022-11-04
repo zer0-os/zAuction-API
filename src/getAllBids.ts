@@ -26,8 +26,8 @@ const findDuplicates = async () => {
       console.log(`bidNonce:  ${bid.bidNonce}`);
     }
 
+    // Mark new items as seen, and add already seen items to `duplicates` array
     if (haveSeen.get(setValue)) {
-      // Don't mark duplicates as "seen"
       duplicates.push(bid);
     } else {
       haveSeen.set(setValue, true);
