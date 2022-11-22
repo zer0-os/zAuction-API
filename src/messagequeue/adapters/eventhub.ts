@@ -4,13 +4,13 @@ import {
   EventHubProducerClient,
 } from "@azure/event-hubs";
 import { Message } from "@zero-tech/zns-message-schemas";
-import { MessageQueueService } from "..";
+import { MessageQueueService, QueueMessage } from "..";
 
 export const create = (
   connectionString: string,
   name: string
 ): MessageQueueService => {
-  const sendMessage = async (message: Message) => {
+  const sendMessage = async (message: QueueMessage) => {
     const producer: EventHubProducerClient = new EventHubProducerClient(
       connectionString,
       name
