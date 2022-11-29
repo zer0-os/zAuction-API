@@ -160,7 +160,7 @@
   dependencies:
     tslib "^2.2.0"
 
-"@azure/service-bus@^7.7.1":
+"@azure/service-bus@7.7.1":
   version "7.7.1"
   resolved "https://registry.yarnpkg.com/@azure/service-bus/-/service-bus-7.7.1.tgz#7721a11863cc4e5688c3278f4e742957d78ecc6d"
   integrity sha512-n04GNKZodxpUa5YGfW+LcIQvCzDQ9y8eY5SURv11cys+P67rVF4RNt5GVTE+FzoFFVS57y8Cb2IOmA4MClSI0g==
