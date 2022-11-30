@@ -1,19 +1,19 @@
-import { CreateBatchOptions } from "@azure/event-hubs";
+import { CreateBatchOptions, EventData } from "@azure/event-hubs";
+import { ServiceBusMessage } from "@azure/service-bus";
 import {
   TypedMessage,
   BidPlacedV1Data,
-  BidPlacedV2Data,
   BidCancelledV1Data,
   Message,
 } from "@zero-tech/zns-message-schemas";
 
 export * from "./adapters";
 
+export type QueueMessage = ServiceBusMessage | EventData
+
 export interface MessageQueueService {
   sendMessage: (
-    message: TypedMessage<
-      BidPlacedV1Data | BidPlacedV2Data | BidCancelledV1Data
-    >
+    message: QueueMessage
   ) => Promise<void>;
 
   sendMessagesBatch: (

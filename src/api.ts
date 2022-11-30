@@ -6,8 +6,8 @@ import {
   MessageType,
   TypedMessage,
   BidCancelledV1Data,
-  BidPlacedV2Data,
   BidPlacedV1Data,
+  BidPlacedV2Data,
 } from "@zero-tech/zns-message-schemas";
 
 import { adapters, BidDatabaseService } from "./database";
@@ -59,15 +59,15 @@ const db = env.get("MONGO_DB").required().asString();
 const collection = env.get("MONGO_COLLECTION").required().asString();
 const database: BidDatabaseService = adapters.mongo.create(db, collection);
 
-const connectionString = env
-  .get("EVENT_HUB_CONNECTION_STRING")
-  .required()
-  .asString();
-const name = env.get("EVENT_HUB_NAME").required().asString();
-const queue: MessageQueueService = queueAdapters.eventhub.create(
-  connectionString,
-  name
-);
+const serviceBusConnectionString = env
+.get("SERVICE_BUS_CONNECTION_STRING")
+.required()
+.asString();
+const serviceBusName = env.get("SERVICE_BUS_NAME").required().asString();
+const serviceBus: MessageQueueService = queueAdapters.serviceBus.create(
+  serviceBusConnectionString,
+  serviceBusName
+)
 
 // Returns encoded data to be signed, a generated bidNonce,
 // and a generated nftId determined by the NFT contract address and tokenId
@@ -262,61 +262,8 @@ router.post(
 
       // Add new bid document to database
       await database.insertBid(newBid);
+      serviceBus.sendMessage({body: newBid});
 
-      // To support backwards compatibility we allow bids to be either v2 or v2.1
-      // and that means allowing contractAddress or bidToken to be nullable, and so
-      // they must be checked to emit the right messages
-      if (bidParams.bidToken) {
-        // v2.1 Bid => v2 message
-        const message: TypedMessage<BidPlacedV2Data> = {
-          event: MessageType.BidPlaced,
-          version: "2.0",
-          timestamp: dateNow,
-          logIndex: undefined,
-          blockNumber: undefined,
-          data: {
-            account: newBid.account,
-            bidNonce: newBid.bidNonce,
-            bidAmount: newBid.bidAmount,
-            minimumBid: newBid.minimumBid,
-            contractAddress: newBid.contractAddress ?? "",
-            startBlock: newBid.startBlock,
-            expireBlock: newBid.expireBlock,
-            tokenId: newBid.tokenId,
-            date: newBid.date,
-            signedMessage: newBid.signedMessage,
-            version: newBid.version,
-            bidToken: bidParams.bidToken,
-          },
-        };
-        // Add new bid to our event queue
-        await queue.sendMessage(message);
-      } else {
-        // v2.0 Bid => v1 message
-        const message: TypedMessage<BidPlacedV1Data> = {
-          event: MessageType.BidPlaced,
-          version: "2.0",
-          timestamp: dateNow,
-          logIndex: undefined,
-          blockNumber: undefined,
-          data: {
-            nftId: "",
-            account: newBid.account,
-            bidNonce: newBid.bidNonce,
-            bidAmount: newBid.bidAmount,
-            minimumBid: newBid.minimumBid,
-            contractAddress: newBid.contractAddress ?? "",
-            startBlock: newBid.startBlock,
-            expireBlock: newBid.expireBlock,
-            tokenId: newBid.tokenId,
-            date: newBid.date,
-            signedMessage: newBid.signedMessage,
-            version: newBid.version,
-          },
-        };
-        // Add new bid to our event queue
-        await queue.sendMessage(message);
-      }
       return res.status(200).send({});
     } catch (error) {
       next(error);
@@ -398,22 +345,7 @@ router.post(
         cancelDate: timeStamp,
       };
       await database.cancelBid(cancelledBid, collection);
-
-      const message: TypedMessage<BidCancelledV1Data> = {
-        event: MessageType.BidCancelled,
-        version: "1.0",
-        timestamp: timeStamp,
-        logIndex: undefined,
-        blockNumber: undefined,
-        data: {
-          account: signer,
-          bidNonce: cancelledBid.bidNonce,
-          version: cancelledBid.version,
-          cancelDate: timeStamp,
-        },
-      };
-
-      await queue.sendMessage(message);
+      await serviceBus.sendMessage({body: cancelledBid});
 
       return res.status(200).send({});
 
